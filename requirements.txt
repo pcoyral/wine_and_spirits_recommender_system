@@ -1,0 +1,25 @@
+# Core data handling
+pandas>=2.0
+numpy>=1.24
+
+# ML / recommenders
+scikit-learn>=1.3
+scipy>=1.11
+
+# NLP / embeddings
+sentence-transformers>=2.2
+torch>=2.0
+
+# Notebooks
+jupyter>=1.0
+ipykernel>=6.25
+
+# Visualization
+matplotlib>=3.7
+seaborn>=0.12
+
+# Evaluation / metrics
+tqdm>=4.65
+
+# Testing
+pytest>=7.4

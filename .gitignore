@@ -1,0 +1,34 @@
+# Byte-compiled / cache
+__pycache__/
+*.py[cod]
+*$py.class
+.ipynb_checkpoints/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Data — the full ~130k-review dataset is large and external (see README),
+# so it's excluded by name. 03_Sample_Data.csv (small, schema reference) stays tracked.
+data/raw/winemag-data*.csv
+data/processed/*
+!data/processed/.gitkeep
+
+# Model artifacts / embeddings cache
+*.pkl
+*.pt
+*.bin
+models_cache/
+
+# Env / secrets
+.env
+*.key
+
+# OS / editor
+.DS_Store
+.vscode/
+*.swp
+
+# Jupyter
+*.ipynb_checkpoints

@@ -50,12 +50,31 @@ sensoryrec-capstone/
 
 ## Setup
 
+Requires **Python 3.11**.
+
 ```bash
 git clone <your-repo-url>
 cd sensoryrec-capstone
-python -m venv .venv
-source .venv/bin/activate      # Windows: .venv\Scripts\activate
-pip install -r requirements.txt
+
+# Create the venv OUTSIDE the project directory.
+# This repo may live in an iCloud-synced folder (~/Desktop, ~/Documents), and
+# iCloud will offload large packages like torch to the cloud — imports then
+# block for minutes while files are re-downloaded. Keeping the venv in a
+# non-synced path avoids this entirely.
+python3 -m venv ~/venvs/sensoryrec
+source ~/venvs/sensoryrec/bin/activate
+
+pip install -r requirements.txt   # or requirements.lock.txt for exact versions
+pip install -e .                  # makes `src` importable from anywhere
+
+# Register the venv as a Jupyter kernel for the notebooks
+python -m ipykernel install --user --name sensoryrec --display-name "SensoryRec (venv)"
+```
+
+Verify the install:
+
+```bash
+pytest -q          # expect: 3 passed
 ```
 
 ## Data

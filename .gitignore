@@ -5,6 +5,10 @@ __pycache__/
 .ipynb_checkpoints/
 
 # Virtual environments
+# `.venv` without a trailing slash also covers a symlink to a venv kept
+# outside the repo (see README) - the trailing-slash form matches only
+# real directories.
+.venv
 .venv/
 venv/
 env/

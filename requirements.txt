@@ -1,4 +1,4 @@
-# Direct dependencies, pinned to the versions in requirements.lock.txt.
+# Direct dependencies, pinned to the same versions as requirements.lock.txt.
 # After changing this file, regenerate the lock with: pip freeze > requirements.lock.txt
 
 # Data

@@ -46,8 +46,11 @@ Each step logs rows before / removed / after to `cleaning_log.csv`.
 | Step | Removed | Why |
 |---|---|---|
 | Empty description | 0 | The description is the main signal. No text, no content-based recommendation. |
-| Exact duplicate description | 10,016 | See below. |
 | Missing variety | 1 | Needed for the test-set stratification and the attribute baseline. |
+| Exact duplicate description | 10,016 | See below. |
+
+The order matters: rows without a variety go *before* de-duplication, so if a
+note appears twice and only one copy has a variety, the usable copy is kept.
 | **Result** | **129,971 → 119,954** | |
 
 **Why drop duplicates?** Two reasons (`duplicate_check.csv`):
@@ -115,7 +118,13 @@ from the catalogue.
     alongside the overall result.
 - **Rounding ("largest remainder"):** after the minimums, fractional shares
   are rounded down, and the leftover places go to the bands with the largest
-  fractions. That guarantees the total is exactly 200.
+  fractions. That guarantees the total is exactly 200. If the settings are
+  impossible (minimums adding up to more than 200, or too few eligible
+  wines), `allocate()` stops with an error instead of quietly returning
+  fewer wines.
+- **The minimums (30 test / 15 dev)** were proposed by Claude and confirmed by
+  you. Reason: 30 is enough for a rough per-band estimate and still leaves
+  most of the 200 shared proportionally.
 
 **Why fixed bands, not tail-based bands?** The split was made before the tail
 was defined, on purpose. If the test set depended on the tail definition, you
@@ -151,11 +160,11 @@ being fitted on test data, and that rule applies from S1 on.
 least reviewed, with review counts on the y-axis. Both axes are logarithmic
 because the range is huge.
 
-- **Varieties:** the curve is steep. A few grapes have more than 10,000
+- **Varieties:** the curve is steep. The most-reviewed variety has 12,277
   reviews, and most have a handful.
-- **Wineries:** the curve is flatter. The biggest winery has only about 200
+- **Wineries:** the curve is flatter. The biggest winery has only 211
   reviews, but there are 16,755 wineries, and 4,582 of them have just one
-  review (`summary.csv`).
+  review (`summary.csv`: `max_reviews_per_variety`, `max_reviews_per_winery`).
 
 **Lorenz curve and Gini** (`fig_lorenz.png`, `summary.csv`).
 
@@ -207,7 +216,10 @@ because the range is huge.
 
 **Scrape date** (`vintage_years.csv`, `summary.csv`). The latest vintage year
 in the titles is 2017, a lower bound: the data cannot be older than its
-newest wine. That fits Kaggle's v2 release. *Confirm the exact date on the
+newest wine. Titles look like "Winery 2013 Name Variety (Region)", so the
+vintage is the first year *after the winery name*. Taking the first year in
+the title would count "1912 Winemakers 2011 …" as 1912; taking the last would
+count "Kirsten 2013 1904 Spätlese" as 1904. That fits Kaggle's v2 release. *Confirm the exact date on the
 Kaggle page.* It also matters for the business chapter: the catalogue is old
 and US-centric, which is why location and availability are Future Work.
 
@@ -224,19 +236,21 @@ and US-centric, which is why location and availability are Future Work.
 **Defence:**
 
 1. **Simple:** one sentence that anyone can check.
-2. **Grounded in the data:** a top-20% (Pareto) cut on wineries lands at 10
-   reviews on this data, so the threshold isn't arbitrary.
+2. **Grounded in the data:** a top-20% (Pareto) cut on wineries puts the head
+   at 10 or more reviews on this data (`tail_options.csv`, option A), right
+   next to the chosen threshold, so it isn't arbitrary.
 3. **Usable:** about a third of the catalogue is in the tail, with enough test
    wines to report tail results separately.
 4. **Consistent unit:** the Popularity baseline can rank by winery review
    count, so the baseline and the tail measure the same thing.
 
-**Rejected alternatives** (see `DECISIONS.md`):
+**Rejected alternatives** (all in `tail_options.csv`, reasons in `DECISIONS.md`):
 
-- **Head = wineries holding 20% or 50% of reviews:** 88–98% of wineries end
-  up in the tail, too broad to say anything.
+- **Head = wineries holding 20% or 50% of reviews (option C):** 88.5–97.7% of
+  wineries end up in the tail, too broad to say anything.
 - **Variety as the unit:** varieties are so concentrated that the tail holds
-  either very few wines or almost every variety.
+  either very few wines (3.4% under option A) or almost every variety
+  (98.7–99.6% under option C).
 
 **"Isn't 10 arbitrary?"** Any threshold is. This one was chosen on evidence,
 and in S1 results can also be reported at 5 and 20 reviews, to show the
@@ -250,11 +264,15 @@ conclusions hold either way. That is a cheap robustness check worth adding.
    removed; a note with one word changed stays in.
 2. **The data comes from a mirror.** Closed by comparing the SHA-256 with a
    Kaggle download.
-3. **The vintage regex is rough.** A brand name containing a year (e.g. "1865")
-   could be miscounted. It is only used as evidence for the scrape date.
+3. **Vintage years come from the title text.** Years inside winery names are
+   skipped, but a few titles stay ambiguous (e.g. "Hermann J. Wiemer 1997
+   Cuvée Brut 2000"). It is only used as evidence for the scrape date.
 4. **The 30 / 15 minimums per band are a judgement call,** chosen to allow a
    rough per-band estimate. They are not statistically optimised.
-5. **The catalogue is from 2017 and US-centric.** That limits real-world use
+5. **The S0 code was reviewed** (21 Oct 2026). The fixes: the cleaning order,
+   the vintage rule, error checks in `allocate()`, the pipeline order in the
+   Makefile, and generating every number cited in `DECISIONS.md` from a script.
+6. **The catalogue is from 2017 and US-centric.** That limits real-world use
    (images, availability) but not the research question.
 
 ---
@@ -264,13 +282,17 @@ conclusions hold either way. That is a cheap robustness check worth adding.
 | Function | One line you should be able to say |
 |---|---|
 | `load_raw` | Reads the CSV and keeps the original row number as a stable `wine_id`. |
-| `clean` | Removes empty, duplicate and no-variety rows, logs each step, flags and fills missing values. |
-| `duplicate_check` | Compares each removed duplicate with the kept copy: same wine scraped twice, or not? |
+| `clean` | Removes empty, no-variety and duplicate rows (in that order), logs each step, flags and fills missing values. |
+| `duplicate_pairs` | Puts each removed duplicate next to the copy that is kept. |
+| `duplicate_check` | Same title, winery, points and price as the kept copy? Then it's the same wine scraped twice. |
+| `metric_table` | Turns `{metric: value}` into the two-column CSVs in `results/eda/`. |
 | `variety_band` | Labels each wine by how common its grape variety is. |
-| `allocate` | Sets each band's quota: the minimum first, then the rest proportionally. |
+| `allocate` | Sets each band's quota: the minimum first, then the rest proportionally; errors if impossible. |
 | `stratified_sample` | Draws each band's quota at random with the fixed seed. |
 | `make_splits` | Builds test first, then dev from what's left; only notes of 20+ words. |
 | `tail_mask` | True if the wine's winery has at most 10 reviews. |
 | `gini` | One number for how unequal a set of counts is. |
 | `lorenz`, `top_share` | The curve and table behind the Gini. |
+| `vintage_years` | Vintage = first year after the winery name in the title. |
 | `summary_table`, `tail_summary` | The headline numbers you cite, written to CSV. |
+| `tail_options` | The tail definitions you compared before choosing one. |

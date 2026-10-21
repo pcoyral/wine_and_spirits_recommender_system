@@ -8,8 +8,10 @@ come from files in `results/`, never typed by hand.
   blocked from the cloud environment, so this copy was downloaded from the
   R4DS TidyTuesday mirror (`rfordatascience/tidytuesday`,
   `data/2019/2019-05-28/winemag-data-130k-v2.csv`).
-- Checks: 129,971 rows, the expected 14 columns, and all 500 rows of
-  `data/raw/03_Sample_Data.csv` appear in it unchanged. The SHA-256 is in
+- Checks: the row count (`raw_rows` in `results/eda/data_manifest.json`)
+  matches the ~129,971 in CLAUDE.md; the 14 expected columns are present; and
+  in a one-off check on 21 Oct 2026, every row of
+  `data/raw/03_Sample_Data.csv` was found in it unchanged. The SHA-256 is in
   `results/eda/data_manifest.json`. **To do:** compare it with the SHA-256 of
   the file downloaded from Kaggle (`shasum -a 256 winemag-data-130k-v2.csv`).
 
@@ -20,7 +22,9 @@ come from files in `results/`, never typed by hand.
   `results/eda/duplicate_check.csv` compares each removed duplicate with the
   kept copy (same title, winery, points and price = same wine).
 - **Missing variety:** drop the row. Variety is needed for the test/dev
-  stratification and for the attribute baseline.
+  stratification and for the attribute baseline. This step runs *before*
+  de-duplication, so a duplicate that has a variety is never dropped in
+  favour of a copy without one (code review, 21 Oct 2026).
 - **Missing price:** keep the row, do not impute; add `price_missing`. An
   invented price would distort the attribute baseline and price filters.
 - **Missing country, province, region, designation, taster:** fill with
@@ -39,8 +43,11 @@ come from files in `results/`, never typed by hand.
   split does not depend on the tail definition chosen later.
 - **Allocation (option 1c):** every band gets a minimum (test 30, dev 15),
   the rest is shared in proportion to band size. Results will be reported per
-  band as well as overall. *The minimums 30 / 15 were set by Claude as a
-  starting value; change them in `config.yaml` if you prefer others.*
+  band as well as overall. The minimums were proposed by Claude and
+  **confirmed by the student on 21 Oct 2026**: 30 per band is enough for a
+  rough per-band estimate while leaving most of the 200 proportional.
+  `allocate()` raises an error if the settings cannot be met, so the sizes are
+  always exactly 200 / 100.
 - **Eligibility:** only notes with at least 20 words can be picked for test or
   dev; very short notes give the retriever too little to match. They stay in
   the catalogue.
@@ -53,15 +60,19 @@ come from files in `results/`, never typed by hand.
 - **Decision:** a wine is in the long tail if its **winery has at most 10
   reviews** (`tail` in `config.yaml`). Size of the tail:
   `results/eda/tail_summary.csv`.
-- **Options considered** (computed on the cleaned catalogue):
-  - (A) Pareto cut: wineries outside the top 20% by review count. On this data
-    the cut falls at 10 reviews, so it nearly coincides with the choice.
+- **Options considered:** all in `results/eda/tail_options.csv` (written by
+  `make data`), for both wineries and varieties:
+  - (A) Pareto cut: items outside the top 20% by review count. For wineries
+    the head starts at 10 reviews, so the A tail (`tail_max_reviews` 9)
+    nearly coincides with the choice.
   - (B) Fixed threshold, winery with ≤ k reviews (k = 5, 10, 20). **Chosen
     with k = 10.**
-  - (C) Head = most-reviewed wineries holding the first 20% / 50% of reviews.
-    This puts 88–98% of wineries in the tail, too broad to be informative.
-  - Variety as the unit was rejected: varieties are so concentrated that
-    the variety tail holds very few wines, or almost all varieties.
+  - (C) Head = most-reviewed items holding the first 20% / 50% of reviews.
+    For wineries this puts most wineries in the tail (`tail_items_pct`), too
+    broad to be informative.
+  - Variety as the unit was rejected: varieties are so concentrated that the
+    variety tail holds either very few wines or almost all varieties
+    (`tail_wines_pct`, `tail_items_pct`).
 - **Why:** one sentence to state and defend; close to the 80/20 split; about
   a third of wines and enough test wines fall in the tail to report results
   for the tail separately; the winery is also the unit the Popularity
@@ -72,4 +83,6 @@ come from files in `results/`, never typed by hand.
 
 ## Open
 - **Scrape date** — check the Kaggle dataset page; `latest_vintage_in_titles`
-  in `results/eda/summary.csv` is a lower bound.
+  in `results/eda/summary.csv` is a lower bound. The vintage is the first year
+  after the winery name in the title, so years in winery or cuvée names
+  ("1912 Winemakers", "Vignes de 1939") are not counted.

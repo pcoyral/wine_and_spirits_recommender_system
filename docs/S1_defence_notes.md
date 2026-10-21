@@ -243,10 +243,10 @@ the code and your understanding are checked against each other.
    baseline, but say so explicitly in the thesis.
 5. **The wine-level Gini saturates near 1.** That is why the winery level is
    reported too.
-6. **Open novelty issue:** a test wine whose winery has no other reviews gets
-   p = 0. This must be settled before S2, for example by adding 1 to every
-   winery's count (`DECISIONS.md`, open item). Until then `novelty()` refuses
-   p = 0 with an error rather than returning infinity.
+6. **Novelty when p = 0:** a test wine whose winery has no other reviews
+   would get p = 0. Resolved with add-one smoothing: every winery gets one
+   extra review, so p > 0 and the shares still sum to 1 (`DECISIONS.md`).
+   `novelty()` itself still refuses p = 0 with an error, as a safety net.
 7. **The S1 code was reviewed** (21 Oct 2026). The fixes: the cache now also
    checks the model version, unknown filters are errors, metrics refuse
    empty input, and file handles are closed.

@@ -255,3 +255,30 @@ Fixed before any results exist, so the choice cannot be tuned to the results.
   after (median change; share of cases where it leaves the top 5).
 - **"Cheaper":** maximum price = median price of the current top 5; wines
   without a price are excluded.
+
+## 2026-10-21 — S2: implementation details
+- **Retries stop early** when the model repeats the same answer: the next
+  retry prompt would be identical, and with temperature 0 so would the
+  answer. `attempts` counts only genuinely different tries.
+- **Numbers and prices:** a query containing a digit or a currency symbol is
+  a violation (D7: no price), handled like an expert term.
+- **Flagged queries** (still breaking a rule after the retries) are left out
+  of `make eval`, `make refine` and `make compare-human`; their number is in
+  `results/queries_quality.csv` (`pct_flagged`) and in the log.
+- **Copy share:** content words are words of 3+ letters that are not English
+  stop words or "wine(s)" (too generic to show copying).
+- **Refinement summary:** mean success = mean of the 12 per-refinement rates
+  (each refinement counts equally). Random control: 10 random unit
+  directions (seed 42), success averaged over them. Cost: rank after minus
+  rank before for the target wine, and the share of targets in the top 5
+  that leave it. "Cheaper" succeeds when the median price of the new top 5
+  is strictly lower.
+- **α at the edge of the grid:** if the largest α is chosen, `make refine`
+  warns; extending the grid must be decided on dev, before looking at test.
+- **Sommelier sample:** 10 eligible test cases (seed 42) with the query, the
+  refinement and the top 5 before and after, in
+  `results/refinement_sommelier_sample.csv`, with empty columns for the
+  sommelier's verdict.
+- **Human cards:** 30 test wines (at least 5 per band, shuffled). Some notes
+  name the grape or region; the instructions ask participants not to repeat
+  names, and the leak check flags it if they do (kept as written).

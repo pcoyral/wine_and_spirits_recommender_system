@@ -37,3 +37,20 @@ semantic:
 demo:
   queries: data/demo_queries.txt
   out_dir: results/demo
+
+tfidf:
+  # Standard settings, not tuned (Semantic is not tuned either), DECISIONS.md
+  min_df: 2
+  stop_words: english
+  sublinear_tf: true
+  ngram_range: [1, 1]
+
+attribute:
+  # Hand-made variety -> colour table (to be checked by the student)
+  colour_table: data/variety_colour.csv
+
+eval:
+  queries_dir: data/queries
+  out_dir: results
+  # Tail share is also reported at these thresholds (robustness check)
+  robustness_tail: [5, 20]

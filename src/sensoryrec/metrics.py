@@ -9,6 +9,10 @@ Conventions
 Accuracy:      hit_rate_at_k, ndcg_at_k
 Long tail:     catalogue_coverage, tail_share, recommendation_gini, novelty
 Diversity:     intra_list_diversity
+
+When there is nothing to measure (no queries, no recommendations, no pairs),
+a metric raises ValueError instead of returning nan, so an empty result can
+never slip into a results table unnoticed.
 """
 from collections import Counter
 from itertools import chain
@@ -33,6 +37,8 @@ def gini(counts):
 
 def hit_rate_at_k(recs, targets, k):
     """Share of queries whose target wine is in the top k."""
+    if not recs:
+        raise ValueError("no queries")
     hits = [target in list(rec)[:k] for rec, target in zip(recs, targets)]
     return float(np.mean(hits))
 
@@ -45,6 +51,8 @@ def ndcg_at_k(recs, targets, k):
     earns exactly 1, so no further normalisation is needed. Averaged over
     queries. Unlike HR@k, it rewards finding the wine higher up the list.
     """
+    if not recs:
+        raise ValueError("no queries")
     scores = []
     for rec, target in zip(recs, targets):
         top = list(rec)[:k]
@@ -61,6 +69,8 @@ def tail_share(recs, tail_ids):
     """Share of all recommendation slots filled by long-tail wines."""
     tail_ids = set(tail_ids)
     slots = list(chain.from_iterable(recs))
+    if not slots:
+        raise ValueError("no recommendations")
     return sum(item in tail_ids for item in slots) / len(slots)
 
 
@@ -82,9 +92,20 @@ def novelty(recs, item_popularity):
     item_popularity maps wine_id -> p, the share of all reviews that belong
     to the wine's winery (DECISIONS.md). A wine from a rarely reviewed winery
     has a small p, so -log2(p) is large: it is more novel. Averaged within
-    each list, then over lists. Every p must be > 0.
+    each list, then over lists; empty lists are skipped.
+
+    Every p must be > 0: -log2(0) is infinite. A wine whose winery has no
+    reviews outside the test set would get p = 0; how to handle that is an
+    open decision in DECISIONS.md, so it is an error here, not a silent inf.
     """
-    per_list = [np.mean([-np.log2(item_popularity[item]) for item in rec]) for rec in recs]
+    lists = [rec for rec in recs if len(rec) > 0]
+    if not lists:
+        raise ValueError("no recommendations")
+    bad = [item for rec in lists for item in rec if item_popularity[item] <= 0]
+    if bad:
+        raise ValueError(f"popularity must be > 0 for novelty; p <= 0 for {bad[:5]} "
+                         "(see the open item in DECISIONS.md)")
+    per_list = [np.mean([-np.log2(item_popularity[item]) for item in rec]) for rec in lists]
     return float(np.mean(per_list))
 
 
@@ -105,4 +126,6 @@ def intra_list_diversity(recs, vectors):
         # sum of all pairs, minus the diagonal (each wine with itself)
         mean_pair_sim = (sims.sum() - np.trace(sims)) / (n * (n - 1))
         values.append(1 - mean_pair_sim)
+    if not values:
+        raise ValueError("no list has 2 or more wines, so there are no pairs to compare")
     return float(np.mean(values))

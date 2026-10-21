@@ -51,16 +51,16 @@ def write_query(wine, llm, vocab, prompt, retry_prompt, max_retries):
     query = clean(llm.generate(base))
     expert, leak, other = problems(query, wine, vocab)
     first = {"first_expert": "; ".join(expert), "first_leak": "; ".join(leak + other)}
-    attempts = 1
-    while (expert or leak or other) and attempts <= max_retries:
+    attempts, retries = 1, 0   # attempts = different answers; retries = retry prompts sent
+    while (expert or leak or other) and retries < max_retries:
         found = ", ".join(expert + leak + other)
         new = clean(llm.generate(base + retry_prompt.format(previous=query, problems=found)))
-        attempts += 1
+        retries += 1
         if new == query:
             # Same answer again: the next retry prompt would be identical, and
             # with temperature 0 so would the answer. Stop trying.
             break
-        query = new
+        query, attempts = new, attempts + 1
         expert, leak, other = problems(query, wine, vocab)
     remaining = expert + leak + other
     return {"wine_id": wine["wine_id"], "query": query, "attempts": attempts, **first,

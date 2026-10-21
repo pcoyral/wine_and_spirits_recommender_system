@@ -39,7 +39,8 @@ recommend(query, k, filters) →  shared: score, filter, sort, top k
   query always gives the same list (CLAUDE.md rule 1).
 - **Filters** (max/min price, country, variety): a wine without a price never
   passes a price filter. Its price is unknown, not cheap, which matches the
-  S0 decision not to make up prices.
+  S0 decision not to make up prices. A misspelled filter name is an error,
+  never silently ignored.
 - **Leakage guard.** `fit` receives the test IDs, and each model must ignore
   them when learning. The test wines stay in the catalogue, because they are
   the answers the evaluation looks for.
@@ -130,9 +131,9 @@ OUT of scope anyway.
 
 - **Why:** encoding about 120,000 notes takes minutes, so the result is stored
   on disk.
-- **Fingerprint:** a hash of the model name, every `wine_id` and every note is
-  stored with the cache. If anything changes, the fingerprint no longer
-  matches and the cache is rebuilt. That prevents the silent risk of using
+- **Fingerprint:** a hash of the model name, the model version, every
+  `wine_id` and every note is stored with the cache. If anything changes, the
+  fingerprint no longer matches and the cache is rebuilt. That prevents the silent risk of using
   embeddings from an old version of the data. The cache test checks this: a
   second run reuses the cache, and changing one note triggers a rebuild.
 
@@ -205,6 +206,11 @@ every pair of wines in a list.
 one yardstick is applied to all. The honest weakness is that the yardstick is
 the Semantic model's own view of similarity. Say so before the examiner does.
 
+**"What if there is nothing to measure?"** For example, a filter so strict
+that no wine passes. Each metric then stops with an error instead of
+returning "not a number" (nan), so an empty result can never end up in a
+results table unnoticed.
+
 **"Why test on toy examples?"** Every metric gets an example small enough to
 calculate by hand (`tests/test_metrics.py`, with the working in comments), so
 the code and your understanding are checked against each other.
@@ -239,7 +245,11 @@ the code and your understanding are checked against each other.
    reported too.
 6. **Open novelty issue:** a test wine whose winery has no other reviews gets
    p = 0. This must be settled before S2, for example by adding 1 to every
-   winery's count (`DECISIONS.md`, open item).
+   winery's count (`DECISIONS.md`, open item). Until then `novelty()` refuses
+   p = 0 with an error rather than returning infinity.
+7. **The S1 code was reviewed** (21 Oct 2026). The fixes: the cache now also
+   checks the model version, unknown filters are errors, metrics refuse
+   empty input, and file handles are closed.
 
 ---
 

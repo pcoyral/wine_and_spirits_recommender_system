@@ -4,7 +4,8 @@ import pytest
 
 from sensoryrec.config import repo_path
 from sensoryrec.refinement import (Refiner, choose_alpha, direction_vector, has_terms, is_eligible,
-                                   is_success, load_lexicons, shift, summarise, target_rank, top_k)
+                                   is_success, load_lexicons, shift, summarise, summarise_cheaper,
+                                   target_rank, top_k)
 from sensoryrec.text import normalise
 
 LEXICONS = load_lexicons(repo_path("data/refinement_lexicons.yaml"))
@@ -104,13 +105,33 @@ def test_refiner_end_to_end():
     assert not less["eligible"]       # "drier": nothing sweet in the top 1 to remove
 
 
-def test_cheaper_filter():
+def test_cheaper_records_price_drop_and_relevance_cost():
     r = toy_refiner()
-    # Query along y: top 2 = wines 1 ($30) and 2 ($25), median 27.5.
-    # Filter <= 27.5: wine 1 is out, wine 4 has no price (out) -> wines 2 and 3, median 17.5
-    rows = r.cheaper([np.array([0.0, 1.0])], [1], k=2)
-    assert rows.loc[0, "eligible"] and rows.loc[0, "success"]
-    assert rows.loc[0, "target_in_before"] and not rows.loc[0, "target_in_after"]
+    # Query along y: top 2 = wines 1 ($30, similarity 1) and 2 ($25, similarity 0.98).
+    # Median $27.5. Filter <= 27.5: wine 1 out, wine 4 (no price) out -> wines 2 and 3
+    # ($25 and $10, similarity 0.98 and 0) -> median $17.5.
+    row = r.cheaper([np.array([0.0, 1.0])], [1], k=2).iloc[0]
+    sim2 = 0.98 / np.linalg.norm([0.2, 0.98])
+    assert row["eligible"] and row["price_drop_pct"] == pytest.approx((27.5 - 17.5) / 27.5 * 100)
+    assert row["relevance_before"] == pytest.approx((1 + sim2) / 2)
+    assert row["relevance_after"] == pytest.approx((sim2 + 0) / 2)
+    assert row["target_in_before"] and not row["target_in_after"]
+
+
+def test_summarise_cheaper_with_an_ineligible_row():
+    # The ineligible row has no target_in_after: the column becomes mixed;
+    # the percentage must still be a proper share (the review found -150 %).
+    cases = pd.DataFrame([
+        {"wine_id": 1, "eligible": False, "target_in_before": False},
+        {"wine_id": 2, "eligible": True, "target_in_before": True, "target_in_after": False,
+         "price_drop_pct": 20.0, "relevance_before": 0.8, "relevance_after": 0.7},
+        {"wine_id": 3, "eligible": True, "target_in_before": True, "target_in_after": True,
+         "price_drop_pct": 40.0, "relevance_before": 0.6, "relevance_after": 0.4}])
+    row = summarise_cheaper(cases)
+    assert row["n_eligible"] == 2 and "success_rate" not in row
+    assert row["median_price_drop_pct"] == pytest.approx(30.0)
+    assert row["mean_relevance_cost"] == pytest.approx(0.15)      # (0.1 + 0.2) / 2
+    assert row["pct_target_left_topk"] == pytest.approx(50.0)     # 1 of the 2 left
 
 
 def test_summarise():
@@ -119,9 +140,12 @@ def test_summarise():
         "eligible": [True, True, True, False], "success": [True, False, True, False],
         "random_success": [0.1, 0.0, 0.2, 0.0],
         "rank_before": [1, 3, 10, 2], "rank_after": [4, 2, 12, 2]})
-    row = summarise(cases, {"oak": {"more": "more oaky", "less": "less oaky"}}).iloc[0]
+    row = summarise(cases, {"oak": {"more": "more oaky", "less": "less oaky"}}, k=5).iloc[0]
     assert row["n_eligible"] == 3 and row["success_rate"] == pytest.approx(2 / 3)
     assert row["random_success_rate"] == pytest.approx(0.1)          # (0.1 + 0 + 0.2) / 3
     assert row["median_rank_change"] == pytest.approx(1.0)           # changes 3, -1, 2, 0
     # in the top 5 before: ranks 1, 3, 2 -> after 4, 2, 2: none left the top 5
-    assert row["pct_target_left_top5"] == pytest.approx(0.0)
+    assert row["pct_target_left_topk"] == pytest.approx(0.0)
+    # with k = 2, only ranks 1 and 2 count as "in the top k": rank 1 -> 4 left
+    row2 = summarise(cases, {"oak": {"more": "more oaky", "less": "less oaky"}}, k=2).iloc[0]
+    assert row2["n_target_in_topk_before"] == 2 and row2["pct_target_left_topk"] == pytest.approx(50.0)

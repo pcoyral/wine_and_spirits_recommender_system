@@ -20,7 +20,8 @@ simply coming back.
    -> results/refinement_alpha_dev.csv
 2. Evaluates on the test queries with that alpha, with two controls:
    (a) random directions with the same alpha, (b) how far the target wine
-   drops -> results/refinement.csv
+   drops -> results/refinement.csv. "Cheaper" has no success rate (it is
+   true by construction); it reports the price drop and the relevance cost.
 3. Exports 10 test cases for the sommelier -> results/refinement_sommelier_sample.csv
 Test notes and test queries are never used to build vectors or choose alpha.
 """
@@ -158,30 +159,36 @@ class Refiner:
 
     def cheaper(self, query_vecs, target_ids, k=5):
         """The "cheaper" refinement: max price = median price of the current
-        top k (wines without a price excluded). One row per query."""
+        top k (wines without a price excluded). One row per query.
+
+        A "success rate" would be true by construction (every new wine costs
+        at most the old median), so this records what it gains and costs:
+        the drop in median price, the relevance before and after (mean cosine
+        similarity of the top k to the query), and whether the target stays."""
         rows = []
         for q, target in zip(query_vecs, target_ids):
             s = self.scores(q)
             before = rank(self.catalogue, s, k)
             median_before = before["price"].median()
-            if pd.isna(median_before):
-                rows.append({"wine_id": target, "eligible": False})
-                continue
-            after = rank(self.catalogue, s, k, filters={"max_price": median_before})
-            rows.append({"wine_id": target, "eligible": True,
-                         "success": after["price"].median() < median_before,
-                         "target_in_before": target in set(before["wine_id"]),
-                         "target_in_after": target in set(after["wine_id"])})
+            row = {"wine_id": target, "eligible": not pd.isna(median_before),
+                   "target_in_before": target in set(before["wine_id"])}
+            if row["eligible"]:
+                after = rank(self.catalogue, s, k, filters={"max_price": median_before})
+                row.update({"price_drop_pct": (median_before - after["price"].median()) / median_before * 100,
+                            "relevance_before": before["score"].mean(),
+                            "relevance_after": after["score"].mean(),
+                            "target_in_after": target in set(after["wine_id"])})
+            rows.append(row)
         return pd.DataFrame(rows)
 
 
-def summarise(cases, lexicons):
+def summarise(cases, lexicons, k=5):
     """Per trait and direction: success rate (over eligible cases), the random
-    control, and the cost to the target wine."""
+    control, and the cost to the target wine (does it leave the top k?)."""
     rows = []
     for (trait, sign), g in cases.groupby(["trait", "sign"], sort=False):
         ok = g[g["eligible"]]
-        in_top = g[g["rank_before"] <= 5]
+        in_top = g[g["rank_before"] <= k]
         row = {"refinement": lexicons[trait]["more" if sign > 0 else "less"],
                "trait": trait, "direction": "more" if sign > 0 else "less",
                "n_queries": len(g), "n_eligible": len(ok),
@@ -189,19 +196,25 @@ def summarise(cases, lexicons):
         if "random_success" in g:
             row["random_success_rate"] = ok["random_success"].mean() if len(ok) else np.nan
         row.update({"median_rank_change": (g["rank_after"] - g["rank_before"]).median(),
-                    "n_target_in_top5_before": len(in_top),
-                    "pct_target_left_top5": (in_top["rank_after"] > 5).mean() * 100 if len(in_top) else np.nan})
+                    "n_target_in_topk_before": len(in_top),
+                    "pct_target_left_topk": (in_top["rank_after"] > k).mean() * 100 if len(in_top) else np.nan})
         rows.append(row)
     return pd.DataFrame(rows)
 
 
 def summarise_cheaper(cases):
-    ok = cases[cases["eligible"]]
-    in_top = ok[ok["target_in_before"]]
+    """One summary row for "cheaper": no success rate (true by construction),
+    but the median price drop, the mean relevance cost and the target cost.
+    Columns are made boolean first: with ineligible rows they can be mixed."""
+    ok = cases[cases["eligible"].astype(bool)]
+    in_top = ok[ok["target_in_before"].astype(bool)]
+    left = ~in_top["target_in_after"].astype(bool)
     return {"refinement": "cheaper", "trait": "price", "direction": "less",
-            "n_queries": len(cases), "n_eligible": len(ok), "success_rate": ok["success"].mean(),
-            "n_target_in_top5_before": len(in_top),
-            "pct_target_left_top5": (~in_top["target_in_after"]).mean() * 100 if len(in_top) else np.nan}
+            "n_queries": len(cases), "n_eligible": len(ok),
+            "median_price_drop_pct": ok["price_drop_pct"].median() if len(ok) else np.nan,
+            "mean_relevance_cost": (ok["relevance_before"] - ok["relevance_after"]).mean() if len(ok) else np.nan,
+            "n_target_in_topk_before": len(in_top),
+            "pct_target_left_topk": left.mean() * 100 if len(in_top) else np.nan}
 
 
 def macro_success(cases):
@@ -269,7 +282,7 @@ def main():
     rng = np.random.default_rng(cfg["seed"])
     random_dirs = [unit(v) for v in rng.normal(size=(r["n_random"], model.embeddings.shape[1]))]
     cases = refiner.evaluate(test_vecs, test["wine_id"], alpha, k, random_dirs)
-    summary = summarise(cases, lexicons)
+    summary = summarise(cases, lexicons, k)
     summary = pd.concat([summary, pd.DataFrame([summarise_cheaper(refiner.cheaper(test_vecs, test["wine_id"], k))])],
                         ignore_index=True)
     summary.insert(0, "alpha", alpha)

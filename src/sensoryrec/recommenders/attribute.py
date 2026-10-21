@@ -22,13 +22,13 @@ Variety and country lists are learned from the catalogue minus the test
 wines (CLAUDE.md rule 4).
 """
 import re
-import unicodedata
 
 import numpy as np
 import pandas as pd
 
 from sensoryrec.config import repo_path
 from sensoryrec.recommenders.base import Recommender
+from sensoryrec.text import normalise
 
 # Everyday words for the four colours (after removing accents: rosé -> rose)
 COLOUR_WORDS = {
@@ -59,14 +59,6 @@ PRICE_MAX = re.compile(r"\b(?:under|below|less than|cheaper than|up to|no more t
 PRICE_MIN = re.compile(r"(?<!no )\b(?:over|above|more than|at least|min(?:imum)?)\s*[$€£]?\s*(\d+(?:\.\d+)?)")
 PRICE_OR_LESS = re.compile(r"[$€£]?\s*(\d+(?:\.\d+)?)\s*(?:euros?|dollars?|bucks|eur|usd)?\s*or (?:less|under|cheaper)")
 PRICE_BETWEEN = re.compile(r"(?:between|from)\s*[$€£]?\s*(\d+(?:\.\d+)?)\s*(?:and|to)\s*[$€£]?\s*(\d+(?:\.\d+)?)")
-
-
-def normalise(text):
-    """Lower case, no accents, only letters, digits and single spaces:
-    "Nero d'Avola" -> "nero d avola", "Rosé" -> "rose"."""
-    text = unicodedata.normalize("NFKD", str(text).lower())
-    text = "".join(ch for ch in text if not unicodedata.combining(ch))
-    return " ".join(re.sub(r"[^a-z0-9]+", " ", text).split())
 
 
 def find_names(text, names):

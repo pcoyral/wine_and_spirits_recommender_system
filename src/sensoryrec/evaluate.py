@@ -104,6 +104,13 @@ def load_queries(cfg, split, split_ids):
         raise SystemExit(f"No casual queries yet: {path} is created in S2 "
                          "(columns wine_id, query). Nothing was evaluated.")
     queries = pd.read_csv(path)
+    if "flagged" in queries:
+        # Queries that still broke a rule after the retries are not used
+        # (CLAUDE.md rule 5); how many is logged here and in queries_quality.csv.
+        n_flagged = int(queries["flagged"].sum())
+        if n_flagged:
+            log.warning("leaving out %d flagged %s queries", n_flagged, split)
+        queries = queries[~queries["flagged"].astype(bool)]
     unknown = set(queries["wine_id"]) - set(split_ids["wine_id"])
     if unknown:
         raise SystemExit(f"{len(unknown)} query wine_ids are not in the {split} set, e.g. {sorted(unknown)[:5]}")

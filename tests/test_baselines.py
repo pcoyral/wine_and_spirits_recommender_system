@@ -2,7 +2,8 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from sensoryrec.recommenders.attribute import AttributeRecommender, normalise, parse_price
+from sensoryrec.recommenders.attribute import AttributeRecommender, parse_price
+from sensoryrec.text import normalise
 from sensoryrec.recommenders.tfidf import TfidfRecommender
 
 

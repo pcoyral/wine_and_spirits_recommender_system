@@ -60,6 +60,10 @@ SHA-256 is recorded in `results/eda/data_manifest.json` by `make data`.
 | `make eda` | Rebuild only the EDA (needs `make data` once) |
 | `make embed` | Build the SBERT embedding cache (downloads the model on first use) |
 | `make demo` | Top-5 of Popularity and Semantic for the queries in `data/demo_queries.txt` |
+| `make queries` | LLM casual queries for the test and dev wines (Ollama running) → `data/queries/`, `results/queries_quality.csv` |
+| `make human-cards` | Note cards and answer template for the 30 hand-written queries |
+| `make refine` | Refinement: α on dev, evaluation on test → `results/refinement*.csv` |
+| `make compare-human` | LLM vs hand-written queries → `results/llm_vs_human.csv` |
 | `make eval` | All four models on the casual test queries → `results/ablation.csv` (needs S2 queries) |
 | `make eval-dev` | The same on the dev queries, for tuning → `results/ablation_dev.csv` |
 | `make test` | Run unit tests |

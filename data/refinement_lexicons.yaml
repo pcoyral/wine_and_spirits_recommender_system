@@ -1,0 +1,47 @@
+# Refinement lexicons (DECISIONS.md D5). Approved by the student on 21 Oct 2026.
+#
+# build:   words whose notes define the trait's direction vector
+#          (mean embedding of training notes with a build word minus those without)
+# measure: separate words used only to judge whether a shift worked
+#          (share of top-5 notes containing a measure word, before vs after)
+# The two lists of a trait share no word stem (checked by a test).
+# "less <trait>" uses the same lists with the opposite sign: drier = less
+# sweet, lighter = less body.
+# Matching: whole words, case and accents ignored; a word right after
+# "not", "no", "without" or "never" does not count.
+
+sweetness:
+  more: sweeter
+  less: drier
+  build: [sweet, sweetness, sugar, sugary]
+  measure: [honey, honeyed, syrup, syrupy, dessert, luscious]
+
+body:
+  more: heavier
+  less: lighter
+  build: [full-bodied, heavy, big]
+  measure: [dense, concentrated, massive, thick, powerful]
+
+fruitiness:
+  more: more fruity
+  less: less fruity
+  build: [fruity, fruitiness, fruit-forward]
+  measure: [jammy, jam, juicy, succulent]
+
+oak:
+  more: more oaky
+  less: less oaky
+  build: [oak, oaky, oaked]
+  measure: [vanilla, toast, toasty, toasted, barrel, cedar]
+
+acidity:
+  more: more acidic
+  less: less acidic
+  build: [acidity, acidic, acid, acids]
+  measure: [crisp, zesty, tangy, zippy, racy, tart]
+
+tannin:
+  more: more tannic
+  less: less tannic
+  build: [tannin, tannins, tannic]
+  measure: [grip, gripping, astringent, chewy, firm, drying]

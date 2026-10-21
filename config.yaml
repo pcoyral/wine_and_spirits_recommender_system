@@ -56,3 +56,66 @@ eval:
   out_dir: results
   # Tail share is also reported at these thresholds (robustness check)
   robustness_tail: [5, 20]
+
+llm:
+  # Local model via Ollama (DECISIONS.md D2). Before `make queries`:
+  #   ollama pull llama3.2:3b-instruct-q4_K_M
+  # then pin `digest` (ID column of `ollama list`) and `ollama_version`
+  # (`ollama --version`). Check the tag on the Ollama library page.
+  model: llama3.2:3b-instruct-q4_K_M
+  digest: null
+  ollama_version: null
+  url: http://localhost:11434/api/generate
+  temperature: 0
+  seed: 42
+  cache_dir: data/llm_cache
+
+queries:
+  vocab: data/wine_vocab.txt
+  out_dir: data/queries
+  quality: results/queries_quality.csv
+  max_retries: 3
+  # {note} = the tasting note, {banned} = the expert terms of the vocabulary
+  prompt: |
+    Here is a professional wine tasting note:
+
+    "{note}"
+
+    Imagine a person who knows nothing about wine has just tasted this wine.
+    Write what they would say to a friend about how it tastes, in one or two
+    short sentences, using plain everyday words.
+
+    Rules:
+    - Describe only the taste and how it feels in the mouth. You may say
+      whether it is red, white, rosé or sparkling.
+    - Do not mention food, occasions, prices or numbers.
+    - Do not name the grape, the winery, the region or the country.
+    - Do not use these wine-expert words: {banned}.
+    - Reply with the description only, without quotation marks or any introduction.
+  # Added after the prompt when the answer broke a rule (DECISIONS.md)
+  retry_prompt: |
+
+    Your previous answer was: "{previous}"
+    It used words that are not allowed: {problems}.
+    Rewrite it without those words, following the same rules.
+    Reply with the description only.
+
+human:
+  # Hand-written queries from novices on 30 test wines (D1, D6)
+  n_wines: 30
+  min_per_band: 5
+  cards: data/human_cards.csv
+  template: data/human_queries_template.csv
+  # the filled-in copy of the template
+  queries: data/human_queries.csv
+
+refinement:
+  # Build / measure word lists per trait (D5)
+  lexicons: data/refinement_lexicons.yaml
+  # alpha: chosen on dev = smallest value within tolerance_pp of the best
+  alphas: [0.05, 0.1, 0.2, 0.3, 0.5]
+  tolerance_pp: 2
+  # control (a): random directions with the same alpha
+  n_random: 10
+  sommelier_cases: 10
+  out_dir: results

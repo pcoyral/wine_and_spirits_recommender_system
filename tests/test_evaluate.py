@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from sensoryrec.evaluate import evaluate, item_popularity, winery_counts
+from sensoryrec.evaluate import evaluate, item_popularity, load_queries, winery_counts
 from sensoryrec.recommenders.attribute import AttributeRecommender
 from sensoryrec.recommenders.popularity import PopularityRecommender
 from sensoryrec.recommenders.semantic import SemanticRecommender
@@ -76,3 +76,17 @@ def test_evaluate_end_to_end():
     assert pop["tail_share"] == 0
     # TF-IDF: "red berry" shares "berry" only with wine 5, so wine 5 ranks first.
     assert by_band.set_index(["model", "band"]).loc[("tfidf", "1-10"), "hr@2"] == 1
+
+
+def test_load_queries_leaves_out_flagged(tmp_path):
+    pd.DataFrame({"wine_id": [5, 6], "query": ["ok", "a merlot"], "flagged": [False, True]}) \
+        .to_csv(tmp_path / "test_queries.csv", index=False)
+    split_ids = pd.DataFrame({"wine_id": [5, 6], "band": ["1-10", "11-100"]})
+    cfg = {"eval": {"queries_dir": tmp_path}}
+    queries = load_queries(cfg, "test", split_ids)
+    assert queries["wine_id"].tolist() == [5] and queries["band"].tolist() == ["1-10"]
+
+
+def test_load_queries_without_file_stops(tmp_path):
+    with pytest.raises(SystemExit, match="No casual queries"):
+        load_queries({"eval": {"queries_dir": tmp_path}}, "test", pd.DataFrame({"wine_id": []}))

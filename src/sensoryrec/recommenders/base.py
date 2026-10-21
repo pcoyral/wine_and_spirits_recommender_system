@@ -27,11 +27,16 @@ class Recommender(ABC):
     def recommend(self, query, k=5, filters=None):
         """The k best wines for `query` that pass `filters`, best first.
         Ties are broken by wine_id, so the result is always the same."""
-        scores = np.asarray(self.score(query), dtype=float)
-        result = self.catalogue.assign(score=scores)
-        result = result[filter_mask(result, filters)]
-        result = result.sort_values(["score", "wine_id"], ascending=[False, True]).head(k)
-        return result.assign(rank=np.arange(1, len(result) + 1))
+        return rank(self.catalogue, self.score(query), k, filters)
+
+
+def rank(catalogue, scores, k=5, filters=None):
+    """The k best-scoring wines that pass `filters`, best first, ties broken
+    by wine_id. Shared by every model (and by refinement)."""
+    result = catalogue.assign(score=np.asarray(scores, dtype=float))
+    result = result[filter_mask(result, filters)]
+    result = result.sort_values(["score", "wine_id"], ascending=[False, True]).head(k)
+    return result.assign(rank=np.arange(1, len(result) + 1))
 
 
 FILTER_KEYS = {"max_price", "min_price", "country", "variety"}

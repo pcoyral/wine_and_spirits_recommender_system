@@ -30,8 +30,6 @@ class CachedLLM:
         self.url = url
         self.call = call or self.ask_ollama
         self.n_calls = 0  # prompts actually sent to the model (not from cache)
-        if digest is None:
-            log.warning("llm.digest is not pinned in config.yaml: copy it from `ollama list`")
 
     def key(self, prompt):
         data = {"model": self.model, "digest": self.digest, "options": self.options, "prompt": prompt}
@@ -41,6 +39,11 @@ class CachedLLM:
         path = self.cache_dir / f"{self.key(prompt)}.json"
         if path.exists():
             return json.loads(path.read_text(encoding="utf-8"))["response"]
+        if self.digest is None:
+            # The digest is part of the cache key: pinning it later would orphan
+            # every cached answer, and a re-run might write different queries.
+            raise RuntimeError("Pin llm.digest in config.yaml (ID column of `ollama list`) "
+                               "before generating anything new.")
         response = self.call(prompt)
         self.n_calls += 1
         self.cache_dir.mkdir(parents=True, exist_ok=True)

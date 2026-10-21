@@ -3,6 +3,16 @@
 Methodological choices, with date and reason. Numbers that support a decision
 come from files in `results/`, never typed by hand.
 
+## 2026-10-21 — Data source
+- `winemag-data-130k-v2.csv` (Wine Reviews by zackthoutt, Kaggle). Kaggle is
+  blocked from the cloud environment, so this copy was downloaded from the
+  R4DS TidyTuesday mirror (`rfordatascience/tidytuesday`,
+  `data/2019/2019-05-28/winemag-data-130k-v2.csv`).
+- Checks: 129,971 rows, the expected 14 columns, and all 500 rows of
+  `data/raw/03_Sample_Data.csv` appear in it unchanged. The SHA-256 is in
+  `results/eda/data_manifest.json`. **To do:** compare it with the SHA-256 of
+  the file downloaded from Kaggle (`shasum -a 256 winemag-data-130k-v2.csv`).
+
 ## 2026-10-21 — Cleaning
 - **Duplicates:** drop rows whose `description` is an exact duplicate (after
   trimming spaces), keeping the first. A repeated note is the same review

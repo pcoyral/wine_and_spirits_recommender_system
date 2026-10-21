@@ -1,0 +1,5 @@
+step,rows_before,rows_removed,rows_after
+load raw,129971,0,129971
+drop empty description,129971,0,129971
+drop duplicate description,129971,10016,119955
+drop missing variety,119955,1,119954

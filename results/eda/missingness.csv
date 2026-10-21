@@ -1,0 +1,15 @@
+column,pct_missing
+wine_id,0.0
+country,0.05
+description,0.0
+designation,28.79
+points,0.0
+price,6.99
+province,0.05
+region_1,16.3
+region_2,61.02
+taster_name,20.77
+taster_twitter_handle,24.54
+title,0.0
+variety,0.0
+winery,0.0

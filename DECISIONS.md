@@ -145,6 +145,13 @@ Fixed before any results exist, so the choice cannot be tuned to the results.
   wines; test wines are still turned into vectors (they are the targets).
   Rejected (A2): adding word pairs; they still do not understand negation and
   make the vocabulary much larger.
+- **TF-IDF stop words (option b):** scikit-learn's English list (318 words)
+  also removes "not", "no", "too", "very", "less", "more", "without" and
+  "full", so "not too heavy for a barbecue" became just "heavy barbecue" and
+  "full-bodied" lost "full". These 8 words are kept (`tfidf.keep_words` in
+  `config.yaml`). Reason: they carry meaning in tasting notes and novice
+  queries, and removing them would weaken the baseline Semantic most needs
+  to beat fairly. Rejected (a): the standard list with the limitation stated.
 - **Attribute (option B2):** a rule-based reader (no LLM, rule 2) finds
   variety, country, colour and explicit price wishes in the query; score =
   number of wishes the wine matches, points as tie-breaker. A soft score, so

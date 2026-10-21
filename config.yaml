@@ -108,3 +108,14 @@ human:
   template: data/human_queries_template.csv
   # the filled-in copy of the template
   queries: data/human_queries.csv
+
+refinement:
+  # Build / measure word lists per trait (D5)
+  lexicons: data/refinement_lexicons.yaml
+  # alpha: chosen on dev = smallest value within tolerance_pp of the best
+  alphas: [0.05, 0.1, 0.2, 0.3, 0.5]
+  tolerance_pp: 2
+  # control (a): random directions with the same alpha
+  n_random: 10
+  sommelier_cases: 10
+  out_dir: results

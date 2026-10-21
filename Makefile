@@ -1,7 +1,7 @@
 PYTHON ?= python
 export PYTHONPATH := src
 
-.PHONY: data eda embed demo queries human-cards eval eval-dev test
+.PHONY: data eda embed demo queries human-cards eval eval-dev refine test
 
 # Definition of done for S0: `make data` gives the cleaned parquet, the
 # test/dev IDs and all EDA figures. The two steps are recipe lines, not
@@ -37,6 +37,10 @@ eval:
 # Same on the dev queries, for tuning -> results/ablation_dev*.csv
 eval-dev:
 	$(PYTHON) -m sensoryrec.evaluate --split dev
+
+# Refinement: alpha on dev, evaluation on test -> results/refinement*.csv
+refine:
+	$(PYTHON) -m sensoryrec.refinement
 
 test:
 	$(PYTHON) -m pytest -q

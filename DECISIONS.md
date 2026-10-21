@@ -184,3 +184,74 @@ Fixed before any results exist, so the choice cannot be tuned to the results.
   conclusions do not depend on the threshold of 10.
 - **ILD** uses the SBERT embeddings for all four models (see metric
   definitions), so `make eval` needs the embedding cache.
+
+## 2026-10-21 — S2: casual queries (student decisions D1–D3, D6, D7)
+- **D1 — who writes the queries:** an LLM writes all 300 casual queries
+  (200 test + 100 dev). About 30 hand-written queries from novices on test
+  wines serve as a validity check (`results/llm_vs_human.csv`).
+- **D2 — which LLM:** a local model via Ollama, run on the student's laptop
+  (8 GB RAM): **Llama 3.2 3B Instruct**. Candidates considered: Qwen2.5 7B
+  Instruct and Llama 3.1 8B Instruct (both need ~16 GB). Temperature 0, fixed
+  seed; the exact tag, model digest and Ollama version are pinned in
+  `config.yaml`. Every output is cached in `data/llm_cache/` (JSON keyed by a
+  prompt hash) and committed: temperature 0 + seed is reproducible on the
+  same machine and Ollama version, not guaranteed elsewhere, so the cache is
+  the record of the queries.
+- **D3 — vocabulary check, two tiers** (`data/wine_vocab.txt`): "expert"
+  terms are banned from queries; "everyday" taste words (sweet, dry, fruity,
+  light, ...) are allowed. The student approves every word.
+  - "oaky", "tannic" and "acidic" are in the **banned** tier for queries; a
+    novice would more likely say "woody", "drying" or "sour". Refinement
+    phrases are not queries, so the check does not apply to them.
+- **D6 — human protocol:** the participant reads the tasting note once, the
+  note is hidden, then they write the query in their own words.
+- **D7 — test queries describe taste only:** no occasion, food or price.
+  **Colour words are allowed** ("red", "white", "sparkling"): they are
+  everyday words a novice would use, and forbidding them would leave the
+  Attribute baseline almost nothing to read.
+- **Leak check:** besides the vocabulary check, a query must not contain its
+  own wine's variety, winery, region, province, country or designation, so
+  "no name, region or variety" is verified, not only instructed.
+- **Retries:** on a violation, the retry prompt names the banned words that
+  were used and asks for a rewrite (up to 3 retries, then the query is
+  flagged). With temperature 0, repeating the same prompt would repeat the
+  same answer; the retry prompt is deterministic and cached.
+- **Copying from the note:** `results/queries_quality.csv` also reports the
+  share of each query's content words that appear in its tasting note, for
+  LLM and human queries alike. Limitation: the LLM sees the note while
+  writing; humans write from memory (D6).
+
+## 2026-10-21 — S2: splits
+- The test (200) and dev (100) wines from S0 are kept unchanged. The S0 dev
+  set already meets the S2 requirement (drawn from non-test wines,
+  stratified like the test set).
+- **Training** = catalogue minus test wines (as in S1). Direction vectors are
+  built from training notes; the step size is tuned on dev queries; test is
+  never used for either.
+
+## 2026-10-21 — S2: refinement (student decisions D4, D5)
+- **D4 — traits:** 6 taste traits in both directions — sweeter / drier,
+  lighter / heavier, more / less fruity, oaky, acidic, tannic — plus
+  "cheaper" as a price filter, not an embedding shift. Refinement applies to
+  the Semantic model (the others have no embedding to shift).
+- **D5 — split lexicons:** per trait, one word list builds the direction
+  vector and a separate, non-overlapping list measures the effect (a test
+  checks the lists share no word stem). A sommelier checks ~10 cases later.
+- **Direction vector:** mean embedding of training notes containing a build
+  word minus the mean of those without, scaled to length 1. "More X":
+  q' = normalise(q + α·d); "less X": −d.
+- **Negation guard:** a lexicon word right after "not", "no", "without" or
+  "never" does not count, when building or when measuring.
+- **Step size α:** one value for all traits, chosen on dev from
+  {0.05, 0.1, 0.2, 0.3, 0.5}: the **smallest** α whose mean directional
+  success is within 2 percentage points of the best — the gentlest shift
+  that works. A larger α always "succeeds" more but costs more.
+- **Success:** the share of top-5 notes containing a measurement word goes up
+  ("more") or down ("less"). Cases where this cannot happen (for "less", no
+  top-5 note has the trait; for "more", all five do) are **excluded and
+  counted** (`n_eligible`).
+- **Controls:** (a) 10 random directions (fixed seed, same α) — success
+  should be clearly lower; (b) the cost — the target wine's rank before and
+  after (median change; share of cases where it leaves the top 5).
+- **"Cheaper":** maximum price = median price of the current top 5; wines
+  without a price are excluded.

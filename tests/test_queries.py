@@ -5,7 +5,7 @@ import pytest
 
 from sensoryrec.config import repo_path
 from sensoryrec.llm import CachedLLM
-from sensoryrec.queries import clean, quality, write_query
+from sensoryrec.queries import clean, problems, quality, write_query
 from sensoryrec.vocab import load_vocab
 
 VOCAB = load_vocab(repo_path("data/wine_vocab.txt"))
@@ -42,6 +42,12 @@ def test_cache_key_depends_on_model_version(tmp_path):
     a = CachedLLM("fake", {}, tmp_path, None, digest="d1", call=str)
     b = CachedLLM("fake", {}, tmp_path, None, digest="d2", call=str)
     assert a.key("x") != b.key("x")
+
+
+def test_problems_combines_all_checks():
+    # expert term, the wine's own grape, and a price
+    expert, leak, other = problems("A merlot with soft tannins, $12", WINE, VOCAB)
+    assert expert == ["tannin"] and leak == ["Merlot"] and other == ["number or price"]
 
 
 def test_clean():

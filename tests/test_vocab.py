@@ -2,7 +2,7 @@ import pytest
 
 from sensoryrec.config import repo_path
 from sensoryrec.text import find_terms, overlap_share
-from sensoryrec.vocab import expert_terms_used, leaked_names, load_vocab, violations
+from sensoryrec.vocab import expert_terms_used, leaked_names, load_vocab
 
 VOCAB = load_vocab(repo_path("data/wine_vocab.txt"))
 
@@ -58,8 +58,21 @@ def test_everyday_names_are_not_leaks():
     assert leaked_names("a dry rosé for us", rose, everyday=VOCAB["everyday"]) == []
 
 
-def test_violations_combines_both_checks():
-    assert violations("Pinot noir with soft tannins", WINE, VOCAB) == ["tannin", "Pinot Noir"]
+def test_leak_check_finds_distinctive_words_of_variety_and_place():
+    wine = {"variety": "Cabernet Sauvignon", "winery": "Black Stallion", "region_1": "Willamette Valley",
+            "province": "Oregon", "country": "US", "designation": None}
+    # part of a name is still a leak; generic words ("valley") are not
+    assert leaked_names("a typical cabernet from willamette", wine) == ["cabernet", "willamette"]
+    assert leaked_names("a valley breeze", wine) == []
+    # winery words are only matched as the full name: "black cherry" is fine
+    assert leaked_names("black cherry and plums", wine) == []
+    assert leaked_names("tastes like black stallion", wine) == ["Black Stallion"]
+
+
+def test_names_that_would_match_ordinary_text_are_skipped():
+    # "[+]" normalises to nothing, "i" is a word, "Dry White" is only everyday words
+    wine = {"variety": "Merlot", "winery": "i", "designation": "[+]", "region_1": "Dry White"}
+    assert leaked_names("I think it is a dry white", wine, everyday=VOCAB["everyday"]) == []
 
 
 def test_overlap_share():

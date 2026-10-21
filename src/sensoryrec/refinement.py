@@ -261,6 +261,9 @@ def main():
     pd.DataFrame({"alpha": list(grid), "mean_success_dev": list(grid.values()),
                   "chosen": [a == alpha for a in grid]}).round(4).to_csv(out / "refinement_alpha_dev.csv", index=False)
     log.info("alpha chosen on dev: %s", alpha)
+    if alpha == max(r["alphas"]):
+        log.warning("alpha is the largest value in the grid: success may still rise for larger "
+                    "alpha; consider extending `refinement.alphas` (decide before looking at test)")
 
     # 2. test, with controls
     rng = np.random.default_rng(cfg["seed"])

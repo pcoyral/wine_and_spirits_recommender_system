@@ -100,3 +100,26 @@ def test_intra_list_diversity():
     assert intra_list_diversity([[1, 2], [1, 3]], v) == pytest.approx(0.5)
     # [1, 2, 3]: pairs (1,2) = 0, (1,3) = 1, (2,3) = 0 -> mean 1/3 -> ILD 2/3
     assert intra_list_diversity([[1, 2, 3]], v) == pytest.approx(2 / 3)
+
+
+def test_metrics_refuse_empty_input():
+    # Nothing to measure is an error, never a silent nan.
+    with pytest.raises(ValueError):
+        hit_rate_at_k([], [], k=5)
+    with pytest.raises(ValueError):
+        ndcg_at_k([], [], k=5)
+    with pytest.raises(ValueError):
+        tail_share([[], []], tail_ids={1})
+    with pytest.raises(ValueError, match="pairs"):
+        intra_list_diversity([[1]], {1: np.array([1.0, 0.0])})
+
+
+def test_novelty_refuses_zero_popularity():
+    # -log2(0) is infinite: an error that points to the open decision.
+    with pytest.raises(ValueError, match="DECISIONS"):
+        novelty([[1, 2]], {1: 0.5, 2: 0.0})
+
+
+def test_novelty_skips_empty_lists():
+    # The empty list (e.g. a filter nobody passed) is skipped: only [1] counts -> 1 bit
+    assert novelty([[1], []], {1: 0.5}) == pytest.approx(1.0)

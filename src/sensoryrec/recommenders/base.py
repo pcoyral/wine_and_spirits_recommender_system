@@ -34,13 +34,20 @@ class Recommender(ABC):
         return result.assign(rank=np.arange(1, len(result) + 1))
 
 
+FILTER_KEYS = {"max_price", "min_price", "country", "variety"}
+
+
 def filter_mask(df, filters):
     """True for wines that pass every filter. Supported keys: max_price,
     min_price, country, variety. A wine without a price never passes a price
-    filter: its price is unknown, not cheap (DECISIONS.md)."""
+    filter: its price is unknown, not cheap (DECISIONS.md). An unknown key is
+    an error, so a misspelled filter is never silently ignored."""
     mask = np.ones(len(df), dtype=bool)
     if not filters:
         return mask
+    unknown = set(filters) - FILTER_KEYS
+    if unknown:
+        raise ValueError(f"unknown filter(s) {sorted(unknown)}; supported: {sorted(FILTER_KEYS)}")
     if "max_price" in filters:
         mask &= (df["price"] <= filters["max_price"]).fillna(False).to_numpy()
     if "min_price" in filters:

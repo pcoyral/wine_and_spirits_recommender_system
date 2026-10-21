@@ -52,6 +52,12 @@ def test_filters():
     assert filter_mask(df, None).all()
 
 
+def test_unknown_filter_is_an_error():
+    # A misspelled key must not silently return unfiltered wines.
+    with pytest.raises(ValueError, match="price_max"):
+        filter_mask(catalogue(), {"price_max": 20})
+
+
 def test_recommend_applies_filters():
     model = PopularityRecommender().fit(catalogue())
     top = model.recommend("anything", k=5, filters={"max_price": 20})
@@ -101,4 +107,14 @@ def test_semantic_embedding_cache(tmp_path):
     changed = catalogue()
     changed.loc[0, "description"] = "white"
     SemanticRecommender("fake", cache_dir=tmp_path, encoder=enc).fit(changed)
+    assert enc.calls == 2
+
+
+def test_semantic_cache_rebuilt_when_model_version_changes(tmp_path):
+    enc = FakeEncoder()
+    SemanticRecommender("fake", revision="v1", cache_dir=tmp_path, encoder=enc).fit(catalogue())
+    SemanticRecommender("fake", revision="v1", cache_dir=tmp_path, encoder=enc).fit(catalogue())
+    assert enc.calls == 1
+    # Same notes, new model version: the old embeddings must not be reused.
+    SemanticRecommender("fake", revision="v2", cache_dir=tmp_path, encoder=enc).fit(catalogue())
     assert enc.calls == 2

@@ -92,7 +92,8 @@ come from files in `results/`, never typed by hand.
   `score(query)`, `recommend(query, k, filters)`. `recommend()` is shared, so
   models differ only in how they score. Ties are broken by `wine_id`.
 - **Filters:** `max_price`, `min_price`, `country`, `variety`. A wine without a
-  price never passes a price filter (its price is unknown, not cheap).
+  price never passes a price filter (its price is unknown, not cheap). Any
+  other filter name is an error, so a misspelled filter is never ignored.
 - **Popularity (option 1a):** score = number of reviews of the wine's winery,
   counted on the catalogue **minus test wines**; points break ties.
   Alternatives: (b) points only — "most acclaimed", unrelated to the tail
@@ -103,9 +104,9 @@ come from files in `results/`, never typed by hand.
 - **Semantic:** `sentence-transformers/all-MiniLM-L6-v2`, embeddings scaled to
   length 1 so cosine similarity is a dot product. The model is pretrained and
   learns nothing from our data, so test wines are embedded too (as retrieval
-  targets). Embeddings are cached with a fingerprint of model, wine_ids and
-  notes. **To do:** pin the model `revision` in `config.yaml` after the first
-  download.
+  targets). Embeddings are cached with a fingerprint of model name, model
+  revision, wine_ids and notes. **To do:** pin the model `revision` in
+  `config.yaml` after the first download; until then `make embed` warns.
 - **Where the model runs:** `make embed` / `make demo` run on the student's
   laptop; the cloud environment cannot reach huggingface.co.
 
@@ -124,6 +125,10 @@ Fixed before any results exist, so the choice cannot be tuned to the results.
 - **Intra-list diversity:** 1 − mean pairwise cosine of the k wines, using the
   SBERT embeddings **for every model**, so all are measured with one
   yardstick. Limitation: the yardstick is the Semantic model's own space.
+- **Empty input:** when there is nothing to measure (no queries, no
+  recommendations, no pairs), a metric raises an error instead of returning
+  nan, so an empty result cannot slip into a results table. Novelty skips
+  empty lists and refuses p = 0 (see the open item below).
 - **Open for S2:** p for novelty and the tail label are counted on the
   catalogue minus test wines, so a test wine whose winery has no other
   reviews gets p = 0 (−log2 0 is infinite). Decide how to handle it

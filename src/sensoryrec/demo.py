@@ -1,5 +1,5 @@
 """Demo for the supervisor: run the casual queries in data/demo_queries.txt
-through Popularity and Semantic and show the top 5 of each.
+through Popularity and Semantic and show the top k of each (k in config.yaml).
 
 Run with `make demo` (needs `make data` once; the first run also builds the
 embedding cache, which takes a few minutes).
@@ -9,9 +9,11 @@ computed here (those come with the casual test queries in S2).
 
 Outputs
 - printed to the terminal
-- results/demo/demo_top5.csv   every recommendation, one row each
-- results/demo/demo_top5.md    the same, readable, to show on screen
+- results/demo/demo_top{k}.csv   every recommendation, one row each
+- results/demo/demo_top{k}.md    the same, readable, to show on screen
 """
+from pathlib import Path
+
 import pandas as pd
 
 from sensoryrec.config import load_config, repo_path
@@ -23,7 +25,7 @@ SHOW = ["rank", "wine_id", "title", "variety", "country", "price", "points", "sc
 
 def read_queries(path):
     """One query per line; blank lines and lines starting with # are skipped."""
-    lines = [line.strip() for line in open(path, encoding="utf-8")]
+    lines = [line.strip() for line in Path(path).read_text(encoding="utf-8").splitlines()]
     return [line for line in lines if line and not line.startswith("#")]
 
 
@@ -32,8 +34,8 @@ def short(text, n_words=25):
     return " ".join(words[:n_words]) + (" …" if len(words) > n_words else "")
 
 
-def to_markdown(results):
-    parts = ["# Demo: top-5 per model\n",
+def to_markdown(results, k):
+    parts = [f"# Demo: top-{k} per model\n",
              "Qualitative output of `make demo`. Not an evaluation.\n"]
     for (i, query), block in results.groupby(["query_no", "query"], sort=True):
         parts.append(f"\n## Query {i}: \"{query}\"\n")
@@ -74,9 +76,10 @@ def main():
     results = pd.concat(blocks, ignore_index=True)
     out_dir = repo_path(cfg["demo"]["out_dir"])
     out_dir.mkdir(parents=True, exist_ok=True)
-    results.to_csv(out_dir / "demo_top5.csv", index=False)
-    (out_dir / "demo_top5.md").write_text(to_markdown(results), encoding="utf-8")
-    print(f"\nSaved to {out_dir}/demo_top5.csv and demo_top5.md")
+    name = f"demo_top{cfg['k']}"
+    results.to_csv(out_dir / f"{name}.csv", index=False)
+    (out_dir / f"{name}.md").write_text(to_markdown(results, cfg["k"]), encoding="utf-8")
+    print(f"\nSaved to {out_dir}/{name}.csv and {name}.md")
 
 
 if __name__ == "__main__":

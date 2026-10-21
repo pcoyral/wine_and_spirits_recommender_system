@@ -129,7 +129,51 @@ Fixed before any results exist, so the choice cannot be tuned to the results.
   recommendations, no pairs), a metric raises an error instead of returning
   nan, so an empty result cannot slip into a results table. Novelty skips
   empty lists and refuses p = 0 (see the open item below).
-- **Open for S2:** p for novelty and the tail label are counted on the
-  catalogue minus test wines, so a test wine whose winery has no other
-  reviews gets p = 0 (−log2 0 is infinite). Decide how to handle it
-  (e.g. add-one smoothing) before computing any numbers.
+- **Novelty when p = 0 (resolved, option C1):** p and the tail label are
+  counted on the catalogue minus test wines, so a test wine whose winery has
+  no other reviews would get p = 0 (−log2 0 is infinite). **Add-one
+  smoothing:** p = (winery reviews + 1) / (reviews counted + number of
+  wineries). Every winery gets one extra review, so p > 0 and the shares
+  still sum to 1. Rejected (C2): counting on the full catalogue, which avoids
+  the problem but is inconsistent with how the tail label is counted.
+
+## 2026-10-21 — S1: TF-IDF and Attribute baselines
+- **TF-IDF (option A1):** standard settings, not tuned (Semantic is not tuned
+  either, so the comparison stays fair): single words, English stop words
+  removed, words in at least 2 notes, dampened counts (`sublinear_tf`),
+  cosine similarity. Vocabulary and IDF learned on the catalogue minus test
+  wines; test wines are still turned into vectors (they are the targets).
+  Rejected (A2): adding word pairs; they still do not understand negation and
+  make the vocabulary much larger.
+- **Attribute (option B2):** a rule-based reader (no LLM, rule 2) finds
+  variety, country, colour and explicit price wishes in the query; score =
+  number of wishes the wine matches, points as tie-breaker. A soft score, so
+  k wines always come back; with no wish at all, the ranking is by points.
+  Variety and country lists are learned on the catalogue minus test wines.
+- **Colour table** `data/variety_colour.csv`: the dataset has no colour, so a
+  hand-made table maps the 71 most common varieties (92.2% of reviews,
+  `results/eda/top_share.csv`) to red / white / rosé / sparkling. Drafted by
+  Claude; **to be checked by the student** (the `note` column flags the
+  uncertain ones). Varieties not in the table have no colour.
+  Rejected (B1): no colour — most novice queries would then match nothing.
+- **Hand-made word lists** in `recommenders/attribute.py`: everyday words for
+  colours ("pink", "bubbly"), country adjectives ("italian"), and names never
+  read as a variety or country because they are everyday words (Melon, Apple,
+  Other, Mission, Debit, Vital, "us").
+- **Prices:** only explicit amounts ("under 20", "between 10 and 20"); vague
+  words like "cheap" are ignored, because any threshold would be arbitrary.
+  Dataset prices are US dollars and the number is not converted, so "under
+  20 euros" is read as under $20 — a limitation to state.
+
+## 2026-10-21 — S1: evaluation protocol (`make eval`)
+- **Input:** `data/queries/{test,dev}_queries.csv` (wine_id, query), written in
+  S2. Until it exists, `make eval` stops without producing numbers.
+- **Fitting:** every model is fitted with the **test wines held out**, also
+  when evaluating on the dev split.
+- **Output:** `results/ablation.csv` (one row per model) and
+  `results/ablation_by_band.csv` (per variety band); `_dev` for the dev split.
+- **Robustness (option D):** tail share is also reported with the tail at
+  ≤ 5 and ≤ 20 winery reviews (`eval.robustness_tail`), to show the
+  conclusions do not depend on the threshold of 10.
+- **ILD** uses the SBERT embeddings for all four models (see metric
+  definitions), so `make eval` needs the embedding cache.

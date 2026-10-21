@@ -60,7 +60,10 @@ the scope document. Four defences:
    "complex" and "elegant" are deliberately banned too.
 2. **Leak check:** the query may not contain its own wine's grape, winery,
    region, province, country or designation. Otherwise "a Pinot Noir from
-   Sancerre" would hand the Attribute and TF-IDF models a shortcut.
+   Sancerre" would hand the Attribute and TF-IDF models a shortcut. Part of
+   a grape or place name counts too ("cabernet", "willamette"), but not
+   generic words ("valley") or single words of winery names, which are often
+   ordinary ("Black Stallion" vs "black cherry").
 3. **Copy share:** the share of a query's content words that also appear in
    its note. This *measures* copying, for LLM and human queries alike,
    instead of assuming it away.
@@ -124,6 +127,12 @@ the LLM, which *does* see the note: an honest asymmetry to mention.
   variety band (`make human-cards`), so the comparison covers rare grapes too.
 - **Ethics:** check IE's rules for human participants before recruiting.
 
+**A like-for-like comparison:** both sources are compared on the same wines.
+Human queries are scored twice, as written (`human_all`) and only those
+passing the same checks as the LLM (`human_clean`). The quality table counts
+all LLM queries of those wines, flagged ones included, and how many wines
+were lost because their LLM query was flagged.
+
 **"Is n = 30 enough?"** For a validity check, yes. For a statistical test,
 no. `results/llm_vs_human.csv` reports hit counts per model, not p-values.
 
@@ -185,8 +194,12 @@ building or when measuring.
 
 **"Cheaper"** isn't a direction (D4), because price isn't in the text. The
 new maximum price is the median price of the current top 5; wines without a
-price are excluded. Success means the median price of the new top 5 is
-strictly lower.
+price are excluded. **There is no success rate for it:** with that filter,
+the new median is lower almost by construction, so a "success rate" would be
+close to 100% whatever the model did. Instead, `results/refinement.csv`
+reports what it gains and what it costs: the median price drop, the
+**relevance cost** (how much less similar to the query the new top 5 is), and
+how often the target wine leaves the top 5.
 
 **"Why only the Semantic model?"** Refinement needs a vector to move. TF-IDF
 and Attribute could only add filters.
@@ -208,12 +221,17 @@ words, so a human has to confirm the taste really changed.
 3. **The vocabulary check is word-based.** "Finish" is banned even as a verb,
    and a paraphrase of expert vocabulary ("it grips your gums") passes.
 4. **Llama 3.2 3B is a small model,** chosen for 8 GB of RAM. Expect more
-   retries and flags; that is why both rates are reported.
+   retries and flags; that is why both rates are reported. The model version
+   (digest) must be pinned before the first run, or the program refuses.
 5. **"Less X" = minus "more X"** assumes a trait runs along one straight line
    in embedding space. It is a simplification.
 6. **Refinement success is measured on words in critics' notes,** not on how
    the wine tastes. That is why there is a sommelier check.
 7. **The human subset is small** (about 30), so it is descriptive only.
+8. **The S2 code was reviewed** (21 Oct 2026). The fixes: partial-name
+   leaks, names too short or ordinary to check, "cheaper" reported without a
+   circular success rate, a like-for-like human comparison, and a guard that
+   keeps the LLM cache valid.
 
 ---
 

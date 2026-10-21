@@ -9,11 +9,14 @@ Inputs
 - data/queries/test_queries.csv   the LLM queries (flagged ones left out)
 
 Outputs
-- results/llm_vs_human.csv          per model and source: queries, hits, HR@k
-- results/human_queries_quality.csv the same checks as the LLM queries
-  (expert terms, leaked names, length, copy share) for the human queries
-  and for the LLM queries of the same wines. Human queries are kept as
-  written: no retries.
+- results/llm_vs_human.csv          per model and source: queries, hits, HR@k.
+  Sources, all on the same wines (those with a usable LLM query):
+  "llm" (after retries, flagged ones left out), "human_all" (as written)
+  and "human_clean" (human queries that pass the same checks).
+- results/human_queries_quality.csv the same checks for the human queries
+  and for ALL LLM queries of the same wines (flagged ones included), so the
+  two rows are comparable; plus how many wines were lost because their LLM
+  query was flagged. Human queries are kept as written: no retries.
 """
 import logging
 
@@ -45,6 +48,23 @@ def check(queries, wines, vocab):
                           first_leak=["; ".join(l + o) for _, l, o in found])
 
 
+def prepare(human, llm_all, wines_by_id, vocab):
+    """Line up human and LLM queries on the same wines.
+
+    Returns (sources for the HR comparison, all LLM queries of the human
+    wines, checked human queries, wines lost because the LLM query was flagged).
+    """
+    human = check(human, wines_by_id, vocab)
+    llm_same = llm_all[llm_all["wine_id"].isin(human["wine_id"])]
+    usable = set(llm_same.loc[~llm_same["flagged"].astype(bool), "wine_id"])
+    lost = set(human["wine_id"]) - usable
+    passes = (human["first_expert"] == "") & (human["first_leak"] == "")
+    sources = {"llm": llm_same[llm_same["wine_id"].isin(usable)],
+               "human_all": human[human["wine_id"].isin(usable)],
+               "human_clean": human[human["wine_id"].isin(usable) & passes]}
+    return sources, llm_same, human, lost
+
+
 def compare(models, sources, k):
     """HR@k of every model on every source of queries (each a DataFrame with
     wine_id and query). Returns one row per model and source."""
@@ -61,7 +81,6 @@ def compare(models, sources, k):
 
 def main():
     logging.basicConfig(level=logging.INFO, format="%(message)s")
-    from sensoryrec.evaluate import load_queries
     from sensoryrec.recommenders import attribute, semantic, tfidf
     from sensoryrec.recommenders.popularity import PopularityRecommender
 
@@ -70,23 +89,24 @@ def main():
     wines = pd.read_parquet(processed / "wines.parquet")
     test_ids = pd.read_csv(processed / "test_ids.csv")
     vocab = load_vocab(repo_path(cfg["queries"]["vocab"]))
+    by_id = wines.set_index("wine_id", drop=False)
 
     human = load_human(repo_path(cfg["human"]["queries"]))
-    llm = load_queries(cfg, "test", test_ids)
-    shared = set(human["wine_id"]) & set(llm["wine_id"])
-    human, llm = human[human["wine_id"].isin(shared)], llm[llm["wine_id"].isin(shared)]
-    log.info("%d wines with both an LLM and a human query (%d human queries)", len(shared), len(human))
+    llm_all = pd.read_csv(repo_path(cfg["queries"]["out_dir"]) / "test_queries.csv")  # flagged included
+    sources, llm_same, human, lost = prepare(human, llm_all, by_id, vocab)
+    log.info("%d human queries; %d wines left out because their LLM query was flagged",
+             len(human), len(lost))
 
-    by_id = wines.set_index("wine_id", drop=False)
     notes = by_id["description"].to_dict()
-    pd.DataFrame([quality(check(human, by_id, vocab), notes, "human"),
-                  quality(llm, notes, "llm_same_wines")]).round(3) \
+    human_row = quality(human, notes, "human")
+    human_row["n_wines_lost_to_llm_flags"] = len(lost)
+    pd.DataFrame([human_row, quality(llm_same, notes, "llm_same_wines")]).round(3) \
         .to_csv(repo_path("results/human_queries_quality.csv"), index=False)
 
     models = [PopularityRecommender(), tfidf.from_config(cfg), attribute.from_config(cfg), semantic.from_config(cfg)]
     for model in models:
         model.fit(wines, holdout_ids=test_ids["wine_id"])
-    result = compare(models, {"llm": llm, "human": human}, cfg["k"])
+    result = compare(models, sources, cfg["k"])
     result.round(4).to_csv(repo_path("results/llm_vs_human.csv"), index=False)
     log.info("\n%s", result.round(3).to_string(index=False))
 

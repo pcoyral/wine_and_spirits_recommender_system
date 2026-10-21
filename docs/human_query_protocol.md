@@ -79,6 +79,8 @@ Self-rated wine knowledge (asked before the first card):
 - `make compare-human` checks every hand-written query with the same
   vocabulary and leak checks as the LLM queries (without retries: a
   person's words are kept as written) and writes
-  `results/llm_vs_human.csv` and `results/human_queries_quality.csv`.
+  `results/llm_vs_human.csv` (HR@5 for the LLM queries, all human queries,
+  and the human queries that pass the checks) and
+  `results/human_queries_quality.csv`.
 - If a participant used expert words, keep the query: how often that
   happens is itself a result.

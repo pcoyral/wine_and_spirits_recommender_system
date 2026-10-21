@@ -5,7 +5,7 @@ import pytest
 
 from sensoryrec.config import repo_path
 from sensoryrec.llm import CachedLLM
-from sensoryrec.queries import clean, quality, write_query
+from sensoryrec.queries import clean, problems, quality, write_query
 from sensoryrec.vocab import load_vocab
 
 VOCAB = load_vocab(repo_path("data/wine_vocab.txt"))
@@ -38,10 +38,22 @@ def test_cache_stores_and_reuses(tmp_path):
     assert again.generate("hello") == "an answer" and again.n_calls == 0 and seen2 == []
 
 
+def test_refuses_to_generate_without_pinned_digest(tmp_path):
+    unpinned = CachedLLM("fake", {}, tmp_path, None, digest=None, call=str)
+    with pytest.raises(RuntimeError, match="digest"):
+        unpinned.generate("hello")
+
+
 def test_cache_key_depends_on_model_version(tmp_path):
     a = CachedLLM("fake", {}, tmp_path, None, digest="d1", call=str)
     b = CachedLLM("fake", {}, tmp_path, None, digest="d2", call=str)
     assert a.key("x") != b.key("x")
+
+
+def test_problems_combines_all_checks():
+    # expert term, the wine's own grape, and a price
+    expert, leak, other = problems("A merlot with soft tannins, $12", WINE, VOCAB)
+    assert expert == ["tannin"] and leak == ["Merlot"] and other == ["number or price"]
 
 
 def test_clean():
@@ -71,9 +83,10 @@ def test_flagged_after_max_retries(tmp_path):
 def test_repeated_answer_stops_retrying(tmp_path):
     # The model repeats the same wrong answer: a further retry prompt would be
     # identical (and so would the answer), so it stops after one retry.
+    # attempts counts different answers only: still 1 (DECISIONS.md).
     model, seen = llm(tmp_path, lambda p: "A merlot, great for $10.")
     row = write_query(WINE, model, VOCAB, PROMPT, RETRY, max_retries=3)
-    assert row["attempts"] == 2 and row["flagged"] and len(seen) == 2
+    assert row["attempts"] == 1 and row["flagged"] and len(seen) == 2
 
 
 def test_clean_query_needs_one_attempt(tmp_path):

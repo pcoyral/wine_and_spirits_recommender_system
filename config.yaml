@@ -62,6 +62,7 @@ llm:
   #   ollama pull llama3.2:3b-instruct-q4_K_M
   # then pin `digest` (ID column of `ollama list`) and `ollama_version`
   # (`ollama --version`). Check the tag on the Ollama library page.
+  # `make queries` refuses to call the model while `digest` is null.
   model: llama3.2:3b-instruct-q4_K_M
   digest: null
   ollama_version: null

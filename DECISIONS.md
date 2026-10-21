@@ -270,9 +270,8 @@ Fixed before any results exist, so the choice cannot be tuned to the results.
 - **Refinement summary:** mean success = mean of the 12 per-refinement rates
   (each refinement counts equally). Random control: 10 random unit
   directions (seed 42), success averaged over them. Cost: rank after minus
-  rank before for the target wine, and the share of targets in the top 5
-  that leave it. "Cheaper" succeeds when the median price of the new top 5
-  is strictly lower.
+  rank before for the target wine, and the share of targets in the top k
+  that leave it. ("Cheaper": see the code-review entry below.)
 - **α at the edge of the grid:** if the largest α is chosen, `make refine`
   warns; extending the grid must be decided on dev, before looking at test.
 - **Sommelier sample:** 10 eligible test cases (seed 42) with the query, the
@@ -282,3 +281,32 @@ Fixed before any results exist, so the choice cannot be tuned to the results.
 - **Human cards:** 30 test wines (at least 5 per band, shuffled). Some notes
   name the grape or region; the instructions ask participants not to repeat
   names, and the leak check flags it if they do (kept as written).
+
+## 2026-10-21 — S2: changes after code review
+- **Leak check, partial names (option A-b):** besides full names, the
+  distinctive single words of the wine's variety, region and province count
+  as leaks ("cabernet" from "Cabernet Sauvignon", "willamette" from
+  "Willamette Valley"). Words of 4+ letters only, excluding stop words,
+  everyday words and generic place words (valley, county, coast, ...; list
+  in `vocab.py`). Winery and designation names are still matched only in
+  full, because their single words are often ordinary ("Black Stallion"
+  would flag "black cherry"). Rejected (A-a): full names only.
+- **Names that cannot be checked:** a name that normalises to fewer than 3
+  characters or only to everyday words and stop words ("[+]", "i",
+  "Dry White") is skipped; otherwise it would match ordinary text and flag
+  harmless queries.
+- **"Cheaper" (option B-b):** no success rate — with the maximum price at the
+  old median, the new median is lower almost by construction. Instead:
+  median price drop (%), mean **relevance cost** (mean cosine similarity of
+  the top k to the query, before minus after), and the share of targets that
+  leave the top k. Rejected (B-a): keeping the success rate with a label.
+- **`attempts`** counts different answers only (a repeated answer is not a
+  new attempt), as decided above.
+- **The LLM refuses to generate while `llm.digest` is null.** The digest is
+  part of the cache key, so pinning it after a run would orphan the cache
+  and a re-run could write different queries.
+- **LLM vs human, like for like:** HR@k is compared on the same wines (those
+  with a usable LLM query) for three sources: `llm`, `human_all` (as
+  written) and `human_clean` (human queries passing the same checks). The
+  quality table uses all LLM queries of the human wines, flagged included,
+  and counts the wines lost because their LLM query was flagged.

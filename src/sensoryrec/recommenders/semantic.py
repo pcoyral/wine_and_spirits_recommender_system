@@ -10,7 +10,7 @@ nothing to hold out: test wines are embedded too, as retrieval targets.
 
 Embeddings for the ~120k notes take minutes to compute, so they are cached in
 data/processed/embeddings/. The cache stores a fingerprint of the model name,
-the wine_ids and the notes; if any of these change, it is rebuilt.
+its revision, the wine_ids and the notes; if any of these change, it is rebuilt.
 
 Run `make embed` to build the cache.
 """
@@ -32,9 +32,10 @@ def unit_vectors(m):
     return m / np.clip(np.linalg.norm(m, axis=1, keepdims=True), 1e-12, None)
 
 
-def fingerprint(model_name, wine_ids, texts):
-    """A short hash that changes if the model, the wines or any note changes."""
-    h = hashlib.sha256(model_name.encode())
+def fingerprint(model_name, revision, wine_ids, texts):
+    """A short hash that changes if the model, its version, the wines or any
+    note changes."""
+    h = hashlib.sha256(f"{model_name}@{revision}".encode())
     for wine_id, text in zip(wine_ids, texts):
         h.update(f"{wine_id}\t{text}\n".encode())
     return h.hexdigest()
@@ -56,6 +57,9 @@ class SemanticRecommender(Recommender):
     def encoder(self):
         if self._encoder is None:
             from sentence_transformers import SentenceTransformer  # slow import, only when needed
+            if self.revision is None:
+                log.warning("semantic.revision is not pinned in config.yaml: results depend on "
+                            "whichever model version is downloaded (see DECISIONS.md)")
             self._encoder = SentenceTransformer(self.model_name, revision=self.revision)
         return self._encoder
 
@@ -75,19 +79,22 @@ class SemanticRecommender(Recommender):
     def load_or_encode(self):
         ids = self.catalogue["wine_id"].to_numpy()
         texts = self.catalogue["description"].tolist()
-        fp = fingerprint(self.model_name, ids, texts)
+        fp = fingerprint(self.model_name, self.revision, ids, texts)
 
         if self.cache_dir is not None and self.cache_path().exists():
-            cached = np.load(self.cache_path())
-            if str(cached["fingerprint"]) == fp:
-                log.info("loaded embeddings from %s", self.cache_path())
-                return cached["embeddings"]
+            # `with` closes the file, so it can be overwritten below if stale
+            with np.load(self.cache_path()) as cached:
+                if str(cached["fingerprint"]) == fp:
+                    log.info("loaded embeddings from %s", self.cache_path())
+                    return cached["embeddings"]
             log.info("cache is out of date, re-encoding")
 
         log.info("encoding %d notes with %s", len(texts), self.model_name)
         embeddings = self.encode(texts)
         if self.cache_dir is not None:
             self.cache_path().parent.mkdir(parents=True, exist_ok=True)
+            # wine_ids are not needed to load the cache (the fingerprint covers
+            # them); they make the file self-describing: row i is wine_ids[i].
             np.savez(self.cache_path(), embeddings=embeddings, wine_ids=ids, fingerprint=np.array(fp))
         return embeddings
 

@@ -30,6 +30,14 @@ def term_pattern(term, negation_guard=False):
     return re.compile(guard + r"\b" + re.escape(normalise(term)) + r"(?:s|es)?\b")
 
 
+def any_term_pattern(terms, negation_guard=False):
+    """One regex matching any of the terms (whole words, plural allowed);
+    faster than one regex per term when scanning many notes."""
+    guard = "".join(f"(?<!\\b{n} )" for n in NEGATORS) if negation_guard else ""
+    options = "|".join(re.escape(normalise(t)) for t in sorted(terms, key=len, reverse=True))
+    return re.compile(guard + r"\b(?:" + options + r")(?:s|es)?\b")
+
+
 def find_terms(text, terms, negation_guard=False):
     """The terms that occur in `text`, in the order of `terms`."""
     text = normalise(text)

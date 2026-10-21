@@ -1,0 +1,13 @@
+unit,option,rule,tail_max_reviews,tail_items,tail_items_pct,tail_wines_pct,test_wines_in_tail
+winery,A,head = top 20% of items,9,13361,79.7,33.5,78
+winery,C,head = items holding first 20% of reviews,41,16366,97.7,79.6,165
+winery,C,head = items holding first 50% of reviews,15,14833,88.5,48.3,107
+winery,B,at most 5 reviews,5,11266,67.2,20.9,54
+winery,B,at most 10 reviews,10,13706,81.8,36.4,87
+winery,B,at most 20 reviews,20,15426,92.1,57.1,123
+variety,A,head = top 20% of items,37,564,79.8,3.4,48
+variety,C,head = items holding first 20% of reviews,8836,704,99.6,73.3,161
+variety,C,head = items holding first 50% of reviews,3219,698,98.7,47.4,136
+variety,B,at most 10 reviews,10,431,61.0,1.1,31
+variety,B,at most 100 reviews,100,621,87.8,6.3,65
+variety,B,at most 1000 reviews,1000,683,96.6,23.6,109

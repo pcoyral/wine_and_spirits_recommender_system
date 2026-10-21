@@ -6,6 +6,7 @@ Run with `make eda` (needs `make data` first). Everything goes to results/eda/:
 - taster_coverage.csv          reviews per taster
 - vintage_years.csv            vintage years found in titles (scrape-date evidence)
 - tail_summary.csv             size of the long tail under config.yaml's definition
+- tail_options.csv             the tail definitions considered (DECISIONS.md)
 - fig_rank_frequency.png       long-tail plot, wineries and varieties
 - fig_lorenz.png               Lorenz curves with Gini
 - fig_description_length.png   words per tasting note
@@ -22,7 +23,7 @@ import numpy as np
 import pandas as pd
 
 from sensoryrec.config import load_config, repo_path
-from sensoryrec.data import tail_mask
+from sensoryrec.data import metric_table, tail_mask
 from sensoryrec.metrics import gini
 
 log = logging.getLogger(__name__)
@@ -71,13 +72,19 @@ def taster_table(df):
 
 
 def vintage_years(df):
-    """Four-digit years 1900-2099 found in the wine title. The latest one is
-    a lower bound for when the data was scraped."""
-    years = df["title"].str.extract(r"\b(19\d{2}|20\d{2})\b")[0].dropna().astype(int)
+    """Vintage year of each wine, read from its title. Titles look like
+    "Winery 2013 Name Variety (Region)", so we cut off the winery name and
+    take the first four-digit year (1900-2099) after it. Taking simply the
+    first or last year in the title goes wrong for names such as
+    "1912 Winemakers 2011 ..." or "Kirsten 2013 1904 Spätlese ...".
+    The latest vintage is a lower bound for when the data was scraped."""
+    rest = [t[len(w):] if t.startswith(w) else t for t, w in zip(df["title"], df["winery"])]
+    found = pd.Series(rest, index=df.index).str.extract(r"\b(19\d{2}|20\d{2})\b")[0]
+    years = found.dropna().astype(int)
     return years.value_counts().sort_index().rename_axis("year").reset_index(name="n_wines")
 
 
-def summary_table(df, cleaning_log):
+def summary_table(df, cleaning_log, min_words):
     winery = reviews_per(df, "winery")
     variety = reviews_per(df, "variety")
     tasters = df.loc[~df["taster_name_missing"], "taster_name"]
@@ -91,12 +98,14 @@ def summary_table(df, cleaning_log):
         "n_countries": df.loc[df["country"] != "Unknown", "country"].nunique(),
         "wineries_with_1_review": int((winery == 1).sum()),
         "varieties_with_1_review": int((variety == 1).sum()),
+        "max_reviews_per_winery": int(winery.max()),
+        "max_reviews_per_variety": int(variety.max()),
         "median_reviews_per_winery": float(winery.median()),
         "median_reviews_per_variety": float(variety.median()),
         "gini_winery": round(gini(winery), 4),
         "gini_variety": round(gini(variety), 4),
         "median_words": float(df["n_words"].median()),
-        "pct_under_20_words": round((df["n_words"] < 20).mean() * 100, 2),
+        f"pct_under_{min_words}_words": round((df["n_words"] < min_words).mean() * 100, 2),
         "n_tasters": n_tasters,
         "pct_no_taster": round(df["taster_name_missing"].mean() * 100, 2),
         # One review per wine, so a taster x wine matrix has at most one
@@ -105,8 +114,7 @@ def summary_table(df, cleaning_log):
         "reviews_per_wine": 1,
         "latest_vintage_in_titles": int(years["year"].max()),
     }
-    # dtype=object keeps whole numbers as integers in the CSV
-    return pd.DataFrame({"metric": list(rows.keys()), "value": pd.Series(list(rows.values()), dtype=object)})
+    return metric_table(rows)
 
 
 def tail_summary(df, test_ids, tail_cfg):
@@ -122,7 +130,41 @@ def tail_summary(df, test_ids, tail_cfg):
         "tail_wines_pct": round(tail.mean() * 100, 2),
         "test_wines_in_tail": int(tail[df["wine_id"].isin(test_ids)].sum()),
     }
-    return pd.DataFrame({"metric": list(rows.keys()), "value": pd.Series(list(rows.values()), dtype=object)})
+    return metric_table(rows)
+
+
+def tail_options(df, test_ids):
+    """The long-tail definitions compared before choosing one (DECISIONS.md).
+    Each becomes 'tail = at most max_reviews reviews', so all go through
+    tail_mask:
+    - A: head = the top 20% of items by review count
+    - C: head = the most-reviewed items that together hold 20% / 50% of reviews
+    - B: fixed thresholds
+    """
+    rows = []
+    for unit, fixed in [("winery", [5, 10, 20]), ("variety", [10, 100, 1000])]:
+        counts = reviews_per(df, unit)  # most reviewed first
+        rules = []
+        head_min = counts.iloc[int(np.ceil(0.2 * len(counts))) - 1]
+        rules.append(("A", "head = top 20% of items", head_min - 1))
+        share = counts.cumsum() / counts.sum()
+        for p in [0.2, 0.5]:
+            head_min = counts[share >= p].iloc[0]
+            rules.append(("C", f"head = items holding first {p:.0%} of reviews", head_min - 1))
+        rules += [("B", f"at most {k} reviews", k) for k in fixed]
+
+        for option, rule, max_reviews in rules:
+            tail = tail_mask(df, unit, max_reviews)
+            n_tail_items = int((counts <= max_reviews).sum())
+            rows.append({
+                "unit": unit, "option": option, "rule": rule,
+                "tail_max_reviews": int(max_reviews),
+                "tail_items": n_tail_items,
+                "tail_items_pct": round(n_tail_items / len(counts) * 100, 1),
+                "tail_wines_pct": round(tail.mean() * 100, 1),
+                "test_wines_in_tail": int(tail[df["wine_id"].isin(test_ids)].sum()),
+            })
+    return pd.DataFrame(rows)
 
 
 def plot_rank_frequency(df, path):
@@ -198,7 +240,7 @@ def main():
     cleaning_log = pd.read_csv(eda_dir / "cleaning_log.csv")
     missing_df = pd.read_csv(eda_dir / "missingness.csv")
 
-    summary = summary_table(df, cleaning_log)
+    summary = summary_table(df, cleaning_log, cfg["split"]["min_words"])
     tasters = taster_table(df)
     summary.to_csv(eda_dir / "summary.csv", index=False)
     top_share_table(df).to_csv(eda_dir / "top_share.csv", index=False)
@@ -207,6 +249,7 @@ def main():
     test_ids = pd.read_csv(repo_path(cfg["paths"]["processed_dir"]) / "test_ids.csv")["wine_id"]
     tail = tail_summary(df, test_ids, cfg["tail"])
     tail.to_csv(eda_dir / "tail_summary.csv", index=False)
+    tail_options(df, test_ids).to_csv(eda_dir / "tail_options.csv", index=False)
 
     plot_rank_frequency(df, eda_dir / "fig_rank_frequency.png")
     plot_lorenz(df, eda_dir / "fig_lorenz.png")

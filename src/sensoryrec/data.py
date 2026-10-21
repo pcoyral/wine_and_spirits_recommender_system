@@ -61,10 +61,11 @@ def missingness(df):
 
 
 def clean(df):
-    """Clean the raw table. Returns (clean_df, log_df, missing_df).
+    """Clean the raw table. Returns (clean_df, log_df, missing_df, dup_pairs).
 
     Each step records how many rows it removed, so every count in the
-    thesis can be traced back to this function.
+    thesis can be traced back to this function. dup_pairs holds each removed
+    duplicate next to the copy that was kept (see duplicate_check).
     """
     steps = []
 
@@ -82,13 +83,17 @@ def clean(df):
     df = df[df["description"].notna() & (df["description"] != "")]
     record("drop empty description", n, len(df))
 
-    n = len(df)
-    df = df.drop_duplicates(subset="description", keep="first")
-    record("drop duplicate description", n, len(df))
-
+    # Missing variety goes before de-duplication, so a usable duplicate is
+    # never thrown away in favour of a copy without a variety.
     n = len(df)
     df = df[df["variety"].notna()]
     record("drop missing variety", n, len(df))
+
+    n = len(df)
+    is_dup = df.duplicated(subset="description", keep="first")
+    dup_pairs = duplicate_pairs(df, is_dup)
+    df = df[~is_dup]
+    record("drop duplicate description", n, len(df))
 
     # Missingness is measured here, after removing rows but before filling,
     # so it describes the data we actually use.
@@ -102,34 +107,44 @@ def clean(df):
 
     df["n_words"] = word_count(df["description"])
     df = df.reset_index(drop=True)
-    return df, pd.DataFrame(steps), missing_df
+    return df, pd.DataFrame(steps), missing_df, dup_pairs
 
 
-def duplicate_check(df):
+DUP_COLS = ["title", "winery", "points", "price"]
+
+
+def duplicate_pairs(df, is_dup):
+    """Each removed duplicate (is_dup True) next to the copy that is kept."""
+    kept = df[~is_dup].set_index("description")[DUP_COLS]
+    return df[is_dup].join(kept, on="description", rsuffix="_kept")
+
+
+def duplicate_check(pairs):
     """Are the duplicate notes the same wine scraped twice?
 
-    Compares each duplicate that clean() removes with the copy it keeps.
-    Same title, winery, points and price = the same wine scraped twice.
+    Same title, winery, points and price as the kept copy = the same wine.
     Returns (summary_df, different_df): counts, and the pairs that differ.
     """
-    desc = df["description"].astype("string").str.strip()
-    df = df.assign(description=desc)[desc.notna() & (desc != "")]
-    is_dup = df.duplicated("description", keep="first")
-    cols = ["title", "winery", "points", "price"]
-    kept = df[~is_dup].set_index("description")[cols]
-    pairs = df[is_dup].join(kept, on="description", rsuffix="_kept")
-
     same = pd.Series(True, index=pairs.index)
-    for c in cols:
+    for c in DUP_COLS:
         a, b = pairs[c], pairs[f"{c}_kept"]
         same &= (a == b) | (a.isna() & b.isna())
 
-    rows = {"duplicates": len(pairs), "same_wine": int(same.sum()),
-            "different_wine": int((~same).sum()),
-            "pct_same_wine": round(same.mean() * 100, 2) if len(pairs) else 0.0}
-    summary = pd.DataFrame({"metric": list(rows.keys()), "value": pd.Series(list(rows.values()), dtype=object)})
+    summary = metric_table({
+        "duplicates": len(pairs),
+        "same_wine": int(same.sum()),
+        "different_wine": int((~same).sum()),
+        "pct_same_wine": round(same.mean() * 100, 2) if len(pairs) else 0.0,
+    })
     different = pairs.loc[~same, ["wine_id", "title", "title_kept", "winery", "winery_kept"]]
     return summary, different
+
+
+def metric_table(rows):
+    """Turn {metric: value} into a two-column table for a results CSV.
+    dtype=object keeps whole numbers as integers in the CSV."""
+    return pd.DataFrame({"metric": list(rows.keys()),
+                         "value": pd.Series(list(rows.values()), dtype=object)})
 
 
 def tail_mask(df, unit, max_reviews):
@@ -153,11 +168,18 @@ def allocate(band_sizes, total, minimum):
     """How many wines to sample from each band.
 
     Every band gets `minimum` (or all its wines if it has fewer); the rest is
-    shared in proportion to band size (largest-remainder rounding).
+    shared in proportion to band size (largest-remainder rounding). The
+    quotas always add up to exactly `total`; impossible settings raise an error.
     """
     sizes = pd.Series(band_sizes, dtype=float)
+    if sizes.sum() < total:
+        raise ValueError(f"only {int(sizes.sum())} eligible wines, need {total}")
     base = np.minimum(sizes, minimum)
+    if base.sum() > total:
+        raise ValueError(f"band minimums need {int(base.sum())} wines, more than the total {total}")
     left = total - base.sum()
+    if left == 0:
+        return base.astype(int)
     room = sizes - base
     share = room / room.sum() * left
     extra = np.floor(share)
@@ -165,7 +187,7 @@ def allocate(band_sizes, total, minimum):
     remainder = int(left - extra.sum())
     for band in (share - extra).sort_values(ascending=False).index[:remainder]:
         extra[band] += 1
-    return (base + np.minimum(extra, room)).astype(int)
+    return (base + extra).astype(int)
 
 
 def stratified_sample(df, total, minimum, seed):
@@ -202,8 +224,8 @@ def main():
     eda_dir.mkdir(parents=True, exist_ok=True)
 
     raw = load_raw(raw_path)
-    wines, steps, missing_df = clean(raw)
-    dup_summary, dup_different = duplicate_check(raw)
+    wines, steps, missing_df, dup_pairs = clean(raw)
+    dup_summary, dup_different = duplicate_check(dup_pairs)
     test, dev = make_splits(wines, cfg, cfg["seed"])
 
     wines.to_parquet(out_dir / "wines.parquet", index=False)

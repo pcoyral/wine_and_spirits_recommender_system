@@ -3,7 +3,7 @@ import pandas as pd
 import pytest
 
 from sensoryrec.data import allocate, clean, duplicate_check, make_splits, tail_mask, variety_band
-from sensoryrec.eda import top_share
+from sensoryrec.eda import top_share, vintage_years
 
 LONG = " ".join(["word"] * 25)  # a 25-word note, long enough for test/dev
 
@@ -23,7 +23,7 @@ def tiny_raw():
 
 
 def test_clean_logs_each_step():
-    df, steps, _ = clean(tiny_raw())
+    df, steps, _, _ = clean(tiny_raw())
     removed = dict(zip(steps["step"], steps["rows_removed"]))
     assert removed["drop empty description"] == 1      # row 3
     assert removed["drop duplicate description"] == 1  # row 1 (after stripping spaces)
@@ -32,7 +32,7 @@ def test_clean_logs_each_step():
 
 
 def test_clean_fills_unknown_but_not_price():
-    df, _, _ = clean(tiny_raw())
+    df, _, _, _ = clean(tiny_raw())
     row = df[df["wine_id"] == 4].iloc[0]
     assert row["taster_name"] == "Unknown" and row["taster_name_missing"]
     assert np.isnan(row["price"]) and row["price_missing"]
@@ -43,12 +43,24 @@ def test_duplicate_check_same_and_different_wine():
     raw = tiny_raw()
     # row 1 repeats row 0 exactly (same wine); add row 5: row 4's note on another wine
     extra = raw.iloc[[4]].assign(wine_id=5, title="Other wine", winery="W9")
-    summary, different = duplicate_check(pd.concat([raw, extra], ignore_index=True))
+    _, _, _, pairs = clean(pd.concat([raw, extra], ignore_index=True))
+    summary, different = duplicate_check(pairs)
     counts = dict(zip(summary["metric"], summary["value"]))
     assert counts["duplicates"] == 2
     assert counts["same_wine"] == 1 and counts["different_wine"] == 1
     assert counts["pct_same_wine"] == 50.0
     assert list(different["wine_id"]) == [5]
+
+
+def test_missing_variety_dropped_before_duplicates():
+    # Same note twice: the first copy has no variety, the second does.
+    # The second copy must survive.
+    raw = tiny_raw().iloc[[0, 1]].copy()
+    raw["variety"] = [None, "Riesling"]
+    df, steps, _, _ = clean(raw)
+    assert list(df["wine_id"]) == [1]
+    removed = dict(zip(steps["step"], steps["rows_removed"]))
+    assert removed["drop missing variety"] == 1 and removed["drop duplicate description"] == 0
 
 
 def test_variety_band_labels():
@@ -69,6 +81,18 @@ def test_allocate_minimum_then_proportional():
     quota = allocate(pd.Series({"a": 90, "b": 10, "c": 2}), total=20, minimum=3)
     assert quota.to_dict() == {"a": 14, "b": 4, "c": 2}
     assert quota.sum() == 20
+
+
+def test_allocate_impossible_settings_raise():
+    with pytest.raises(ValueError, match="minimums"):
+        allocate(pd.Series({"a": 90, "b": 90, "c": 90}), total=20, minimum=10)
+    with pytest.raises(ValueError, match="eligible"):
+        allocate(pd.Series({"a": 5, "b": 5}), total=20, minimum=3)
+
+
+def test_allocate_exactly_the_minimums():
+    quota = allocate(pd.Series({"a": 50, "b": 50}), total=20, minimum=10)
+    assert quota.to_dict() == {"a": 10, "b": 10}
 
 
 def make_catalogue():
@@ -102,6 +126,18 @@ def test_splits_are_reproducible():
     a, _ = make_splits(cat, CFG, seed=42)
     b, _ = make_splits(cat, CFG, seed=42)
     assert list(a["wine_id"]) == list(b["wine_id"])
+
+
+def test_vintage_is_first_year_after_winery_name():
+    # A year in the winery name ("1912") or after the vintage ("1904") is not the vintage.
+    df = pd.DataFrame({
+        "winery": ["1912 Winemakers", "Kirsten", "Champagne Y"],
+        "title": ["1912 Winemakers 2011 Piorro Red (Douro)",
+                  "Kirsten 2013 1904 Spätlese Riesling (Mosel)",
+                  "Champagne Y NV Brut (Champagne)"],
+    })
+    years = vintage_years(df)
+    assert years.to_dict("list") == {"year": [2011, 2013], "n_wines": [1, 1]}
 
 
 def test_top_share():

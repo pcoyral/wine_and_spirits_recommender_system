@@ -6,6 +6,8 @@ n_varieties,707
 n_countries,43
 wineries_with_1_review,4582
 varieties_with_1_review,153
+max_reviews_per_winery,211
+max_reviews_per_variety,12277
 median_reviews_per_winery,3.0
 median_reviews_per_variety,5.0
 gini_winery,0.6131

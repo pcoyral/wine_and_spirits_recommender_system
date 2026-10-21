@@ -1,0 +1,4 @@
+# Demo queries for `make demo`, one per line. Lines starting with # are ignored.
+# Write them yourself, the way a novice would say them, without wine vocabulary
+# (e.g. no "tannins", "oaky", "finish"). Example of the style:
+#   something red that isn't too heavy, for a barbecue

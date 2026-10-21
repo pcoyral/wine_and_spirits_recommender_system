@@ -22,3 +22,18 @@ tail:
   # reviews (see DECISIONS.md, 2026-10-21).
   unit: winery
   max_reviews: 10
+
+# Number of recommendations per query
+k: 5
+
+semantic:
+  model: sentence-transformers/all-MiniLM-L6-v2
+  # Pin the exact model version after the first download: copy the commit
+  # hash from ~/.cache/huggingface/hub/models--sentence-transformers--all-MiniLM-L6-v2/refs/main
+  revision: null
+  batch_size: 64
+  cache_dir: data/processed/embeddings
+
+demo:
+  queries: data/demo_queries.txt
+  out_dir: results/demo

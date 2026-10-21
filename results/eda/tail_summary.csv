@@ -1,0 +1,7 @@
+metric,value
+definition,winery with <= 10 reviews
+tail_winery_count,13706
+tail_winery_pct,81.8
+tail_wines,43690
+tail_wines_pct,36.42
+test_wines_in_tail,87

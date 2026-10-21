@@ -18,5 +18,7 @@ split:
   dev_min_per_band: 15
 
 tail:
-  # Chosen after the EDA, see DECISIONS.md
-  definition: null
+  # A wine is in the long tail if its winery has at most this many
+  # reviews (see DECISIONS.md, 2026-10-21).
+  unit: winery
+  max_reviews: 10

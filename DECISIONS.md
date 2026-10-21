@@ -47,10 +47,27 @@ come from files in `results/`, never typed by hand.
   counts, attribute stats, direction vectors) is fitted on the catalogue
   minus test wines.
 
+## 2026-10-21 — Long-tail definition
+- **Decision:** a wine is in the long tail if its **winery has at most 10
+  reviews** (`tail` in `config.yaml`). Size of the tail:
+  `results/eda/tail_summary.csv`.
+- **Options considered** (computed on the cleaned catalogue):
+  - (A) Pareto cut: wineries outside the top 20% by review count. On this data
+    the cut falls at 10 reviews, so it nearly coincides with the choice.
+  - (B) Fixed threshold, winery with ≤ k reviews (k = 5, 10, 20). **Chosen
+    with k = 10.**
+  - (C) Head = most-reviewed wineries holding the first 20% / 50% of reviews.
+    This puts 88–98% of wineries in the tail, too broad to be informative.
+  - Variety as the unit was rejected: varieties are so concentrated that
+    the variety tail holds very few wines, or almost all varieties.
+- **Why:** one sentence to state and defend; close to the 80/20 split; about
+  a third of wines and enough test wines fall in the tail to report results
+  for the tail separately; the winery is also the unit the Popularity
+  baseline can count, so baseline and tail are measured the same way.
+- **From S1 on:** the winery counts behind the tail label are taken from the
+  catalogue minus test wines (CLAUDE.md rule 4). The S0 EDA uses the full
+  catalogue, which is descriptive only.
+
 ## Open
-- **Tail definition** — to choose after `make data` produces the EDA numbers.
-  Options: (A) share-based Pareto cut on wineries, (B) fixed threshold
-  (winery with ≤ k reviews), (C) head / mid / tail by cumulative review share.
-  Must use the same unit (winery or variety) as the Popularity baseline.
 - **Scrape date** — check the Kaggle dataset page; `latest_vintage_in_titles`
   in `results/eda/summary.csv` is a lower bound.

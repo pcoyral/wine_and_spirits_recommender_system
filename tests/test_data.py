@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from sensoryrec.data import allocate, clean, make_splits, variety_band
+from sensoryrec.data import allocate, clean, make_splits, tail_mask, variety_band
 from sensoryrec.eda import top_share
 
 LONG = " ".join(["word"] * 25)  # a 25-word note, long enough for test/dev
@@ -43,6 +43,12 @@ def test_variety_band_labels():
     df = pd.DataFrame({"wine_id": range(12), "variety": ["A"] * 11 + ["B"]})
     bands = variety_band(df, [10, 100, 1000])
     assert bands.iloc[0] == "11-100" and bands.iloc[-1] == "1-10"
+
+
+def test_tail_mask():
+    # W1 has 3 reviews, W2 has 1: with max_reviews=2 only W2's wine is tail
+    df = pd.DataFrame({"winery": ["W1", "W1", "W1", "W2"]})
+    assert tail_mask(df, "winery", 2).tolist() == [False, False, False, True]
 
 
 def test_allocate_minimum_then_proportional():

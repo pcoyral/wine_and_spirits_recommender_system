@@ -5,6 +5,7 @@ Run with `make eda` (needs `make data` first). Everything goes to results/eda/:
 - top_share.csv                share of reviews held by the top 1/10/20%
 - taster_coverage.csv          reviews per taster
 - vintage_years.csv            vintage years found in titles (scrape-date evidence)
+- tail_summary.csv             size of the long tail under config.yaml's definition
 - fig_rank_frequency.png       long-tail plot, wineries and varieties
 - fig_lorenz.png               Lorenz curves with Gini
 - fig_description_length.png   words per tasting note
@@ -21,6 +22,7 @@ import numpy as np
 import pandas as pd
 
 from sensoryrec.config import load_config, repo_path
+from sensoryrec.data import tail_mask
 from sensoryrec.metrics import gini
 
 log = logging.getLogger(__name__)
@@ -107,6 +109,22 @@ def summary_table(df, cleaning_log):
     return pd.DataFrame({"metric": list(rows.keys()), "value": pd.Series(list(rows.values()), dtype=object)})
 
 
+def tail_summary(df, test_ids, tail_cfg):
+    """How big the long tail is under the definition in config.yaml."""
+    unit, k = tail_cfg["unit"], tail_cfg["max_reviews"]
+    tail = tail_mask(df, unit, k)
+    counts = reviews_per(df, unit)
+    rows = {
+        "definition": f"{unit} with <= {k} reviews",
+        f"tail_{unit}_count": int((counts <= k).sum()),
+        f"tail_{unit}_pct": round((counts <= k).mean() * 100, 2),
+        "tail_wines": int(tail.sum()),
+        "tail_wines_pct": round(tail.mean() * 100, 2),
+        "test_wines_in_tail": int(tail[df["wine_id"].isin(test_ids)].sum()),
+    }
+    return pd.DataFrame({"metric": list(rows.keys()), "value": pd.Series(list(rows.values()), dtype=object)})
+
+
 def plot_rank_frequency(df, path):
     fig, ax = plt.subplots(figsize=(7, 4.5))
     for col in ["winery", "variety"]:
@@ -186,6 +204,9 @@ def main():
     top_share_table(df).to_csv(eda_dir / "top_share.csv", index=False)
     tasters.to_csv(eda_dir / "taster_coverage.csv", index=False)
     vintage_years(df).to_csv(eda_dir / "vintage_years.csv", index=False)
+    test_ids = pd.read_csv(repo_path(cfg["paths"]["processed_dir"]) / "test_ids.csv")["wine_id"]
+    tail = tail_summary(df, test_ids, cfg["tail"])
+    tail.to_csv(eda_dir / "tail_summary.csv", index=False)
 
     plot_rank_frequency(df, eda_dir / "fig_rank_frequency.png")
     plot_lorenz(df, eda_dir / "fig_lorenz.png")
@@ -193,6 +214,7 @@ def main():
     plot_missingness(missing_df, eda_dir / "fig_missingness.png")
     plot_tasters(tasters, eda_dir / "fig_taster_coverage.png")
     log.info("\n%s", summary.to_string(index=False))
+    log.info("\n%s", tail.to_string(index=False))
 
 
 if __name__ == "__main__":

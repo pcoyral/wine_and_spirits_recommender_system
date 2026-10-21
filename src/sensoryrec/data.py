@@ -103,6 +103,14 @@ def clean(df):
     return df, pd.DataFrame(steps), missing_df
 
 
+def tail_mask(df, unit, max_reviews):
+    """True for wines whose `unit` (e.g. winery) has at most `max_reviews`
+    reviews in df. Pass the catalogue the counts should come from: from S1
+    on that is the catalogue minus test wines (CLAUDE.md rule 4)."""
+    counts = df.groupby(unit)[unit].transform("size")
+    return counts <= max_reviews
+
+
 def variety_band(df, edges):
     """Label each wine by how many reviews its variety has.
     With edges [10, 100, 1000]: '1-10', '11-100', '101-1000', '>1000'."""

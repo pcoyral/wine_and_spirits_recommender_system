@@ -1,0 +1,188 @@
+# Vocabulary check for casual queries (CLAUDE.md rule 5, DECISIONS.md D3).
+# Approved by the student on 21 Oct 2026.
+#
+# [expert]   banned in casual queries
+# [everyday] explicitly allowed (documentation only: words in neither tier
+#            are allowed too)
+#
+# Matching: whole words, case and accents ignored, plural forms count
+# ("tannins" matches "tannin"), multi-word terms allowed. "bodied" also
+# catches full-, medium- and light-bodied.
+
+[expert]
+# structure
+acidity
+acidic
+acid
+tannin
+tannic
+palate
+finish
+nose
+bouquet
+aromas
+aromatic
+mouthfeel
+structure
+structured
+body
+bodied
+weight
+core
+length
+grip
+extraction
+concentration
+integrated
+layered
+polished
+racy
+# oak and winemaking
+oak
+oaky
+oaked
+barrel
+barrique
+toast
+toasty
+toasted
+malolactic
+lees
+residual sugar
+terroir
+varietal
+vintage
+cuvée
+appellation
+estate
+bottling
+# tasting-note jargon
+cassis
+currant
+black fruit
+red fruit
+dark fruit
+stone fruit
+baking spice
+forest floor
+leather
+tobacco
+cedar
+graphite
+petrol
+flint
+brioche
+garrigue
+anise
+whiff
+notes of
+hints of
+# drinking window
+drink now
+ready to drink
+cellar
+cellaring
+decant
+age-worthy
+# borderline, kept banned by the student
+complex
+complexity
+elegant
+depth
+intensity
+dense
+concentrated
+tight
+lean
+firm
+chewy
+texture
+textured
+mineral
+minerality
+
+[everyday]
+# taste and feel
+sweet
+dry
+fruity
+light
+heavy
+smooth
+soft
+fresh
+crisp
+rich
+bold
+strong
+mild
+spicy
+peppery
+bitter
+sour
+tart
+tangy
+zesty
+juicy
+jammy
+refreshing
+easy
+simple
+warm
+creamy
+buttery
+silky
+velvety
+bright
+lively
+delicate
+subtle
+earthy
+smoky
+floral
+herbal
+savory
+nutty
+woody
+# flavours
+cherry
+berry
+plum
+blackberry
+raspberry
+strawberry
+blueberry
+cranberry
+apple
+pear
+peach
+apricot
+lemon
+lime
+orange
+grapefruit
+citrus
+pineapple
+tropical
+melon
+honey
+vanilla
+chocolate
+coffee
+caramel
+cinnamon
+clove
+pepper
+licorice
+mint
+flowers
+rose
+almond
+# colour (allowed, D7)
+red
+white
+rosé
+pink
+sparkling
+bubbly
+fizzy

@@ -9,6 +9,8 @@ Outputs
 - data/processed/dev_ids.csv     100 wines for tuning settings
 - results/eda/cleaning_log.csv   rows removed by each cleaning step
 - results/eda/missingness.csv    % missing per column, before filling
+- results/eda/duplicate_check.csv  are removed duplicates the same wine?
+- results/eda/duplicate_different_wines.csv  duplicates attached to a different wine
 - results/eda/data_manifest.json raw file checksum and split sizes
 """
 import hashlib
@@ -103,6 +105,33 @@ def clean(df):
     return df, pd.DataFrame(steps), missing_df
 
 
+def duplicate_check(df):
+    """Are the duplicate notes the same wine scraped twice?
+
+    Compares each duplicate that clean() removes with the copy it keeps.
+    Same title, winery, points and price = the same wine scraped twice.
+    Returns (summary_df, different_df): counts, and the pairs that differ.
+    """
+    desc = df["description"].astype("string").str.strip()
+    df = df.assign(description=desc)[desc.notna() & (desc != "")]
+    is_dup = df.duplicated("description", keep="first")
+    cols = ["title", "winery", "points", "price"]
+    kept = df[~is_dup].set_index("description")[cols]
+    pairs = df[is_dup].join(kept, on="description", rsuffix="_kept")
+
+    same = pd.Series(True, index=pairs.index)
+    for c in cols:
+        a, b = pairs[c], pairs[f"{c}_kept"]
+        same &= (a == b) | (a.isna() & b.isna())
+
+    rows = {"duplicates": len(pairs), "same_wine": int(same.sum()),
+            "different_wine": int((~same).sum()),
+            "pct_same_wine": round(same.mean() * 100, 2) if len(pairs) else 0.0}
+    summary = pd.DataFrame({"metric": list(rows.keys()), "value": pd.Series(list(rows.values()), dtype=object)})
+    different = pairs.loc[~same, ["wine_id", "title", "title_kept", "winery", "winery_kept"]]
+    return summary, different
+
+
 def tail_mask(df, unit, max_reviews):
     """True for wines whose `unit` (e.g. winery) has at most `max_reviews`
     reviews in df. Pass the catalogue the counts should come from: from S1
@@ -174,6 +203,7 @@ def main():
 
     raw = load_raw(raw_path)
     wines, steps, missing_df = clean(raw)
+    dup_summary, dup_different = duplicate_check(raw)
     test, dev = make_splits(wines, cfg, cfg["seed"])
 
     wines.to_parquet(out_dir / "wines.parquet", index=False)
@@ -181,6 +211,8 @@ def main():
     dev.to_csv(out_dir / "dev_ids.csv", index=False)
     steps.to_csv(eda_dir / "cleaning_log.csv", index=False)
     missing_df.to_csv(eda_dir / "missingness.csv", index=False)
+    dup_summary.to_csv(eda_dir / "duplicate_check.csv", index=False)
+    dup_different.to_csv(eda_dir / "duplicate_different_wines.csv", index=False)
 
     manifest = {
         "raw_file": raw_path.name,

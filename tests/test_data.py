@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from sensoryrec.data import allocate, clean, make_splits, tail_mask, variety_band
+from sensoryrec.data import allocate, clean, duplicate_check, make_splits, tail_mask, variety_band
 from sensoryrec.eda import top_share
 
 LONG = " ".join(["word"] * 25)  # a 25-word note, long enough for test/dev
@@ -37,6 +37,18 @@ def test_clean_fills_unknown_but_not_price():
     assert row["taster_name"] == "Unknown" and row["taster_name_missing"]
     assert np.isnan(row["price"]) and row["price_missing"]
     assert "taster_twitter_handle" not in df.columns
+
+
+def test_duplicate_check_same_and_different_wine():
+    raw = tiny_raw()
+    # row 1 repeats row 0 exactly (same wine); add row 5: row 4's note on another wine
+    extra = raw.iloc[[4]].assign(wine_id=5, title="Other wine", winery="W9")
+    summary, different = duplicate_check(pd.concat([raw, extra], ignore_index=True))
+    counts = dict(zip(summary["metric"], summary["value"]))
+    assert counts["duplicates"] == 2
+    assert counts["same_wine"] == 1 and counts["different_wine"] == 1
+    assert counts["pct_same_wine"] == 50.0
+    assert list(different["wine_id"]) == [5]
 
 
 def test_variety_band_labels():

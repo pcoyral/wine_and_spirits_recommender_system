@@ -17,6 +17,8 @@ come from files in `results/`, never typed by hand.
 - **Duplicates:** drop rows whose `description` is an exact duplicate (after
   trimming spaces), keeping the first. A repeated note is the same review
   scraped twice and would give two identical targets in self-retrieval.
+  `results/eda/duplicate_check.csv` compares each removed duplicate with the
+  kept copy (same title, winery, points and price = same wine).
 - **Missing variety:** drop the row. Variety is needed for the test/dev
   stratification and for the attribute baseline.
 - **Missing price:** keep the row, do not impute; add `price_missing`. An

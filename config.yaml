@@ -99,3 +99,12 @@ queries:
     It used words that are not allowed: {problems}.
     Rewrite it without those words, following the same rules.
     Reply with the description only.
+
+human:
+  # Hand-written queries from novices on 30 test wines (D1, D6)
+  n_wines: 30
+  min_per_band: 5
+  cards: data/human_cards.csv
+  template: data/human_queries_template.csv
+  # the filled-in copy of the template
+  queries: data/human_queries.csv

@@ -48,6 +48,15 @@ def test_tfidf_vocabulary_ignores_holdout_wines():
     assert model.recommend("cherry", k=1)["wine_id"].tolist() == [6]
 
 
+def test_tfidf_keeps_meaningful_stop_words():
+    # With the plain English list, "not too heavy" would become just "heavy".
+    model = TfidfRecommender(min_df=1, keep_words=["not", "too", "full"]).fit(catalogue())
+    analyse = model.vectorizer.build_analyzer()
+    assert analyse("not too heavy, full bodied") == ["not", "too", "heavy", "full", "bodied"]
+    plain = TfidfRecommender(min_df=1).fit(catalogue())
+    assert plain.vectorizer.build_analyzer()("not too heavy") == ["heavy"]
+
+
 def test_tfidf_has_no_idea_of_meaning():
     # The baseline weakness: no shared word, no match, whatever the meaning.
     model = TfidfRecommender(min_df=1).fit(catalogue())

@@ -42,6 +42,8 @@ tfidf:
   # Standard settings, not tuned (Semantic is not tuned either), DECISIONS.md
   min_df: 2
   stop_words: english
+  # ...minus these words, which carry meaning in notes and queries (DECISIONS.md)
+  keep_words: [not, "no", too, very, less, more, without, full]
   sublinear_tf: true
   ngram_range: [1, 1]
 

@@ -269,3 +269,208 @@ the code and your understanding are checked against each other.
 | `novelty` | Average surprise in bits, from winery share. |
 | `intra_list_diversity` | How varied each list is, in SBERT space. |
 | `demo.py` | Top 5 of both models for your queries, saved for the supervisor. |
+
+---
+
+# Part 2 — TF-IDF, Attribute and `make eval`
+
+*Same rule as above: no evaluation numbers exist yet; decisions and their
+alternatives are in `DECISIONS.md`.*
+
+## The 60-second version
+
+> "S1 ends with four recommenders behind one interface, plus one command that
+> evaluates them all. Each model adds one capability. Popularity ignores the
+> user. Attribute understands structured wishes such as 'Italian, red, under
+> $15'. TF-IDF matches the user's words with the critic's words. Semantic
+> matches meaning. Comparing them on the same queries, with the same metrics,
+> shows what each capability contributes: an *ablation*. The baselines use
+> standard settings and are never tuned, and every model is fitted without the
+> test wines. `make eval` refuses to run until the casual test queries exist,
+> so no number exists that wasn't produced by the final protocol."
+
+## 7. Why these four models — the ablation ladder
+
+| Model | What it can understand | What comparing it with Semantic tests |
+|---|---|---|
+| Popularity | Nothing; same list for everyone | Does listening to the user help at all? |
+| Attribute | Explicit facts: grape, country, colour, price | Is meaning more than a filter on facts? |
+| TF-IDF | The exact words | Does matching meaning beat matching words? (the vocabulary gap) |
+| Semantic | Meaning | The core model of the main RQ |
+
+**"Why four and not just Semantic vs Popularity?"** Beating Popularity proves
+very little, because any model that reads the query should beat it. TF-IDF is
+the real test of the main claim. If Semantic only matched TF-IDF, the
+vocabulary gap wouldn't matter. Attribute stands for what a wine-shop website
+does: filters on facts.
+
+## 8. TF-IDF — the keyword baseline
+
+**How it works:** each tasting note becomes a vector with one entry per word
+in the vocabulary.
+
+- **TF (term frequency):** how often the word appears in the note, dampened
+  (`sublinear_tf`): 1 + log(count), so a word repeated three times doesn't
+  count three times as much.
+- **IDF (inverse document frequency):** how rare the word is across all notes.
+  A word that appears everywhere ("wine") weighs little; a rare word
+  ("lychee") weighs a lot. scikit-learn computes ln((1 + n) / (1 + df)) + 1,
+  where n is the number of notes and df the number containing the word.
+- **Ranking:** the query becomes a vector the same way, and wines are ranked
+  by cosine similarity. Vectors have length 1, so this is a dot product,
+  exactly as in Semantic. The two models differ only in how they build
+  vectors.
+
+**Settings (A1, standard and not tuned):**
+
+- **Single words:** no word pairs.
+- **Stop words:** filler words like "and" and "the" are dropped, using
+  scikit-learn's English list **minus 8 words that carry meaning**: "not",
+  "no", "too", "very", "less", "more", "without", "full" (decision (b)). With
+  the plain list, "not too heavy for a barbecue" became just "heavy barbecue",
+  the opposite of the request, and "full-bodied" lost "full". Keeping them
+  means the baseline is not weakened by a technicality.
+- **`min_df = 2`:** a word must appear in at least 2 notes. That removes typos
+  and one-off names.
+- **"Why not tune it?"** Semantic isn't tuned either. Tuning only the
+  baseline, or only your own model, would make the comparison unfair.
+
+**Leakage:** the vocabulary and IDF are learned without the test wines. The
+test shows the consequence: a word that appears only in a test wine
+("lychee") doesn't exist for the model. The test wine is still recommendable
+through its other words.
+
+**Its built-in weakness, which is the point:** with no shared word there is
+no match. "Citrus" scores 0 against a note saying "lemon"
+(`test_tfidf_has_no_idea_of_meaning`). Keeping "not" doesn't give TF-IDF an
+understanding of negation either: it only matches notes that also contain
+the word "not".
+
+## 9. Attribute — the structured baseline
+
+**How it works:** a rule-based reader finds four kinds of wish in the query,
+then counts how many each wine satisfies.
+
+| Wish | How it's read | Example |
+|---|---|---|
+| Variety | Grape names from the catalogue, longest first | "sauvignon blanc" isn't also read as "sauvignon" |
+| Country | Country names plus adjectives | "italian" → Italy |
+| Colour | Everyday words | "pink" → rosé, "bubbly" → sparkling |
+| Price | Explicit amounts only | "no more than $15" → at most 15 |
+
+**Score** = number of wishes matched + points / 1000, the same trick as
+Popularity: points only break ties.
+
+- **Hand example from the tests:** for "french white under 20", a French
+  white at $12 matches all three wishes and scores 3.085; the same wine at
+  $25 matches two and scores 2.088.
+- **A soft score, not a filter:** it always returns k wines, even when nothing
+  matches everything.
+- **No wish at all:** every wine scores 0 and the ranking falls back to points,
+  i.e. "best-rated".
+
+**"Why rules and not an LLM to read the query?"** CLAUDE.md rule 2: the LLM
+never ranks. An LLM reading the query would make rankings depend on a
+non-deterministic model and break reproducibility. Rules are crude but fully
+explainable and always give the same answer.
+
+**The colour table (B2):**
+
+- **Why:** the dataset has no colour column, but colour is the most natural
+  wish for a novice ("something red").
+- **What:** a hand-made table maps the 71 most common varieties to a colour.
+  Together they hold 92.2% of reviews (`top_share.csv`). Any variety not in
+  the table has no colour.
+- **Defence:** documented, limited to the common varieties, and checked by
+  you or the sommelier. The uncertain entries are flagged in its `note`
+  column (Moscato, Meritage, Port, Glera, Zinfandel).
+
+**The details that show care:**
+
+- **Accents removed before matching:** "gewurztraminer" finds Gewürztraminer.
+- **Everyday words never read as names:** six variety names are skipped
+  (Melon, Apple, Other, Mission, Debit, Vital), so "tastes like melon" isn't a
+  request for the Melon grape. "us" is never read as the US.
+- **Price wording:** "no more than 20" is read only as a maximum, not also as
+  "more than 20".
+- **No price, no match:** a wine without a price never satisfies a price wish,
+  consistent with S0.
+
+**Limitations to state yourself:**
+
+- **Currency:** "under 20 euros" is compared with dollar prices, unconverted.
+- **Vague words:** "cheap" is ignored, because any threshold would be
+  arbitrary.
+- **Colour words in other phrases:** "red fruit flavours" also reads as a wish
+  for red.
+- **Double counting:** "prosecco" counts twice for Prosecco wines, once as the
+  variety and once as the colour sparkling.
+
+## 10. `make eval` — the evaluation protocol
+
+**What it does:**
+
+1. Reads the casual queries: `wine_id` plus the query written from that
+   wine's note.
+2. Fits all four models with the test wines held out.
+3. Asks each model for the top 5 for each query.
+4. Computes every metric.
+5. Writes `results/ablation.csv` (one row per model) and
+   `results/ablation_by_band.csv` (per variety band).
+
+**Why it refuses to run now:** the queries come in S2. Without them it stops
+and says nothing was evaluated. No preliminary number can exist that might
+later be "improved".
+
+**The protocol decisions:**
+
+- **Test wines are always held out,** even when evaluating on the dev set. The
+  test set must never influence any model.
+- **Per-band results:** this delivers the S0 decision, showing whether
+  Semantic helps rare varieties as well as common ones.
+- **Robustness (D):** tail share is also reported with the tail at ≤ 5 and
+  ≤ 20 reviews. If Semantic beats Popularity at all three thresholds, the
+  conclusion doesn't depend on the choice of 10.
+- **ILD:** uses the SBERT embeddings for every model, the same yardstick for
+  all. That's why `make eval` runs on the laptop, where the embeddings live.
+
+**Novelty fix (C1, add-one smoothing):** p = (winery reviews + 1) / (reviews
+counted + number of wineries).
+
+- **Hand example from the tests:** wineries with 3, 1 and 0 counted reviews,
+  out of 4 reviews and 3 wineries in total, get 4/7, 2/7 and 1/7. Every share
+  is above 0, and they add up to 1.
+- **Why not count on the full catalogue (C2)?** It would be inconsistent with
+  the tail label, which deliberately ignores test wines. Smoothing keeps one
+  rule everywhere.
+
+## 11. Weaknesses to raise yourself (part 2)
+
+1. **The Attribute reader is crude:** no currency conversion, no vague prices,
+   and a colour table built by hand.
+2. **The baselines aren't tuned.** That's deliberate, for fairness, but it
+   means "untuned baseline vs untuned model", not "best possible baseline".
+3. **Negation is hard for every model.** TF-IDF only matches the word "not";
+   sentence models also handle "not too heavy" poorly. Don't claim Semantic
+   solves negation. S2's refinement experiment ("less oaky") is where that is
+   tested.
+4. **TF-IDF's stop-word list was adjusted** (8 words kept). Say why before
+   anyone asks: the plain list removed negations and "full", which would have
+   handicapped the baseline.
+
+## How the code is laid out (part 2)
+
+| Piece | One line you should be able to say |
+|---|---|
+| `TfidfRecommender` | Word vectors weighted by rarity, learned without test wines; cosine ranking. |
+| `keep_words` | Stop words that stay in, because they carry meaning ("not", "full", ...). |
+| `normalise` | Lower case, no accents, letters and digits only, so names match however they're typed. |
+| `find_names` | Finds catalogue names in the query, longest first, whole words only. |
+| `parse_price` | Explicit amounts: under / over / between / "or less". |
+| `AttributeRecommender.parse` | The wishes: varieties, countries, colours, price range. |
+| `AttributeRecommender.score` | Wishes matched + points / 1000. |
+| `variety_colour.csv` | Hand-made colour for the 71 most common varieties (to be checked). |
+| `winery_counts` | Reviews per winery without test wines: the basis of Popularity, the tail and novelty. |
+| `item_popularity` | Winery shares with add-one smoothing, for novelty. |
+| `evaluate` | All models × all queries → every metric, overall and per band. |
+| `make eval` / `make eval-dev` | One command → `results/ablation*.csv`; refuses without queries. |

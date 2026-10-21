@@ -58,6 +58,8 @@ SHA-256 is recorded in `results/eda/data_manifest.json` by `make data`.
 |---|---|
 | `make data` | Clean the data, hold out test/dev wines, build all EDA tables and figures |
 | `make eda` | Rebuild only the EDA (needs `make data` once) |
+| `make embed` | Build the SBERT embedding cache (downloads the model on first use) |
+| `make demo` | Top-5 of Popularity and Semantic for the queries in `data/demo_queries.txt` |
 | `make test` | Run unit tests |
 
 ## Evaluation

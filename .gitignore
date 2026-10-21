@@ -41,3 +41,6 @@ models_cache/
 *.egg-info/
 build/
 dist/
+
+# Pipeline caches
+.cache/

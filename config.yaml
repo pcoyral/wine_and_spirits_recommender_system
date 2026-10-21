@@ -1,0 +1,22 @@
+seed: 42
+
+paths:
+  raw_csv: data/raw/winemag-data-130k-v2.csv
+  processed_dir: data/processed
+  eda_dir: results/eda
+
+split:
+  test_size: 200
+  dev_size: 100
+  # Only notes with at least this many words can be picked for test/dev
+  # (they stay in the catalogue either way).
+  min_words: 20
+  # Variety frequency bands, by number of reviews of the wine's variety:
+  # 1-10, 11-100, 101-1000, >1000
+  band_edges: [10, 100, 1000]
+  test_min_per_band: 30
+  dev_min_per_band: 15
+
+tail:
+  # Chosen after the EDA, see DECISIONS.md
+  definition: null

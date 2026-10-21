@@ -1,99 +1,68 @@
 # SensoryRec
 
-**A Natural Language-Driven Hybrid Recommender System for Wine and Spirits Discovery**
+**A content-based wine recommender for novices, delivered through a RAG chatbot.**
 
 IE University BDBA Capstone Project — Paul, Class of 2027.
 
-## Project Summary
+A novice describes what they like in everyday words ("something red that isn't
+too heavy, for a barbecue"). SensoryRec retrieves matching wines from the Wine
+Enthusiast Reviews dataset by comparing the query with professional tasting
+notes using Sentence-BERT. An LLM then explains the picks, using only the
+retrieved notes; it never ranks.
 
-SensoryRec recommends wine (and potentially spirits) using both structured product
-attributes and natural-language descriptions of user taste preferences (e.g. "fruity
-but not that fruity"). It targets younger, less wine-literate consumers as a
-vocabulary-agnostic personalization layer, framed within an LVMH-style premiumization
-business context.
+The research focus is **cold start under data sparsity** (no user–item
+interactions, so collaborative filtering is not viable) and **long-tail
+exposure** (does semantic matching surface more of the catalogue than
+popularity?).
 
-## Architecture: the ablation ladder
+- `CLAUDE.md` — scope, rules and sprints (read this first)
+- `DECISIONS.md` — methodological choices, with date and reason
+- `docs/scope_v2.md` — scope after the 21 Oct 2026 supervisor meeting
+- `legacy/` — code from before scope v2, kept for reuse
 
-Five recommender architectures, implemented as special cases of a single weighted
-scoring function so the full ablation table can be produced from one parameterized
-implementation:
+## Recommenders compared
 
-| Model | Approach            | Notes                                    |
-|-------|----------------------|-------------------------------------------|
-| 0     | Popularity            | Non-personalized baseline                |
-| 1     | Content-Based         | Structured attribute similarity          |
-| 2     | TF-IDF                | Sparse text similarity on descriptions   |
-| 3     | Sentence-BERT         | Dense semantic embeddings                |
-| 4     | Hybrid                | Weighted combination of the above        |
-
-Layers on top of the core models (per the technical methodology doc):
-context-aware re-ranking and explainability.
-
-## Repo structure
-
-```
-sensoryrec-capstone/
-├── data/
-│   ├── raw/            # Original Wine Enthusiast dataset (NOT committed — see below)
-│   └── processed/       # Cleaned / feature-engineered data (NOT committed)
-├── notebooks/           # EDA, prototyping, ablation experiments
-├── src/
-│   ├── models/           # popularity.py, content_based.py, tfidf.py, sbert.py, hybrid.py
-│   ├── data_loader.py
-│   └── metrics.py        # NDCG@5, serendipity, beyond-accuracy metrics
-├── tests/
-├── docs/                 # Reference documents: RQs, methodology, lit review roadmap
-├── reports/              # EDA report, evaluation outputs
-├── requirements.txt
-└── README.md
-```
+| Model | Approach |
+|---|---|
+| Popularity | Non-personalised baseline |
+| TF-IDF | Keyword match on tasting notes |
+| Attribute | Structured fields (variety, country, price, points) |
+| Semantic | SBERT `all-MiniLM-L6-v2` + cosine similarity |
 
 ## Setup
 
 Requires **Python 3.11**.
 
 ```bash
-git clone <your-repo-url>
-cd sensoryrec-capstone
-
-# Create the venv OUTSIDE the project directory.
-# This repo may live in an iCloud-synced folder (~/Desktop, ~/Documents), and
-# iCloud will offload large packages like torch to the cloud — imports then
-# block for minutes while files are re-downloaded. Keeping the venv in a
-# non-synced path avoids this entirely.
+# Create the venv OUTSIDE the project directory: if the repo lives in an
+# iCloud-synced folder (~/Desktop, ~/Documents), iCloud offloads large
+# packages like torch and imports block for minutes.
 python3 -m venv ~/venvs/sensoryrec
 source ~/venvs/sensoryrec/bin/activate
 
-pip install -r requirements.txt   # or requirements.lock.txt for exact versions
-pip install -e .                  # makes `src` importable from anywhere
-
-# Register the venv as a Jupyter kernel for the notebooks
-python -m ipykernel install --user --name sensoryrec --display-name "SensoryRec (venv)"
-```
-
-Verify the install:
-
-```bash
-pytest -q          # expect: 3 passed
+pip install -r requirements.txt
+pip install -e .
 ```
 
 ## Data
 
-The full dataset (~130,000 Wine Enthusiast reviews) is sourced from Kaggle and is
-**not committed to this repo** (see `.gitignore`). Download it separately and place
-it at `data/raw/`. Document the exact source URL/version here once finalized, so the
-project stays reproducible.
+Download **Wine Reviews** (zackthoutt) from Kaggle,
+https://www.kaggle.com/datasets/zynicide/wine-reviews, and put
+`winemag-data-130k-v2.csv` in `data/raw/`. The file is not committed; its
+SHA-256 is recorded in `results/eda/data_manifest.json` by `make data`.
+`data/raw/03_Sample_Data.csv` (500 rows) is a schema reference only.
+
+## Commands
+
+| Command | What it does |
+|---|---|
+| `make data` | Clean the data, hold out test/dev wines, build all EDA tables and figures |
+| `make eda` | Rebuild only the EDA (needs `make data` once) |
+| `make test` | Run unit tests |
 
 ## Evaluation
 
-No real user interaction data exists for this project. Evaluation uses a
-self-retrieval protocol: paraphrased natural-language queries are matched against
-held-out wines, with results validated by a sommelier domain expert. Key metrics:
-NDCG@5, serendipity, and other beyond-accuracy measures.
-
-## Status
-
-Early scaffold — see `docs/` for the current reference documents (project
-assessment, research questions & methodology, literature review roadmap, technical
-methodology, development roadmap). Fill in `docs/` and start implementing
-`src/models/popularity.py` (Model 0) first, per the development roadmap sequencing.
+Self-retrieval: held-out tasting notes are rewritten as casual, novice-style
+queries, and each model must retrieve the original wine (HR@5, NDCG@5).
+Long-tail and beyond-accuracy metrics: catalogue coverage, tail share, Gini,
+novelty, intra-list diversity. All numbers come from `results/*.csv`.

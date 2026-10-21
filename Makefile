@@ -1,7 +1,7 @@
 PYTHON ?= python
 export PYTHONPATH := src
 
-.PHONY: data eda embed demo eval eval-dev test
+.PHONY: data eda embed demo queries eval eval-dev test
 
 # Definition of done for S0: `make data` gives the cleaned parquet, the
 # test/dev IDs and all EDA figures. The two steps are recipe lines, not
@@ -21,6 +21,10 @@ embed:
 # Top-5 of Popularity and Semantic for the queries in data/demo_queries.txt
 demo:
 	$(PYTHON) -m sensoryrec.demo
+
+# Casual test + dev queries from the local LLM (Ollama must be running)
+queries:
+	$(PYTHON) -m sensoryrec.queries --split all
 
 # All four models on the casual test queries -> results/ablation*.csv
 eval:

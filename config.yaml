@@ -56,3 +56,46 @@ eval:
   out_dir: results
   # Tail share is also reported at these thresholds (robustness check)
   robustness_tail: [5, 20]
+
+llm:
+  # Local model via Ollama (DECISIONS.md D2). Before `make queries`:
+  #   ollama pull llama3.2:3b-instruct-q4_K_M
+  # then pin `digest` (ID column of `ollama list`) and `ollama_version`
+  # (`ollama --version`). Check the tag on the Ollama library page.
+  model: llama3.2:3b-instruct-q4_K_M
+  digest: null
+  ollama_version: null
+  url: http://localhost:11434/api/generate
+  temperature: 0
+  seed: 42
+  cache_dir: data/llm_cache
+
+queries:
+  vocab: data/wine_vocab.txt
+  out_dir: data/queries
+  quality: results/queries_quality.csv
+  max_retries: 3
+  # {note} = the tasting note, {banned} = the expert terms of the vocabulary
+  prompt: |
+    Here is a professional wine tasting note:
+
+    "{note}"
+
+    Imagine a person who knows nothing about wine has just tasted this wine.
+    Write what they would say to a friend about how it tastes, in one or two
+    short sentences, using plain everyday words.
+
+    Rules:
+    - Describe only the taste and how it feels in the mouth. You may say
+      whether it is red, white, rosé or sparkling.
+    - Do not mention food, occasions, prices or numbers.
+    - Do not name the grape, the winery, the region or the country.
+    - Do not use these wine-expert words: {banned}.
+    - Reply with the description only, without quotation marks or any introduction.
+  # Added after the prompt when the answer broke a rule (DECISIONS.md)
+  retry_prompt: |
+
+    Your previous answer was: "{previous}"
+    It used words that are not allowed: {problems}.
+    Rewrite it without those words, following the same rules.
+    Reply with the description only.

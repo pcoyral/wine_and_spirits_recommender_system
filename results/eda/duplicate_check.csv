@@ -1,0 +1,5 @@
+metric,value
+duplicates,10016
+same_wine,9982
+different_wine,34
+pct_same_wine,99.66

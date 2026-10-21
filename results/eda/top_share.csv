@@ -1,0 +1,7 @@
+entity,top_fraction,n_items,share_of_reviews
+winery,0.01,168,0.1153
+winery,0.1,1676,0.4833
+winery,0.2,3351,0.661
+variety,0.01,8,0.499
+variety,0.1,71,0.9223
+variety,0.2,142,0.9657

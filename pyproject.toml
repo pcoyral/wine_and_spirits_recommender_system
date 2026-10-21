@@ -4,17 +4,16 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "sensoryrec"
-version = "0.1.0"
-description = "A natural language-driven hybrid recommender system for wine and spirits discovery"
+version = "0.2.0"
+description = "Content-based wine recommender for novices, delivered through a RAG chatbot"
 requires-python = ">=3.11"
 
-# Runtime dependencies are pinned in requirements.txt / requirements.lock.txt
-# rather than here, so the venv stays the single source of truth during the
-# capstone. This file exists to make `src` importable as a package.
+# Runtime dependencies are pinned in requirements.txt rather than here.
+# This file exists to make `sensoryrec` importable (`pip install -e .`).
 
-[tool.setuptools]
-packages = ["src", "src.models"]
+[tool.setuptools.packages.find]
+where = ["src"]
 
 [tool.pytest.ini_options]
-pythonpath = ["."]
+pythonpath = ["src"]
 testpaths = ["tests"]

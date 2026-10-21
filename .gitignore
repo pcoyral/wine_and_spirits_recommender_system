@@ -41,3 +41,9 @@ models_cache/
 *.egg-info/
 build/
 dist/
+
+# Pipeline caches
+.cache/
+# The held-out IDs are committed so the split is fixed and auditable
+!data/processed/test_ids.csv
+!data/processed/dev_ids.csv

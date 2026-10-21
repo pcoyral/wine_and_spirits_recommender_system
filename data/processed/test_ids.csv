@@ -1,0 +1,201 @@
+wine_id,variety,band
+1694,Cabernet Sauvignon,>1000
+3061,Cabernet Sauvignon,>1000
+3319,Prugnolo Gentile,11-100
+3459,Pinot Noir,>1000
+3722,Port,101-1000
+3919,Verdejo,101-1000
+3944,Tempranillo-Merlot,1-10
+4180,Blanc du Bois,1-10
+4222,White Blend,>1000
+4794,Agiorgitiko,11-100
+5392,Petit Verdot,101-1000
+5793,Rhône-style White Blend,101-1000
+6200,Malbec-Syrah,11-100
+7055,Sauvignon Blanc-Chardonnay,1-10
+10256,Grüner Veltliner,>1000
+10323,Pinot Nero,101-1000
+10804,Muskat Ottonel,11-100
+10879,Nero di Troia,11-100
+11378,Tempranillo,>1000
+11398,Viognier,101-1000
+12035,Bordeaux-style White Blend,101-1000
+14296,Gelber Muskateller,11-100
+16598,Cabernet Sauvignon,>1000
+16789,Bordeaux-style Red Blend,>1000
+17282,Chardonnay,>1000
+17345,Red Blend,>1000
+17728,Rhône-style Red Blend,>1000
+17821,Viognier,101-1000
+17822,Pinot Grigio,101-1000
+19393,Refosco,1-10
+20701,Aglianico,101-1000
+21218,Carignan-Grenache,1-10
+21314,Grignolino,1-10
+22609,Nero d'Avola,101-1000
+22983,Syrah,>1000
+23617,Cabernet Sauvignon,>1000
+24389,Aglianico,101-1000
+24532,Aligoté,11-100
+24634,Viognier-Grenache Blanc,1-10
+26361,Pinot Noir,>1000
+26404,Rosenmuskateller,1-10
+27182,Malbec,>1000
+27794,Grenache,101-1000
+29360,Chardonnay,>1000
+29626,Grenache Blend,1-10
+30040,Alicante Bouschet,11-100
+31099,Cabernet Sauvignon-Shiraz,11-100
+31531,Merlot,>1000
+31776,Chardonnay,>1000
+31825,Bordeaux-style White Blend,101-1000
+31887,Pinot Nero,101-1000
+31980,Viognier,101-1000
+32827,Pignoletto,1-10
+32921,Pinot Noir,>1000
+33443,Mission,1-10
+33889,Bordeaux-style Red Blend,>1000
+34693,Cabernet Sauvignon-Cabernet Franc,11-100
+35251,Pansa Blanca,11-100
+36272,Bordeaux-style Red Blend,>1000
+36682,Cabernet Sauvignon,>1000
+36797,Bordeaux-style White Blend,101-1000
+37446,Pinot Noir,>1000
+38728,Fumé Blanc,11-100
+39952,Sangiovese,>1000
+40234,Chardonnay,>1000
+42516,Cabernet Sauvignon,>1000
+43743,Malvasia di Candia,1-10
+46599,Sauvignon Blanc,>1000
+46623,Grenache-Syrah,11-100
+46742,Sauvignon Blanc,>1000
+46815,Semillon-Chardonnay,1-10
+46871,Pinot Noir,>1000
+48204,Moscadello,1-10
+48841,Picpoul,11-100
+49043,Red Blend,>1000
+49605,Shiraz,101-1000
+49752,Garnacha,101-1000
+50568,Merlot,>1000
+50590,Red Blend,>1000
+50743,Pinot-Chardonnay,1-10
+51290,Bordeaux-style Red Blend,>1000
+51846,Sangiovese,>1000
+52442,Gamay,101-1000
+52737,Zinfandel,>1000
+52856,Zinfandel,>1000
+53834,Rosé,>1000
+53876,Pinot Noir,>1000
+54033,Petit Manseng,11-100
+54046,Colombard-Ugni Blanc,1-10
+55294,Pinot Gris,>1000
+55562,White Blend,>1000
+56736,Pinot Noir,>1000
+57009,Malbec,>1000
+57916,Cabernet Sauvignon-Carmenère,11-100
+59162,Meritage,101-1000
+59325,Malbec-Merlot,11-100
+60254,Cabernet Franc,>1000
+61236,Pinot Noir,>1000
+61310,Moscatel,11-100
+61775,Zinfandel,>1000
+62598,Verdejo,101-1000
+63552,Bordeaux-style Red Blend,>1000
+64555,Torrontés,101-1000
+64737,Cabernet Sauvignon,>1000
+64870,Cabernet Sauvignon,>1000
+65024,Pinotage,101-1000
+65367,Garnacha,101-1000
+66179,Carignane,11-100
+66261,Poulsard,1-10
+66461,Lagrein,11-100
+66498,Rosé,>1000
+67512,Chardonnay,>1000
+67641,Cabernet Sauvignon,>1000
+67808,Viognier,101-1000
+68011,Chardonnay,>1000
+68568,Rhône-style White Blend,101-1000
+69103,Cabernet Franc,>1000
+70288,Glera,101-1000
+71305,Shiraz,101-1000
+71599,Pinot Grigio,101-1000
+71924,Viognier-Marsanne,1-10
+72038,Cabernet Sauvignon,>1000
+72215,Gamay,101-1000
+73023,Gewürztraminer,101-1000
+73888,Gewürztraminer,101-1000
+74502,Cabernet Sauvignon-Sangiovese,1-10
+74935,Rosé,>1000
+74937,Sauvignon,101-1000
+75164,Symphony,1-10
+75459,Traminer,11-100
+76044,Cabernet Blend,11-100
+77472,Cabernet Sauvignon,>1000
+78656,Moschofilero,11-100
+79836,Grillo,101-1000
+80033,Bordeaux-style Red Blend,>1000
+80464,Riesling,>1000
+80509,Grüner Veltliner,>1000
+82922,Cabernet-Shiraz,1-10
+83232,Monica,1-10
+83246,Sparkling Blend,>1000
+83500,Grecanico,1-10
+84372,Cayuga,1-10
+85294,Syrah,>1000
+85628,Carmenère,101-1000
+86385,Silvaner,11-100
+86637,Bordeaux-style Red Blend,>1000
+86895,Chardonnay,>1000
+86993,Portuguese White,>1000
+87905,Tempranillo Blend,101-1000
+88525,Rhône-style White Blend,101-1000
+88564,White Blend,>1000
+89702,Chardonnay,>1000
+91006,Chardonnay,>1000
+91355,Shiraz,101-1000
+91386,Red Blend,>1000
+93127,Chardonnay,>1000
+93865,Alsace white blend,11-100
+95205,Red Blend,>1000
+96324,White Blend,>1000
+96515,Pinot Grigio,101-1000
+96916,Malbec-Merlot,11-100
+96917,Malbec-Merlot,11-100
+98137,Riesling,>1000
+98612,Sparkling Blend,>1000
+99946,Pinot Noir,>1000
+100471,Chancellor,1-10
+100808,Pinot Noir,>1000
+102971,Cabernet Sauvignon,>1000
+104046,Cabernet Sauvignon-Syrah,11-100
+104113,Ribolla Gialla,11-100
+104843,Cabernet Sauvignon,>1000
+104941,Sauvignon Blanc,>1000
+105356,Chardonnay,>1000
+105634,Riesling,>1000
+107478,Cabernet Sauvignon,>1000
+110073,Cabernet,1-10
+110131,Tempranillo,>1000
+110209,Barbera,101-1000
+111463,Tinta de Toro,101-1000
+112868,"Corvina, Rondinella, Molinara",101-1000
+113067,Babosa Negro,1-10
+115030,Dornfelder,11-100
+115176,"Corvina, Rondinella, Molinara",101-1000
+117282,Sangiovese,>1000
+118962,Chardonnay,>1000
+119910,Encruzado,11-100
+120149,Chardonnay,>1000
+120788,Merlot,>1000
+121451,Boğazkere,1-10
+123132,Cabernet Sauvignon-Cabernet Franc,11-100
+123203,Chardonnay,>1000
+124920,Syrah-Cabernet Sauvignon,11-100
+125056,Red Blend,>1000
+125128,Chardonnay-Semillon,1-10
+125181,Pinot Noir,>1000
+126108,Champagne Blend,>1000
+126952,Viognier-Roussanne,1-10
+128257,Vignoles,1-10
+128851,Tinto Fino,11-100
+129690,Red Blend,>1000

@@ -9,7 +9,7 @@ results yet (accuracy, long tail, refinement).*
 |---|---|
 | 1-page scope v2 | `1_scope_summary.md` |
 | S0: full-dataset cleaning and EDA, long-tail stats, scrape date | Done. The latest vintage in the titles is 2017 (`results/eda/summary.csv`); the exact scrape date still needs confirming on Kaggle |
-| S1 started: Popularity and SBERT on 3 to 5 example queries, metrics with unit tests | S1 is complete (all 4 recommenders, metrics, tests). Live demo in `results/demo/demo_top5.md` *(to run before the meeting)* |
+| S1 started: Popularity and SBERT on 3 to 5 example queries, metrics with unit tests | S1 is complete (all 4 recommenders, metrics, tests). Demo of all four models on 5 example queries: GitHub Actions run 41330968527 (Actions tab → Demo, summary page) |
 | Storyboard of the worked example | `3_storyboard.md` |
 | Ablation table "if ready" | Not yet. The pipeline exists, but the casual test queries (S2) don't |
 

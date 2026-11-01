@@ -1,9 +1,5 @@
 # SensoryRec — Scope v2 in one page
 
-> **DRAFT by Claude. Rewrite it in your own words before the meeting** (the
-> plan for this meeting asks for the summary "in your own words"). Keep the
-> structure; change the wording.
-
 **Paul — IE University BDBA Capstone · supervisor meeting 2 Nov 2026**
 
 ## Frozen Objective 1 (does not change until submission)

@@ -1,4 +1,9 @@
 # Demo queries for `make demo`, one per line. Lines starting with # are ignored.
-# Write them yourself, the way a novice would say them, without wine vocabulary
-# (e.g. no "tannins", "oaky", "finish"). Example of the style:
-#   something red that isn't too heavy, for a barbecue
+# Novice style: everyday taste words, no wine vocabulary, no grape or region names.
+# Written by Claude at the student's request (1 Nov 2026) and checked against
+# data/wine_vocab.txt (no expert terms). Demo only; not part of the evaluation.
+Something red that isn't too heavy, a bit fruity and easy to drink
+A fresh white that tastes like lemon and green apple, not sweet
+Something bubbly and light to celebrate with friends
+A sweet wine that tastes like honey and ripe peaches, for dessert
+A strong, rich red with chocolate and spice for a cold winter night

@@ -18,7 +18,7 @@ eda:
 embed:
 	$(PYTHON) -m sensoryrec.recommenders.semantic
 
-# Top-5 of Popularity and Semantic for the queries in data/demo_queries.txt
+# Top-5 of all four models for the queries in data/demo_queries.txt
 demo:
 	$(PYTHON) -m sensoryrec.demo
 

@@ -1,32 +1,33 @@
-# Storyboard — the worked example (the "mínimo un caso")
+# Storyboard: the worked example (the "mínimo un caso")
 
-> **DRAFT for one slide.** This is a mock-up of the *planned* demo (S3 chat +
-> S4 images). The wines are placeholders: no real recommendations are shown
-> until the system produces them. Adjust the persona and wording to your taste.
+> DRAFT for one slide. This is a mock-up of the *planned* demo (S3 chat and
+> S4 images). The wines are placeholders, and no real recommendations appear
+> until the system produces them.
 
-## The scenario in one line
+## The scenario
 
-A wine novice describes what she likes in her own words, gets five bottles she
-can recognise in a shop, refines once in plain language, and reads why each
-bottle fits — explained only from the critics' notes.
+A wine novice describes what she likes in her own words and gets five bottles
+she can recognise in a shop. She refines the list once in plain language, then
+reads why each bottle fits, with every explanation drawn only from the
+critics' notes.
 
 ## Six frames
 
 | # | Frame | What the user sees | What the system does | Built in |
 |---|---|---|---|---|
-| 1 | **Persona** | Lucía, 24, likes wine but knows no wine words; buying a bottle for a dinner with friends | — | — |
-| 2 | **Query** | Types: *"something red that isn't too heavy, a bit fruity, easy to drink"* | Sentence-BERT turns the sentence into a vector and compares it with ~120,000 tasting notes | S1 ✅ |
-| 3 | **Top 5** | Five cards: **bottle photo**, name, country, price, one plain-language line | Ranking by cosine similarity (deterministic, no LLM) | Ranking S1 ✅ · cards S3 · photos S4 |
-| 4 | **Refinement** | Types: *"a bit lighter, and cheaper"* | "Lighter" moves the query away from the "body" direction; "cheaper" caps the price at the median of the current top 5 | S2 ✅ (code) · chat S3 |
-| 5 | **Explanation** | 2–3 sentences per bottle: *"The critic describes it as …"* with the quoted words highlighted | The LLM writes the explanation **only from the retrieved notes**; a sample of 50 is checked by hand for unsupported claims | S3 |
-| 6 | **In the shop** | The bottle photo and the label text to look for: producer, wine name, vintage | Photo from the curated subset; otherwise a generic red/white/rosé/sparkling illustration + the label text | S4 |
+| 1 | Persona | Lucía, 24, likes wine but knows no wine vocabulary. She is buying a bottle for a dinner with friends | | |
+| 2 | Query | She types *"something red that isn't too heavy, a bit fruity, easy to drink"* | Sentence-BERT turns the sentence into a vector and compares it with about 120,000 tasting notes | S1 (done) |
+| 3 | Top 5 | Five cards, each with a bottle photo, name, country, price and one plain-language line | Ranking by cosine similarity (deterministic, no LLM) | Ranking S1 (done); cards S3; photos S4 |
+| 4 | Refinement | She types *"a bit lighter, and cheaper"* | "Lighter" moves the query away from the "body" direction, and "cheaper" caps the price at the median of the current top 5 | S2 (code done); chat S3 |
+| 5 | Explanation | 2 or 3 sentences per bottle, such as *"The critic describes it as …"*, with the quoted words highlighted | The LLM writes each explanation only from the retrieved notes. A sample of 50 is checked by hand for unsupported claims | S3 |
+| 6 | In the shop | The bottle photo and the label text to look for: producer, wine name, vintage | The photo comes from the curated subset. Other wines get a generic red, white, rosé or sparkling illustration plus the label text | S4 |
 
 ## Where the bottle images appear
 
-- **Frame 3 and frame 6.** A real photo only for the ~50–100 wines of the demo
-  subset, each with its source and licence logged (`data/images/sources.csv`).
-- **Every other wine** gets a generic illustration by colour plus the label
-  text — never a wrong bottle.
+- Frames 3 and 6. Only the 50 to 100 wines in the demo subset get a real photo,
+  and each photo's source and licence are logged in `data/images/sources.csv`.
+- Every other wine gets a generic illustration by colour plus the label text,
+  so the app never shows the wrong bottle.
 
 ## Slide layout (sketch)
 
@@ -52,7 +53,7 @@ bottle fits — explained only from the critics' notes.
 
 ## Two things to say while showing it
 
-- **The LLM never chooses the wines.** It only explains a list that a
-  deterministic model already ranked, which keeps the results reproducible.
-- **The images are a usability feature, not a research claim.** Coverage will
-  be reported honestly ("photos for N of 119,954 wines").
+- The LLM never chooses the wines. It only explains a list that a
+  deterministic model has already ranked, which keeps the results reproducible.
+- The images help usability and are not part of any research claim. Coverage
+  will be reported as it is ("photos for N of 119,954 wines").

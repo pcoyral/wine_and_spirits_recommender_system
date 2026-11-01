@@ -9,7 +9,7 @@
 | 0-3 | Where I am, in one sentence | |
 | 3-7 | Scope is under control | `1_scope_summary.md` |
 | 7-12 | S0: the data and the long tail | 3 figures in `results/eda/` |
-| 12-17 | S1: the core works (live demo) | `results/demo/demo_top5.md` (or run `make demo`) |
+| 12-17 | S1: the core works (demo) | the 5 demo images, or the Demo run's summary page on GitHub (Actions tab) |
 | 17-20 | S2: how the evaluation will work | `DECISIONS.md`, `docs/human_query_protocol.md` |
 | 20-23 | The worked example | `3_storyboard.md` |
 | 23-30 | Questions for him, next steps | List below |
@@ -35,12 +35,29 @@ S0, the data:
   fewer. On this data that lands right next to the 80/20 cut, and it's the same
   unit the Popularity baseline counts."
 
-S1, the demo (open `demo_top5.md`):
-- "Popularity gives the same wines for every query, here the most-reviewed
-  winery, which is Portuguese. The semantic model follows what the person
-  asked for."
+S1, the demo (one image per query, four models side by side):
+- "Popularity gives the same five wines for every query: the most-reviewed
+  winery, which is Portuguese. It even suggests a white for a red query."
+- Query 1 (light, fruity red): Semantic finds light, easy, fruity reds
+  ("Lightweight red…", "made to be drunk young"). TF-IDF matches words, not
+  meaning: its first pick is a Chardonnay, and its fifth is a rosé the critic
+  calls "too heavy". Attribute only understands "red", so it returns
+  100-point wines at $150–550.
+- Query 2 (lemon, green apple, not sweet): Semantic finds the right kind of
+  white, but its third pick is a semi-sweet Riesling. Be honest: negation
+  ("not sweet") is hard for every model, which is what refinement (S2) is for.
+- Query 3 (bubbly, to celebrate): Semantic picks party and sparkling wines;
+  TF-IDF's first pick is a Cabernet because its note says the flavours "never
+  really make friends" — a word match with no meaning.
+- Query 4 (sweet, honey, peach): TF-IDF and Semantic both do well; Attribute
+  finds no fact in the sentence and falls back to the best-rated wines.
+- Across queries: Semantic and TF-IDF suggest affordable, lesser-known wines;
+  Attribute and Popularity suggest famous, expensive ones. That's a hint for
+  the long-tail question (SQ1), to be measured properly with `make eval`.
 - "This is qualitative. The real numbers will come from 200 held-out test
   queries."
+- "The three models that don't need Sentence-BERT gave identical lists on
+  GitHub's machine and on mine, so the pipeline is reproducible."
 - If he asks how it ranks: sentence embeddings and cosine similarity, no LLM.
 
 S2, evaluation design:

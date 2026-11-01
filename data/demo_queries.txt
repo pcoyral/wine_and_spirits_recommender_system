@@ -2,3 +2,8 @@
 # Write them yourself, the way a novice would say them, without wine vocabulary
 # (e.g. no "tannins", "oaky", "finish"). Example of the style:
 #   something red that isn't too heavy, for a barbecue
+I want a fruity red wine.
+I want to discover a wine from Argentina.
+I want to find the white wine between €20 and €30.
+Recommend me an 8-tier-level Merlot.
+Surprise me with a bottle that I've never tasted before.

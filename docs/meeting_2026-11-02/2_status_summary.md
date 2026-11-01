@@ -1,66 +1,74 @@
-# Status on 1 Nov 2026 — what exists and what doesn't
+# Status on 1 Nov 2026: what exists and what doesn't
 
-*Every number below is copied from the file named next to it. Model results
-(accuracy, long tail, refinement) **do not exist yet**.*
+*Each number below comes from the file named next to it. There are no model
+results yet (accuracy, long tail, refinement).*
 
 ## Against the plan for this meeting
 
 | Planned for 2 Nov | Status |
 |---|---|
 | 1-page scope v2 | `1_scope_summary.md` |
-| S0: full-dataset cleaning + EDA, long-tail stats, scrape date | Done; scrape date: latest vintage in titles is 2017 (`results/eda/summary.csv`), exact date to confirm on Kaggle |
-| S1 started: Popularity + SBERT on 3–5 example queries; metrics with unit tests | **S1 complete** (all 4 recommenders, metrics, tests); live demo: `results/demo/demo_top5.md` *(to run before the meeting)* |
+| S0: full-dataset cleaning and EDA, long-tail stats, scrape date | Done. The latest vintage in the titles is 2017 (`results/eda/summary.csv`); the exact scrape date still needs confirming on Kaggle |
+| S1 started: Popularity and SBERT on 3 to 5 example queries, metrics with unit tests | S1 is complete (all 4 recommenders, metrics, tests). Live demo in `results/demo/demo_top5.md` *(to run before the meeting)* |
 | Storyboard of the worked example | `3_storyboard.md` |
-| Ablation table "if ready" | Not yet: the pipeline exists, the casual test queries (S2) don't |
+| Ablation table "if ready" | Not yet. The pipeline exists, but the casual test queries (S2) don't |
 
-## S0 — data and EDA (PR #1)
+## S0: data and EDA (PR #1)
 
-- **Cleaning** (`results/eda/cleaning_log.csv`): 129,971 rows → 119,954. 10,016
-  exact duplicate notes removed; 99.66% of them are the same wine scraped twice
-  (`duplicate_check.csv`). 1 row with no variety removed.
-- **Long tail** (`summary.csv`, `top_share.csv`): 16,755 wineries, 707 varieties.
-  Gini 0.61 (wineries) and 0.93 (varieties). The top 1% of varieties (8 grapes)
-  hold 49.9% of reviews; 4,582 wineries have a single review.
-- **Tail definition** (`tail_summary.csv`, `tail_options.csv`): a wine is in the
-  tail if its winery has ≤ 10 reviews: 81.8% of wineries, 36.4% of wines.
-- **Why no collaborative filtering** (`summary.csv`, `taster_coverage.csv`):
-  one review per wine, 19 tasters, 20.8% of reviews without a taster.
-- **Hold-out** (`results/eda/data_manifest.json`): 200 test wines + 100 dev
-  wines, stratified by variety band so rare grapes are tested.
+- Cleaning (`results/eda/cleaning_log.csv`): 129,971 rows reduced to 119,954.
+  I removed 10,016 exact duplicate notes, 99.66% of which are the same wine
+  scraped twice (`duplicate_check.csv`), and 1 row with no variety.
+- Long tail (`summary.csv`, `top_share.csv`): 16,755 wineries and 707
+  varieties, with a Gini of 0.61 for wineries and 0.93 for varieties. The top 1%
+  of varieties (8 grapes) hold 49.9% of reviews, and 4,582 wineries have a
+  single review.
+- Tail definition (`tail_summary.csv`, `tail_options.csv`): a wine is in the
+  tail if its winery has 10 reviews or fewer. That covers 81.8% of wineries and
+  36.4% of wines.
+- Why no collaborative filtering (`summary.csv`, `taster_coverage.csv`): one
+  review per wine, 19 tasters, and 20.8% of reviews with no taster.
+- Hold-out (`results/eda/data_manifest.json`): 200 test wines and 100 dev
+  wines, stratified by variety band so that rare grapes get tested.
 
-## S1 — models and metrics (PRs #2–#5)
+## S1: models and metrics (PRs #2 to #5)
 
-- One interface, four models: **Popularity** (winery review count),
-  **TF-IDF**, **Attribute** (rule-based: grape, country, colour, price), and
-  **Semantic** (Sentence-BERT `all-MiniLM-L6-v2`, cosine similarity).
+- Four models share one interface: Popularity (winery review count), TF-IDF,
+  Attribute (rule-based on grape, country, colour and price), and Semantic
+  (Sentence-BERT `all-MiniLM-L6-v2` with cosine similarity).
 - Metrics: HR@5, NDCG@5, coverage, tail share, Gini (wine and winery level),
-  novelty, intra-list diversity — each tested on a hand-worked example.
+  novelty and intra-list diversity. Each one is tested against a hand-worked
+  example.
 - `make eval` builds the ablation table once the test queries exist.
 
-## S2 — evaluation queries and refinement (PRs #6, #7) — code done, not run
+## S2: evaluation queries and refinement (PRs #6, #7), code done but not run
 
-- 300 casual queries to be written by a **local LLM** (Llama 3.2 3B via Ollama,
-  temperature 0, every answer cached and committed). Checked automatically:
-  no expert vocabulary (85 banned terms, approved word by word), no name of the
-  wine, no price; failed queries are retried with feedback, then flagged and excluded.
-- A **human validity check**: ~30 novices write queries from memory for 30 test
-  wines (`docs/human_query_protocol.md`) — **waiting for IE's ethics rules**.
-- **Refinement** ("sweeter", "less oaky", "cheaper"): direction vectors from
-  training notes, step size chosen on dev, success measured with a separate word
-  list against random directions and the cost to the original wine.
+- A local LLM (Llama 3.2 3B via Ollama, temperature 0) will write 300 casual
+  queries, with every answer cached and committed. Each query is checked
+  automatically for expert vocabulary (85 banned terms, approved one by one),
+  the wine's name and the price. A query that fails is retried with feedback;
+  if it still fails, it is flagged and excluded.
+- Human validity check: about 30 novices write queries from memory for 30 test
+  wines (`docs/human_query_protocol.md`). This is on hold until IE's ethics
+  rules are clear.
+- Refinement ("sweeter", "less oaky", "cheaper") uses direction vectors built
+  from the training notes, with the step size chosen on dev. Success is scored
+  with a separate word list and compared against random directions, along with
+  the cost to the original wine's rank.
 
 ## How the work is done
 
-- Every result is regenerated by one command (`make data`, `make eval`, ...),
-  with fixed seeds and pinned versions.
-- Every methodological choice is dated and justified in `DECISIONS.md`.
-- 7 pull requests, each sprint independently code-reviewed; 104 unit tests.
-- **AI assistance:** the code was written with Claude Code (each commit says
-  so); I decided every methodological choice, and `docs/S0–S2_defence_notes.md`
-  are my notes on how each part works.
+- One command regenerates each result (`make data`, `make eval`, ...), with
+  fixed seeds and pinned versions.
+- `DECISIONS.md` dates and justifies every methodological choice.
+- 7 pull requests so far, with each sprint code-reviewed independently, and 104
+  unit tests.
+- AI assistance: Claude Code wrote the code, and each commit says so. I made
+  every methodological choice, and `docs/S0–S2_defence_notes.md` holds my notes
+  on how each part works.
 
 ## Not done yet
 
-- Casual test/dev queries (LLM run on my laptop), then the first ablation table.
-- Human queries (after ethics guidance), sommelier check.
-- S3: chat app with grounded explanations and the worked example.
+- Casual test and dev queries (the LLM runs on my laptop), then the first
+  ablation table.
+- Human queries (after the ethics guidance) and the sommelier check.
+- S3: the chat app with grounded explanations and the worked example.

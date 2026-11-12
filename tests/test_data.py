@@ -3,7 +3,7 @@ import pandas as pd
 import pytest
 
 from sensoryrec.data import allocate, clean, duplicate_check, make_splits, tail_mask, variety_band
-from sensoryrec.eda import top_share, vintage_years
+from sensoryrec.eda import missing_taster_by_vintage, taster_by_country, top_share, vintage_years, wine_vintage
 
 LONG = " ".join(["word"] * 25)  # a 25-word note, long enough for test/dev
 
@@ -143,3 +143,33 @@ def test_vintage_is_first_year_after_winery_name():
 def test_top_share():
     # counts 50, 30, 10, 10: top 10% of 4 items -> ceil(0.4) = 1 item -> 50/100
     assert top_share([10, 50, 10, 30], 0.10) == pytest.approx(0.5)
+
+
+def taster_frame():
+    return pd.DataFrame({
+        "winery": ["W"] * 5,
+        "title": ["W 2010 A", "W 2010 B", "W 2014 C", "W 2014 D", "W NV E"],
+        "country": ["France", "France", "France", "Italy", "Italy"],
+        "taster_name": ["Ann", "Ann", "Bob", "Unknown", "Cid"],
+        "taster_name_missing": [False, False, False, True, False],
+    })
+
+
+def test_wine_vintage_gives_one_year_per_wine():
+    assert wine_vintage(taster_frame()).tolist()[:4] == [2010.0, 2010.0, 2014.0, 2014.0]
+    assert np.isnan(wine_vintage(taster_frame()).iloc[4])       # "NV": no vintage
+
+
+def test_taster_by_country():
+    out = taster_by_country(taster_frame()).set_index("country")
+    # France: 3 reviews, Ann wrote 2 -> 66.7 %; nobody unnamed
+    assert out.loc["France", "main_taster"] == "Ann" and out.loc["France", "main_taster_pct"] == 66.7
+    # Italy: 2 reviews, one unnamed (50 %), Cid wrote the other (50 %)
+    assert out.loc["Italy", "main_taster"] == "Cid" and out.loc["Italy", "pct_no_taster"] == 50.0
+
+
+def test_missing_taster_by_vintage():
+    out = missing_taster_by_vintage(taster_frame()).set_index("year")
+    # 2010: 2 wines, none unnamed; 2014: 2 wines, 1 unnamed; the NV wine is left out
+    assert out.loc[2010, "pct_no_taster"] == 0.0 and out.loc[2014, "pct_no_taster"] == 50.0
+    assert out["n_wines"].sum() == 4

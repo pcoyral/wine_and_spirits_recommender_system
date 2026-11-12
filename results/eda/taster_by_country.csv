@@ -1,0 +1,45 @@
+country,n_reviews,main_taster,main_taster_reviews,main_taster_pct,pct_no_taster
+US,50448,Virginie Boone,8707,17.3,31.7
+France,20351,Roger Voss,17148,84.3,1.3
+Italy,17921,Kerin O’Keefe,9679,54.0,44.5
+Spain,6116,Michael Schachner,6046,98.9,1.0
+Portugal,5256,Roger Voss,5223,99.4,0.1
+Chile,4183,Michael Schachner,4049,96.8,2.6
+Argentina,3543,Michael Schachner,3541,99.9,0.1
+Austria,3033,Anne Krebiehl MW,1961,64.7,0.3
+Australia,2197,Joe Czerwinski,1909,86.9,13.1
+Germany,1992,Anna Lee C. Iijima,1606,80.6,1.6
+South Africa,1301,Lauren Buzzeo,924,71.0,5.5
+New Zealand,1278,Joe Czerwinski,1181,92.4,7.6
+Israel,466,Mike DeSimone,266,57.1,1.1
+Greece,431,Susan Kostrzewa,428,99.3,0.0
+Canada,226,Paul Gregutt,159,70.4,0.4
+Bulgaria,132,Jeff Jenssen,105,79.5,0.0
+Hungary,129,Jeff Jenssen,81,62.8,0.8
+Romania,102,Jeff Jenssen,53,52.0,0.0
+Uruguay,98,Michael Schachner,98,100.0,0.0
+Turkey,81,Mike DeSimone,76,93.8,0.0
+Slovenia,77,Jeff Jenssen,53,68.8,0.0
+Georgia,76,Mike DeSimone,56,73.7,0.0
+Croatia,70,Anna Lee C. Iijima,37,52.9,0.0
+Mexico,68,Michael Schachner,63,92.6,7.4
+England,63,Anne Krebiehl MW,63,100.0,0.0
+Unknown,59,Jeff Jenssen,21,35.6,0.0
+Moldova,56,Jeff Jenssen,49,87.5,0.0
+Brazil,49,Michael Schachner,49,100.0,0.0
+Lebanon,32,Mike DeSimone,17,53.1,0.0
+Morocco,24,Mike DeSimone,23,95.8,0.0
+Peru,16,Michael Schachner,16,100.0,0.0
+Ukraine,14,Jeff Jenssen,12,85.7,0.0
+Czech Republic,11,Jeff Jenssen,7,63.6,0.0
+Macedonia,11,Susan Kostrzewa,5,45.5,0.0
+Cyprus,10,Susan Kostrzewa,10,100.0,0.0
+India,8,Mike DeSimone,8,100.0,0.0
+Serbia,8,Jeff Jenssen,8,100.0,0.0
+Switzerland,6,Jeff Jenssen,5,83.3,0.0
+Luxembourg,5,Jeff Jenssen,5,100.0,0.0
+Armenia,2,Mike DeSimone,2,100.0,0.0
+Bosnia and Herzegovina,2,Anna Lee C. Iijima,1,50.0,0.0
+China,1,Mike DeSimone,1,100.0,0.0
+Egypt,1,Susan Kostrzewa,1,100.0,0.0
+Slovakia,1,Anna Lee C. Iijima,1,100.0,0.0

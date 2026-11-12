@@ -7,10 +7,11 @@ SensoryRec is an IE University BDBA capstone. It is a **content-based** wine rec
 
 ## Frozen scope (do not expand without the student's explicit approval)
 IN: data pipeline, EDA, Popularity / TF-IDF / Attribute / SBERT recommenders, plain-language refinement, offline evaluation, RAG chat UI.
+ADDED after the supervisor meeting of Nov 2026 (approved by the student, 12 Nov 2026; see DECISIONS.md): (1) a coverage/diversity study on ~1,000 LLM-simulated queries; (2) extra embedding models next to SBERT: an open model first, Gemini embeddings if the free quota allows; (3) an analysis-only look at consumer ratings from the open X-Wines dataset (CC0); (4) a note comparing Python map libraries plus one clearly labelled map mock-up.
 REQUIRED: one complete worked example in the demo (persona → query → top-5 with bottle images → refinement → grounded explanation).
 INCREMENTS (only after core is done, in this order): A) bottle images for a curated demo subset + generic fallback; B) group mode for two friends; C) restaurant wine-list photo → OCR → rank menu wines (stretch).
 OUT: collaborative filtering, context-aware recommendation, location/availability and maps (Future Work; at most a clearly labelled mock-up), external purchase APIs, spirits, fine-tuning models.
-NEVER scrape sites whose Terms of Service forbid it (e.g. Vivino, Google). Every external image must have its source and licence logged in `data/images/sources.csv`.
+NEVER scrape sites whose Terms of Service forbid it (e.g. Vivino, Google); for consumer data use published open datasets such as X-Wines. API keys never go in the repo: environment variable or GitHub secret only. Every external image must have its source and licence logged in `data/images/sources.csv`.
 If a task seems to need something in OUT, stop and ask.
 
 ## Non-negotiable rules
@@ -59,6 +60,7 @@ Next supervisor meeting: **Mon 2 Nov 2026**. Target: S0 complete, S1 started (Po
 - **S0** `make data` → cleaned parquet + EDA figures, including long-tail stats (reviews per winery/variety, Lorenz curve) and the dataset's scrape date. Define tail threshold in config.
 - **S1** All four recommenders implement the same interface. `make eval` → `results/ablation.csv` with HR@5, NDCG@5, coverage, tail share, Gini, ILD per model. Unit tests for every metric on toy examples with hand-checked answers.
 - **S2** 200 casual queries (cached), vocabulary check passed, refinement directional success rate in `results/refinement.csv`.
+- **S2b** (after the Nov 2026 meeting) `make simulate` → ~1,000 simulated queries (cached); `make eval-simulated` → `results/simulated_coverage.csv` (coverage, tail share, Gini, novelty, ILD per model, no accuracy); one extra embedding model in every comparison; `results/xwines/` consumer long-tail analysis; `docs/map_libraries.md` + labelled mock-up.
 - **S3** Chat app: query → top-5 + grounded explanation; supports a follow-up refinement turn. Worked example runs end to end from a script. Export 50 explanations to `results/faithfulness_sample.csv` for manual annotation.
 - **S4** Bottle images for the demo subset, fallback for the rest; report coverage (N wines with images).
 - **S5** Group mode + `results/group.csv`.

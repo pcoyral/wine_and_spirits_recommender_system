@@ -70,6 +70,7 @@ SHA-256 is recorded in `results/eda/data_manifest.json` by `make data`.
 | `make simulate` | ~1,000 simulated customer queries written by Gemini (needs `GEMINI_API_KEY`; `LIMIT=20` for a trial) → `data/queries/simulated_queries.csv` |
 | `make eval-simulated` | Coverage and diversity of every model on the simulated queries → `results/simulated_coverage*.csv` |
 | `make xwines` | Long tail and sparsity in consumer ratings (X-Wines, analysis only; put the Full version's two CSVs in `data/raw/xwines/`) → `results/xwines/` |
+| `make map-mockup` | Map MOCK-UP for Future Work (real origins of the top-5, invented shops) → `docs/map_mockup.html`; see `docs/map_libraries.md` |
 | `make test` | Run unit tests |
 
 ## Evaluation

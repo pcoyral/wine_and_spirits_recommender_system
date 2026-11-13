@@ -96,6 +96,7 @@ jobs:
         if: steps.simulate.outcome == 'success'
         run: |
           for ref in ~/.cache/huggingface/hub/models--*/refs/main; do
+            [ -e "$ref" ] || continue   # a model pinned to a revision has no refs/main
             echo "$(basename "$(dirname "$(dirname "$ref")")") revision: $(cat "$ref")"
           done | tee results/simulated_model_revisions.txt
 

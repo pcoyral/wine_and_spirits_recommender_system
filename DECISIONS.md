@@ -398,3 +398,14 @@ The supervisor asked for five things; the student approved these choices
   same table shows Wine Enthusiast reviews per winery and variety, so the
   two long tails can be compared side by side. X-Wines wines are **not**
   matched to Wine Enthusiast wines and no model uses the ratings.
+- **Map mock-up (`make map-mockup`):** built with **plotly**, chosen after
+  comparing folium, plotly and pydeck (`docs/map_libraries.md`): it places
+  countries from their ISO code, so the "where from" map needs no
+  coordinates (the dataset has none), and it is supported directly by both
+  Streamlit and Gradio. Map 1 (real): countries of origin of the top k for
+  one demo query and one model, named in the title. Map 2 (MOCK): four
+  shops invented in the code, each pin and the title labelled MOCK, plus a
+  banner on the page. Country level only: finer places would need geocoding
+  (an external service), which stays Future Work. The country-to-ISO table
+  (`data/country_iso3.csv`) was written by Claude from the ISO 3166 standard
+  ("England" is mapped to GBR, "Macedonia" to MKD).

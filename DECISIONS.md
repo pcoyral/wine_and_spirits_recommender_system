@@ -385,3 +385,16 @@ The supervisor asked for five things; the student approved these choices
   not against 100%.
 - **Trial runs** (`LIMIT=N`) save only the LLM answers; their tables are not
   results.
+- **X-Wines analysis (`make xwines`):** the authors publish three versions.
+  Only the 100-wine Test sample is in their GitHub repository; Slim and Full
+  are on their Google Drive and must be downloaded by hand into
+  `data/raw/xwines/` (not committed; names and SHA-256 go to
+  `results/xwines/data_manifest.json`). Test and Slim are samples picked by
+  the authors, so only the **Full** version shows the real distribution: the
+  script warns, and marks the manifest, when a smaller version is used. No
+  result from the Test sample is committed. A wine with no rating counts as
+  0; a user who rated several vintages of one wine counts once for density;
+  "few ratings" uses the thesis's tail threshold (`tail.max_reviews`). The
+  same table shows Wine Enthusiast reviews per winery and variety, so the
+  two long tails can be compared side by side. X-Wines wines are **not**
+  matched to Wine Enthusiast wines and no model uses the ratings.

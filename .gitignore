@@ -16,6 +16,8 @@ env/
 # Data — the full ~130k-review dataset is large and external (see README),
 # so it's excluded by name. 03_Sample_Data.csv (small, schema reference) stays tracked.
 data/raw/winemag-data*.csv
+# X-Wines consumer ratings (open dataset, downloaded by hand; see src/sensoryrec/xwines.py)
+data/raw/xwines/
 data/processed/*
 !data/processed/.gitkeep
 

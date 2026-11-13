@@ -4,10 +4,14 @@ Run with `make eda` (needs `make data` first). Everything goes to results/eda/:
 - summary.csv                  headline numbers (rows, wineries, Gini, ...)
 - top_share.csv                share of reviews held by the top 1/10/20%
 - taster_coverage.csv          reviews per taster
+- taster_by_country.csv        per country: its main taster and their share
+- missing_taster_by_vintage.csv  % of reviews with no taster name, per vintage
 - vintage_years.csv            vintage years found in titles (scrape-date evidence)
 - tail_summary.csv             size of the long tail under config.yaml's definition
 - tail_options.csv             the tail definitions considered (DECISIONS.md)
-- fig_rank_frequency.png       long-tail plot, wineries and varieties
+- fig_key_facts.png            the headline numbers as one table
+- fig_rank_frequency.png       long-tail plot, wineries and varieties (log-log)
+- fig_long_tail_linear.png     the same on normal axes (the classic long-tail shape)
 - fig_lorenz.png               Lorenz curves with Gini
 - fig_description_length.png   words per tasting note
 - fig_missingness.png          % missing per column (from data.py)
@@ -71,17 +75,48 @@ def taster_table(df):
     return t
 
 
-def vintage_years(df):
-    """Vintage year of each wine, read from its title. Titles look like
-    "Winery 2013 Name Variety (Region)", so we cut off the winery name and
-    take the first four-digit year (1900-2099) after it. Taking simply the
-    first or last year in the title goes wrong for names such as
-    "1912 Winemakers 2011 ..." or "Kirsten 2013 1904 Spätlese ...".
-    The latest vintage is a lower bound for when the data was scraped."""
+def wine_vintage(df):
+    """Vintage year of each wine (NaN if none), read from its title. Titles
+    look like "Winery 2013 Name Variety (Region)", so we cut off the winery
+    name and take the first four-digit year (1900-2099) after it. Taking
+    simply the first or last year in the title goes wrong for names such as
+    "1912 Winemakers 2011 ..." or "Kirsten 2013 1904 Spätlese ..."."""
     rest = [t[len(w):] if t.startswith(w) else t for t, w in zip(df["title"], df["winery"])]
     found = pd.Series(rest, index=df.index).str.extract(r"\b(19\d{2}|20\d{2})\b")[0]
-    years = found.dropna().astype(int)
+    return found.astype(float)
+
+
+def vintage_years(df):
+    """Number of wines per vintage year. The latest vintage is a lower bound
+    for when the data was scraped."""
+    years = wine_vintage(df).dropna().astype(int)
     return years.value_counts().sort_index().rename_axis("year").reset_index(name="n_wines")
+
+
+def taster_by_country(df):
+    """Per country: how many reviews, who wrote most of them, and their share.
+    Shows that some countries are covered almost entirely by one critic
+    (the supervisor's question about one taster's very high count)."""
+    rows = []
+    for country, g in df.groupby("country"):
+        named = g.loc[~g["taster_name_missing"], "taster_name"].value_counts()
+        rows.append({"country": country, "n_reviews": len(g),
+                     "main_taster": named.index[0] if len(named) else "Unknown",
+                     "main_taster_reviews": int(named.iloc[0]) if len(named) else 0,
+                     "main_taster_pct": round(named.iloc[0] / len(g) * 100, 1) if len(named) else 0.0,
+                     "pct_no_taster": round(g["taster_name_missing"].mean() * 100, 1)})
+    return pd.DataFrame(rows).sort_values("n_reviews", ascending=False).reset_index(drop=True)
+
+
+def missing_taster_by_vintage(df):
+    """Per vintage year: wines and the share whose review names no taster.
+    Missing names are mostly older reviews: the reviews exist, the name was
+    not recorded."""
+    d = pd.DataFrame({"year": wine_vintage(df), "missing": df["taster_name_missing"]}).dropna()
+    out = d.groupby("year")["missing"].agg(n_wines="size", pct_no_taster="mean").reset_index()
+    out["year"] = out["year"].astype(int)
+    out["pct_no_taster"] = (out["pct_no_taster"] * 100).round(1)
+    return out
 
 
 def summary_table(df, cleaning_log, min_words):
@@ -108,6 +143,9 @@ def summary_table(df, cleaning_log, min_words):
         f"pct_under_{min_words}_words": round((df["n_words"] < min_words).mean() * 100, 2),
         "n_tasters": n_tasters,
         "pct_no_taster": round(df["taster_name_missing"].mean() * 100, 2),
+        "top_taster": tasters.value_counts().index[0],
+        "top_taster_reviews": int(tasters.value_counts().iloc[0]),
+        "top_taster_pct": round(tasters.value_counts().iloc[0] / len(df) * 100, 2),
         # One review per wine, so a taster x wine matrix has at most one
         # filled cell per column: density = reviews with taster / (tasters * wines)
         "taster_wine_matrix_density": len(tasters) / (n_tasters * len(df)),
@@ -181,6 +219,67 @@ def plot_rank_frequency(df, path):
     plt.close(fig)
 
 
+def plot_long_tail_linear(df, path):
+    """The same counts as the log-log plot on normal axes: a few items with
+    many reviews on the left, then a long, low tail."""
+    fig, axes = plt.subplots(1, 2, figsize=(11, 4.2))
+    for ax, col in zip(axes, ["winery", "variety"]):
+        counts = reviews_per(df, col).to_numpy()
+        ax.fill_between(np.arange(1, len(counts) + 1), counts, step="mid", alpha=0.8)
+        ax.set_xlabel(f"{col.capitalize()} rank (1 = most reviewed)")
+        ax.set_ylabel("Number of reviews")
+        ax.set_title(f"Reviews per {col} ({len(counts):,} in total)")
+    fig.suptitle("The long tail on normal axes")
+    fig.tight_layout()
+    fig.savefig(path, dpi=200)
+    plt.close(fig)
+
+
+def plot_key_facts(summary, top, tail, splits, path):
+    """The headline numbers as one table, each on its own row with a plain
+    label. summary / tail: metric -> value; top: the top-share table;
+    splits: (test wines, dev wines)."""
+    s, t = dict(summary.values), dict(tail.values)
+    share = lambda e, f: float(top[(top["entity"] == e) & (top["top_fraction"] == f)]["share_of_reviews"].iloc[0]) * 100
+    n_test, n_dev = splits
+    rows = [
+        ("Data", "Reviews in the raw file", f"{int(s['raw_rows']):,}"),
+        ("", "Wines after cleaning (the catalogue)", f"{int(s['clean_rows']):,}"),
+        ("", "Wineries", f"{int(s['n_wineries']):,}"),
+        ("", "Grape varieties", f"{int(s['n_varieties']):,}"),
+        ("Long tail", "Gini of reviews per winery", f"{float(s['gini_winery']):.2f}"),
+        ("", "Gini of reviews per grape variety", f"{float(s['gini_variety']):.2f}"),
+        ("", "Reviews held by the top 1% of grape varieties", f"{share('variety', 0.01):.1f}%"),
+        ("", "Reviews held by the top 20% of wineries", f"{share('winery', 0.2):.1f}%"),
+        ("", "Wineries with a single review", f"{int(s['wineries_with_1_review']):,}"),
+        ("", "Wineries in the tail (10 reviews or fewer)", f"{float(t['tail_winery_pct']):.1f}%"),
+        ("", "Wines from tail wineries", f"{float(t['tail_wines_pct']):.1f}%"),
+        ("Sparsity", "Reviews per wine", f"{int(s['reviews_per_wine'])}"),
+        ("", "Named critics (tasters) in the whole dataset", f"{int(s['n_tasters'])}"),
+        ("", "Reviews whose critic's name is missing", f"{float(s['pct_no_taster']):.1f}%"),
+        ("Evaluation", "Wines held out as test questions", f"{n_test} of {int(s['clean_rows']):,}"),
+        ("", "Wines held out for tuning (dev)", f"{n_dev} of {int(s['clean_rows']):,}"),
+        ("", "Test wines that are long-tail wines", f"{int(t['test_wines_in_tail'])} of {n_test}"),
+    ]
+    fig, ax = plt.subplots(figsize=(11, 7.4))
+    ax.axis("off")
+    table = ax.table(cellText=[list(r) for r in rows], colLabels=["", "Fact", "Value"], loc="center",
+                     cellLoc="left", colLoc="left", colWidths=[0.14, 0.58, 0.28])
+    table.auto_set_font_size(False)
+    table.set_fontsize(11)
+    table.scale(1, 1.5)
+    for (r, c), cell in table.get_celld().items():
+        cell.set_edgecolor("#dddddd")
+        if r == 0:
+            cell.set_text_props(weight="bold")
+            cell.set_facecolor("#f0f0f0")
+        if c == 0 and r > 0:
+            cell.set_text_props(weight="bold")
+    ax.set_title("SensoryRec: key facts (Wine Enthusiast, full dataset)", fontsize=14, weight="bold", pad=10)
+    fig.savefig(path, dpi=180, bbox_inches="tight")
+    plt.close(fig)
+
+
 def plot_lorenz(df, path):
     fig, ax = plt.subplots(figsize=(5.5, 5.5))
     for col in ["winery", "variety"]:
@@ -246,12 +345,18 @@ def main():
     top_share_table(df).to_csv(eda_dir / "top_share.csv", index=False)
     tasters.to_csv(eda_dir / "taster_coverage.csv", index=False)
     vintage_years(df).to_csv(eda_dir / "vintage_years.csv", index=False)
+    taster_by_country(df).to_csv(eda_dir / "taster_by_country.csv", index=False)
+    missing_taster_by_vintage(df).to_csv(eda_dir / "missing_taster_by_vintage.csv", index=False)
     test_ids = pd.read_csv(repo_path(cfg["paths"]["processed_dir"]) / "test_ids.csv")["wine_id"]
     tail = tail_summary(df, test_ids, cfg["tail"])
     tail.to_csv(eda_dir / "tail_summary.csv", index=False)
     tail_options(df, test_ids).to_csv(eda_dir / "tail_options.csv", index=False)
 
+    processed = repo_path(cfg["paths"]["processed_dir"])
+    splits = (len(test_ids), len(pd.read_csv(processed / "dev_ids.csv")))
+    plot_key_facts(summary, top_share_table(df), tail, splits, eda_dir / "fig_key_facts.png")
     plot_rank_frequency(df, eda_dir / "fig_rank_frequency.png")
+    plot_long_tail_linear(df, eda_dir / "fig_long_tail_linear.png")
     plot_lorenz(df, eda_dir / "fig_lorenz.png")
     plot_description_length(df, cfg["split"]["min_words"], eda_dir / "fig_description_length.png")
     plot_missingness(missing_df, eda_dir / "fig_missingness.png")

@@ -310,3 +310,47 @@ Fixed before any results exist, so the choice cannot be tuned to the results.
   written) and `human_clean` (human queries passing the same checks). The
   quality table uses all LLM queries of the human wines, flagged included,
   and counts the wines lost because their LLM query was flagged.
+
+## 2026-11-12 — After the supervisor meeting (Nov 2026)
+The supervisor asked for five things; the student approved these choices
+("all recommended", 12 Nov 2026). `CLAUDE.md` scope updated accordingly.
+
+- **Roger Voss's review count: checked, real.** He wrote most French and
+  nearly all Portuguese reviews (`results/eda/taster_by_country.csv`), spread
+  over about a decade of vintages. Limitation to state: with one critic per
+  region, a text model can partly learn a critic's writing style.
+- **"Reviews with no taster":** the reviewer's name is missing mainly for
+  older vintages (`results/eda/missing_taster_by_vintage.csv`); the reviews
+  themselves exist.
+- **A — consumer data (option A1):** no scraping of Vivino (terms of service;
+  CLAUDE.md). Use the published open dataset **X-Wines** (de Azambuja, Morais
+  & Filipe 2023, CC0) for **analysis only**: long tail and sparsity in real
+  consumer ratings. Rejected (A2): a collaborative-filtering baseline on it —
+  CF stays OUT unless agreed with the supervisor.
+- **B — 1,000 simulated queries (option B1):** written by **Gemini's free
+  tier** (supervisor's suggestion; key as a GitHub secret, never in the
+  repo), every answer cached and committed (rule 2). To get 1,000 *different*
+  queries reproducibly, 1,000 "briefs" are built by combining facets with the
+  fixed seed (`data/simulation_facets.yaml`), and the LLM only phrases each
+  brief as a sentence. These queries have no correct wine, so they measure
+  **coverage, diversity, tail share, Gini and novelty, not accuracy**; they
+  complement the 300 self-retrieval queries (S2), they do not replace them.
+  Rejected (B2): the local Ollama model — too slow for 1,000 queries.
+- **C — content of simulated queries (option C1):** broader than the test
+  queries (occasion, budget and country allowed), still novice language: the
+  expert-word check applies, with feedback retries; failures are flagged,
+  excluded and counted. Rejected (C2): taste only.
+- **D — extra embedding models (option D1):** first an open model that runs
+  on GitHub Actions without a key (`BAAI/bge-small-en-v1.5`), then Gemini
+  embeddings if the free quota covers ~120,000 notes. This adds models to the
+  original four; ILD keeps using the MiniLM embeddings for every model
+  (decision of 21 Oct). Rejected (D2): Gemini embeddings only.
+- **E — map (option E1):** a comparison note of three Python map libraries
+  and one mock-up: a real map of where recommended wines come from, plus a
+  "where to buy" layer with invented pins labelled MOCK. Maps stay OUT of
+  the core (Future Work).
+- **Metrics for the simulated study, fixed before any result:** catalogue
+  coverage (wines), winery coverage, variety coverage, tail share (also at
+  ≤ 5 and ≤ 20), Gini at wine and winery level, novelty, ILD — the same
+  definitions as `make eval`, plus a coverage curve (distinct wines after n
+  queries).

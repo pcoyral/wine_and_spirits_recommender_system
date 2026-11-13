@@ -16,6 +16,9 @@ median_words,40.0
 pct_under_20_words,1.68
 n_tasters,19
 pct_no_taster,20.77
+top_taster,Roger Voss
+top_taster_reviews,23558
+top_taster_pct,19.64
 taster_wine_matrix_density,0.04170151189534936
 reviews_per_wine,1
 latest_vintage_in_titles,2017

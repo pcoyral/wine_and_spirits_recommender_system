@@ -62,6 +62,9 @@ jobs:
       - name: Demo
         run: make demo
 
+      - name: Map mock-up with the Semantic model (Future Work, docs/map_libraries.md)
+        run: make map-mockup
+
       - name: Model versions used (to pin the revisions in config.yaml)
         run: |
           for ref in ~/.cache/huggingface/hub/models--*/refs/main; do
@@ -87,7 +90,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git checkout -B demo-results
-          git add results/demo
+          git add results/demo docs/map_mockup.html
           if git diff --cached --quiet; then
             echo "nothing new to save"
           else

@@ -4,15 +4,16 @@
 # It rebuilds the cleaned data from the same raw CSV as the EDA (checked
 # against the SHA-256 in results/eda/data_manifest.json), checks that the
 # test/dev split is unchanged, encodes the notes and runs `make demo`.
-# The readable output is shown on the run's summary page and can be
-# downloaded as the "demo-results" artifact.
+# The readable output is shown on the run's summary page, can be downloaded
+# as the "demo-results" artifact, and is pushed to the branch `demo-results`
+# (to be merged into main with a pull request).
 name: Demo
 
 on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write   # to push the results branch
 
 jobs:
   demo:
@@ -47,20 +48,31 @@ jobs:
           make data
           git diff --exit-code -- data/processed/test_ids.csv data/processed/dev_ids.csv
 
-      - name: Sentence-BERT embeddings
+      - name: Embedding cache from an earlier run
+        uses: actions/cache@v4
+        with:
+          path: data/processed/embeddings
+          key: embeddings-${{ hashFiles('config.yaml', 'results/eda/data_manifest.json') }}
+          # an older cache is still useful: only models whose fingerprint changed are re-encoded
+          restore-keys: embeddings-
+
+      - name: Embeddings (Sentence-BERT and the extra models)
         run: make embed
 
       - name: Demo
         run: make demo
 
-      - name: Model version used (to pin semantic.revision)
+      - name: Model versions used (to pin the revisions in config.yaml)
         run: |
-          ref=~/.cache/huggingface/hub/models--sentence-transformers--all-MiniLM-L6-v2/refs/main
-          echo "sentence-transformers/all-MiniLM-L6-v2 revision: $(cat $ref)" | tee results/demo/model_revision.txt
+          for ref in ~/.cache/huggingface/hub/models--*/refs/main; do
+            echo "$(basename "$(dirname "$(dirname "$ref")")") revision: $(cat "$ref")"
+          done | tee results/demo/model_revision.txt
 
       - name: Show the demo on the summary page
         run: |
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
           cat results/demo/model_revision.txt >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
           echo "" >> "$GITHUB_STEP_SUMMARY"
           cat results/demo/demo_top5.md >> "$GITHUB_STEP_SUMMARY"
 
@@ -68,3 +80,16 @@ jobs:
         with:
           name: demo-results
           path: results/demo/
+
+      - name: Save the demo output on the branch demo-results
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -B demo-results
+          git add results/demo
+          if git diff --cached --quiet; then
+            echo "nothing new to save"
+          else
+            git commit -m "Demo output (run ${{ github.run_id }})"
+            git push --force origin demo-results
+          fi

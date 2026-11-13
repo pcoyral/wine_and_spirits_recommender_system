@@ -1,0 +1,145 @@
+# The simulated-query study (DECISIONS.md, 12 Nov 2026) on GitHub's cloud
+# machine: Actions tab -> "Simulated queries" -> "Run workflow".
+#
+# 1. `make simulate`: Gemini phrases the ~1,000 briefs as customer queries.
+#    The API key comes from the repository secret GEMINI_API_KEY (Settings ->
+#    Secrets and variables -> Actions); it is never written to the repo.
+# 2. `make eval-simulated`: coverage and diversity of every model.
+#
+# The results are pushed to the branch `simulation-results` (LLM cache,
+# queries, result tables, figure), to be merged into main with a pull request.
+# If the free Gemini quota runs out, the answers so far are still saved on that
+# branch; running the workflow again continues from there.
+#
+# "limit" = only the first N briefs, for a cheap trial run (e.g. 20).
+name: Simulated queries
+
+on:
+  workflow_dispatch:
+    inputs:
+      limit:
+        description: "Only the first N briefs (empty = all of them)"
+        required: false
+        default: ""
+
+permissions:
+  contents: write   # to push the results branch
+
+jobs:
+  simulate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install
+        run: |
+          pip install -r requirements.txt
+          pip install -e .
+
+      - name: Unit tests
+        run: make test
+
+      - name: Earlier LLM answers (from the results branch, if it exists)
+        run: |
+          if git ls-remote --exit-code --heads origin simulation-results > /dev/null; then
+            git fetch --depth 1 origin simulation-results
+            git checkout FETCH_HEAD -- data/llm_cache || echo "no cached answers on the branch yet"
+          fi
+
+      - name: Simulated queries (Gemini)
+        id: simulate
+        continue-on-error: true   # keep the answers so far if the quota runs out
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          LIMIT: ${{ inputs.limit }}
+        run: make simulate LIMIT="$LIMIT"
+
+      - name: Raw data (same file as the EDA, checked by SHA-256)
+        if: steps.simulate.outcome == 'success'
+        run: |
+          mkdir -p data/raw
+          curl -sSfL -o data/raw/winemag-data-130k-v2.csv \
+            https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2019/2019-05-28/winemag-data-130k-v2.csv
+          expected=$(python -c "import json; print(json.load(open('results/eda/data_manifest.json'))['raw_sha256'])")
+          echo "$expected  data/raw/winemag-data-130k-v2.csv" | sha256sum --check
+
+      - name: Clean data and check the split is unchanged
+        if: steps.simulate.outcome == 'success'
+        run: |
+          make data
+          git diff --exit-code -- data/processed/test_ids.csv data/processed/dev_ids.csv
+
+      - name: Embedding cache from an earlier run
+        if: steps.simulate.outcome == 'success'
+        uses: actions/cache@v4
+        with:
+          path: data/processed/embeddings
+          key: embeddings-${{ hashFiles('config.yaml', 'results/eda/data_manifest.json') }}
+          # an older cache is still useful: only models whose fingerprint changed are re-encoded
+          restore-keys: embeddings-
+
+      - name: Embeddings (Sentence-BERT and the extra models)
+        if: steps.simulate.outcome == 'success'
+        run: make embed
+
+      - name: Coverage and diversity on the simulated queries
+        if: steps.simulate.outcome == 'success'
+        run: make eval-simulated
+
+      - name: Model versions used (to pin the revisions in config.yaml)
+        if: steps.simulate.outcome == 'success'
+        run: |
+          for ref in ~/.cache/huggingface/hub/models--*/refs/main; do
+            echo "$(basename "$(dirname "$(dirname "$ref")")") revision: $(cat "$ref")"
+          done | tee results/simulated_model_revisions.txt
+
+      - name: Summary page
+        if: always()
+        run: |
+          {
+            echo "### Simulated queries: ${{ steps.simulate.outcome }}"
+            echo "LLM answers in the cache: $(ls data/llm_cache 2>/dev/null | wc -l)"
+            if [ -f results/simulated_coverage.csv ]; then
+              echo ""; echo '```'; cat results/simulated_model_revisions.txt; echo '```'
+              echo ""; echo '```'; column -s, -t results/simulated_queries_quality.csv; echo '```'
+              echo ""; echo '```'; column -s, -t results/simulated_coverage.csv; echo '```'
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Save the answers and results on the branch simulation-results
+        if: always()
+        env:
+          LIMIT: ${{ inputs.limit }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -B simulation-results
+          # A trial run (with a limit) saves only the LLM answers, which the full
+          # run reuses; its tables are on the summary page and are not results.
+          paths="data/llm_cache"
+          if [ -z "$LIMIT" ]; then
+            paths="$paths data/queries/simulated_queries.csv results/simulated_queries_quality.csv
+                   results/simulated_coverage.csv results/simulated_coverage_curve.csv
+                   results/fig_simulated_coverage.png results/simulated_model_revisions.txt"
+          fi
+          for path in $paths; do
+            if [ -e "$path" ]; then git add "$path"; fi
+          done
+          if git diff --cached --quiet; then
+            echo "nothing new to save"
+          else
+            git commit -m "Simulated-query study: LLM answers and results (run ${{ github.run_id }})"
+            git push --force origin simulation-results
+          fi
+
+      - name: Stop here if the queries are not complete
+        if: steps.simulate.outcome != 'success'
+        run: |
+          echo "make simulate did not finish (see its log). Answers so far are on the branch simulation-results; run the workflow again to continue."
+          exit 1

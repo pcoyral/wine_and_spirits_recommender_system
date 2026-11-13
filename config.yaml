@@ -120,3 +120,13 @@ refinement:
   n_random: 10
   sommelier_cases: 10
   out_dir: results
+
+# Extra embedding models compared with Sentence-BERT ("semantic") in every
+# table (DECISIONS.md, 12 Nov 2026). Same recommender, another model.
+extra_embedding_models:
+  - name: semantic_bge
+    model: BAAI/bge-small-en-v1.5
+    revision: null
+    batch_size: 64
+    # From the model card: short queries get this instruction, the notes do not.
+    query_prefix: "Represent this sentence for searching relevant passages: "

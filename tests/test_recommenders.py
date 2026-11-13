@@ -4,7 +4,8 @@ import pytest
 
 from sensoryrec.recommenders.base import filter_mask
 from sensoryrec.recommenders.popularity import PopularityRecommender
-from sensoryrec.recommenders.semantic import SemanticRecommender
+from sensoryrec.recommenders import build_models, ild_vectors
+from sensoryrec.recommenders.semantic import SemanticRecommender, extra_from_config
 
 
 def catalogue():
@@ -118,3 +119,63 @@ def test_semantic_cache_rebuilt_when_model_version_changes(tmp_path):
     # Same notes, new model version: the old embeddings must not be reused.
     SemanticRecommender("fake", revision="v2", cache_dir=tmp_path, encoder=enc).fit(catalogue())
     assert enc.calls == 2
+
+
+class PrefixEncoder(FakeEncoder):
+    """Remembers every text it is asked to encode."""
+    def __init__(self):
+        super().__init__()
+        self.texts = []
+
+    def encode(self, texts, **kwargs):
+        self.texts += list(texts)
+        return super().encode(texts)
+
+
+def test_query_prefix_goes_on_the_query_only():
+    enc = PrefixEncoder()
+    model = SemanticRecommender("fake", encoder=enc, name="semantic_x", query_prefix="search: ").fit(catalogue())
+    model.recommend("white bubbly", k=2)
+    assert model.name == "semantic_x"
+    assert enc.texts[:6] == catalogue()["description"].tolist()   # the notes, unchanged
+    assert enc.texts[6:] == ["search: white bubbly"]              # the query, with the instruction
+
+
+CFG = {"tfidf": {"min_df": 2, "stop_words": "english", "keep_words": ["not"], "sublinear_tf": True,
+                 "ngram_range": [1, 1]},
+       "attribute": {"colour_table": "data/variety_colour.csv"},
+       "semantic": {"model": "sentence-transformers/all-MiniLM-L6-v2", "revision": None,
+                    "batch_size": 64, "cache_dir": "data/processed/embeddings"}}
+EXTRA = {"name": "semantic_bge", "model": "BAAI/bge-small-en-v1.5", "revision": "abc", "batch_size": 32,
+         "query_prefix": "search: "}
+
+
+def test_extra_embedding_models_from_config():
+    assert extra_from_config(CFG) == []                           # the section is optional
+    assert extra_from_config({**CFG, "extra_embedding_models": None}) == []
+    [bge] = extra_from_config({**CFG, "extra_embedding_models": [EXTRA]})
+    assert (bge.name, bge.model_name, bge.revision, bge.batch_size) == \
+        ("semantic_bge", "BAAI/bge-small-en-v1.5", "abc", 32)
+    assert bge.query_prefix == "search: "
+    # its own cache file, next to Sentence-BERT's
+    assert bge.cache_path().name == "bge-small-en-v1.5.npz"
+
+
+class OtherEncoder(FakeEncoder):
+    """Another model: different vectors for the same texts."""
+    def encode(self, texts, **kwargs):
+        return super().encode(texts) + 1.0
+
+
+def test_build_models_order_and_ild_yardstick():
+    models = build_models({**CFG, "extra_embedding_models": [EXTRA]})
+    assert [m.name for m in models] == ["popularity", "tfidf", "attribute", "semantic", "semantic_bge"]
+    # Diversity is always measured with Sentence-BERT ("semantic"), also when
+    # another embedding model comes after it in the list.
+    sbert, bge = models[3], models[4]
+    sbert._encoder, bge._encoder = FakeEncoder(), OtherEncoder()
+    sbert.cache_dir = bge.cache_dir = None
+    sbert.fit(catalogue())
+    bge.fit(catalogue())
+    assert np.array_equal(ild_vectors(models)[11], sbert.vectors()[11])
+    assert not np.array_equal(ild_vectors(models)[11], bge.vectors()[11])

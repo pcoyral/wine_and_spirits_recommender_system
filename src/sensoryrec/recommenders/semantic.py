@@ -44,10 +44,18 @@ def fingerprint(model_name, revision, wine_ids, texts):
 class SemanticRecommender(Recommender):
     name = "semantic"
 
-    def __init__(self, model_name, revision=None, batch_size=64, cache_dir=None, encoder=None):
+    def __init__(self, model_name, revision=None, batch_size=64, cache_dir=None, encoder=None,
+                 name="semantic", query_prefix=""):
         """encoder: anything with .encode(list_of_texts) -> array. Left as None,
-        the Sentence-BERT model is loaded the first time it is needed; tests
-        pass a small fake encoder instead, so they need no download."""
+        the sentence-embedding model is loaded the first time it is needed;
+        tests pass a small fake encoder instead, so they need no download.
+
+        name: how the model is called in result tables ("semantic" is
+        all-MiniLM-L6-v2; extra models get their own name).
+        query_prefix: some embedding models expect a short instruction in
+        front of the query (not in front of the notes); see their model card."""
+        self.name = name
+        self.query_prefix = query_prefix
         self.model_name = model_name
         self.revision = revision
         self.batch_size = batch_size
@@ -58,8 +66,8 @@ class SemanticRecommender(Recommender):
         if self._encoder is None:
             from sentence_transformers import SentenceTransformer  # slow import, only when needed
             if self.revision is None:
-                log.warning("semantic.revision is not pinned in config.yaml: results depend on "
-                            "whichever model version is downloaded (see DECISIONS.md)")
+                log.warning("%s: revision is not pinned in config.yaml: results depend on "
+                            "whichever model version is downloaded (see DECISIONS.md)", self.model_name)
             self._encoder = SentenceTransformer(self.model_name, revision=self.revision)
         return self._encoder
 
@@ -99,7 +107,7 @@ class SemanticRecommender(Recommender):
         return embeddings
 
     def score(self, query):
-        return self.embeddings @ self.encode([query])[0]
+        return self.embeddings @ self.encode([self.query_prefix + query])[0]
 
     def vectors(self):
         """wine_id -> embedding, for the intra-list diversity metric."""
@@ -112,13 +120,23 @@ def from_config(cfg):
                                batch_size=s["batch_size"], cache_dir=s["cache_dir"])
 
 
+def extra_from_config(cfg):
+    """The extra embedding models compared with Sentence-BERT (DECISIONS.md,
+    12 Nov 2026): same recommender, another model."""
+    cache_dir = cfg["semantic"]["cache_dir"]
+    return [SemanticRecommender(m["model"], revision=m["revision"], batch_size=m["batch_size"],
+                                cache_dir=cache_dir, name=m["name"], query_prefix=m.get("query_prefix", ""))
+            for m in cfg.get("extra_embedding_models") or []]
+
+
 def main():
-    """`make embed`: build (or check) the embedding cache."""
+    """`make embed`: build (or check) the embedding cache of every model."""
     logging.basicConfig(level=logging.INFO, format="%(message)s")
     cfg = load_config()
     wines = pd.read_parquet(repo_path(cfg["paths"]["processed_dir"]) / "wines.parquet")
-    model = from_config(cfg).fit(wines)
-    log.info("embeddings: %s, cache: %s", model.embeddings.shape, model.cache_path())
+    for model in [from_config(cfg), *extra_from_config(cfg)]:
+        model.fit(wines)
+        log.info("%s: embeddings %s, cache %s", model.name, model.embeddings.shape, model.cache_path())
 
 
 if __name__ == "__main__":

@@ -81,8 +81,7 @@ def compare(models, sources, k):
 
 def main():
     logging.basicConfig(level=logging.INFO, format="%(message)s")
-    from sensoryrec.recommenders import attribute, semantic, tfidf
-    from sensoryrec.recommenders.popularity import PopularityRecommender
+    from sensoryrec.recommenders import build_models
 
     cfg = load_config()
     processed = repo_path(cfg["paths"]["processed_dir"])
@@ -103,7 +102,7 @@ def main():
     pd.DataFrame([human_row, quality(llm_same, notes, "llm_same_wines")]).round(3) \
         .to_csv(repo_path("results/human_queries_quality.csv"), index=False)
 
-    models = [PopularityRecommender(), tfidf.from_config(cfg), attribute.from_config(cfg), semantic.from_config(cfg)]
+    models = build_models(cfg)
     for model in models:
         model.fit(wines, holdout_ids=test_ids["wine_id"])
     result = compare(models, sources, cfg["k"])

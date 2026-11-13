@@ -1,7 +1,7 @@
 PYTHON ?= python
 export PYTHONPATH := src
 
-.PHONY: data eda embed demo queries human-cards eval eval-dev refine compare-human test simulate eval-simulated xwines
+.PHONY: data eda embed demo queries human-cards eval eval-dev refine compare-human test simulate eval-simulated xwines map-mockup
 
 # Definition of done for S0: `make data` gives the cleaned parquet, the
 # test/dev IDs and all EDA figures. The two steps are recipe lines, not
@@ -49,6 +49,10 @@ eval-simulated:
 # Long tail and sparsity in consumer ratings (X-Wines, analysis only) -> results/xwines/
 xwines:
 	$(PYTHON) -m sensoryrec.xwines
+
+# Map MOCK-UP for Future Work -> docs/map_mockup.html (MODEL=tfidf to use another model)
+map-mockup:
+	$(PYTHON) -m sensoryrec.map_mockup $(if $(MODEL),--model $(MODEL),)
 
 # Refinement: alpha on dev, evaluation on test -> results/refinement*.csv
 refine:

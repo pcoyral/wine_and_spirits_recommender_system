@@ -174,3 +174,8 @@ xwines:
   # CSV and the ratings CSV of the Full version of X-Wines here (not committed).
   dir: data/raw/xwines
   out_dir: results/xwines
+
+map_mockup:
+  # One labelled mock-up for Future Work (DECISIONS.md, option E1)
+  country_codes: data/country_iso3.csv
+  out: docs/map_mockup.html

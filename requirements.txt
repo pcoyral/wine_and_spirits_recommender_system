@@ -16,6 +16,9 @@ scipy==1.17.1
 sentence-transformers==6.1.0
 torch==2.14.0
 
+# Map mock-up (Future Work only, docs/map_libraries.md)
+plotly==7.1.0
+
 # Notebooks
 jupyter==1.1.1
 ipykernel==7.3.0

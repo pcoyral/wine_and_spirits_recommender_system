@@ -1,7 +1,7 @@
 PYTHON ?= python
 export PYTHONPATH := src
 
-.PHONY: data eda embed demo queries human-cards eval eval-dev refine compare-human test simulate eval-simulated
+.PHONY: data eda embed demo queries human-cards eval eval-dev refine compare-human test simulate eval-simulated xwines
 
 # Definition of done for S0: `make data` gives the cleaned parquet, the
 # test/dev IDs and all EDA figures. The two steps are recipe lines, not
@@ -45,6 +45,10 @@ simulate:
 # Coverage and diversity of every model on the simulated queries -> results/simulated_coverage*.csv
 eval-simulated:
 	$(PYTHON) -m sensoryrec.evaluate --split simulated
+
+# Long tail and sparsity in consumer ratings (X-Wines, analysis only) -> results/xwines/
+xwines:
+	$(PYTHON) -m sensoryrec.xwines
 
 # Refinement: alpha on dev, evaluation on test -> results/refinement*.csv
 refine:

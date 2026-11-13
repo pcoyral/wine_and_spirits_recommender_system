@@ -168,3 +168,9 @@ simulation:
     It used words that are not allowed: {problems}.
     Rewrite it without those words, following the same rules.
     Reply with the customer's words only.
+
+xwines:
+  # Consumer ratings, analysis only (DECISIONS.md, 12 Nov 2026). Put the wines
+  # CSV and the ratings CSV of the Full version of X-Wines here (not committed).
+  dir: data/raw/xwines
+  out_dir: results/xwines

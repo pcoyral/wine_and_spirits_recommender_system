@@ -1,6 +1,7 @@
 """Demo for the supervisor: run the casual queries in data/demo_queries.txt
-through all four models (Popularity, TF-IDF, Attribute, Semantic) and show the
-top k of each (k in config.yaml).
+through every model in the comparison (Popularity, TF-IDF, Attribute,
+Semantic and any extra embedding model) and show the top k of each (k in
+config.yaml).
 
 Run with `make demo` (needs `make data` once; the first run also builds the
 embedding cache, which takes a few minutes).
@@ -18,8 +19,7 @@ from pathlib import Path
 import pandas as pd
 
 from sensoryrec.config import load_config, repo_path
-from sensoryrec.recommenders import attribute, semantic, tfidf
-from sensoryrec.recommenders.popularity import PopularityRecommender
+from sensoryrec.recommenders import build_models
 
 SHOW = ["rank", "wine_id", "title", "variety", "country", "price", "points", "score", "description"]
 
@@ -61,9 +61,8 @@ def main():
     wines = pd.read_parquet(processed / "wines.parquet")
     test_ids = pd.read_csv(processed / "test_ids.csv")["wine_id"]
 
-    # The same four models, fitted the same way, as in `make eval`
-    models = [PopularityRecommender(), tfidf.from_config(cfg),
-              attribute.from_config(cfg), semantic.from_config(cfg)]
+    # The same models, fitted the same way, as in `make eval`
+    models = build_models(cfg)
     for model in models:
         model.fit(wines, holdout_ids=test_ids)
 

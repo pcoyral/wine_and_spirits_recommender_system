@@ -354,3 +354,34 @@ The supervisor asked for five things; the student approved these choices
   ≤ 5 and ≤ 20), Gini at wine and winery level, novelty, ILD — the same
   definitions as `make eval`, plus a coverage curve (distinct wines after n
   queries).
+
+### Implementation details (S2b, 13 Nov 2026)
+- **One list of models everywhere:** `build_models(cfg)` returns Popularity,
+  TF-IDF, Attribute, Semantic and every entry of `extra_embedding_models`;
+  the demo, `make eval`, `make eval-simulated` and `make compare-human` all
+  use it. Refinement stays on Semantic (MiniLM) only, as decided on 21 Oct.
+- **Query instruction for bge:** the model's authors recommend putting
+  "Represent this sentence for searching relevant passages: " in front of
+  short queries, not in front of the documents (`query_prefix` in
+  `config.yaml`). Followed as documented, not tuned.
+- **Briefs:** one `experience`, one `kind`, and each optional wish with its
+  own probability (`chance` in the facets file). A sweet dessert wine never
+  gets a sweetness wish (it would contradict itself). Duplicated briefs are
+  redrawn, so the 1,000 briefs are all different. The facet lists were
+  drafted by Claude and are the student's to edit; changing them changes the
+  briefs, the prompts and therefore the cache.
+- **Checks on simulated queries:** only the expert-word check (and "no text
+  at all"). The leak check of S2 does not apply: there is no target wine
+  whose name could leak. Country names are allowed by decision C1.
+- **Gemini as the LLM:** called through its HTTP API with temperature 0 and
+  the fixed seed; the pinned model name is part of the cache key.
+  `simulation.llm.model` stays `null` until the exact name from the course
+  notebook is set; `make simulate` refuses to run before that. The free tier
+  limits requests per minute and per day, so the code pauses between calls
+  and a run that hits the limit can be continued later from the cache.
+- **Extra columns in `simulated_coverage.csv`:** `slots` (queries × k) and
+  `distinct_wines`. Coverage has a ceiling of slots / catalogue size (about
+  4% for 1,000 queries and k = 5), so models are compared with each other,
+  not against 100%.
+- **Trial runs** (`LIMIT=N`) save only the LLM answers; their tables are not
+  results.

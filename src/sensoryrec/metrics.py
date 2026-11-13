@@ -7,7 +7,8 @@ Conventions
   whose tasting note the casual query was written from).
 
 Accuracy:      hit_rate_at_k, ndcg_at_k
-Long tail:     catalogue_coverage, tail_share, recommendation_gini, novelty
+Long tail:     catalogue_coverage, category_coverage, tail_share,
+               recommendation_gini, novelty
 Diversity:     intra_list_diversity
 
 When there is nothing to measure (no queries, no recommendations, no pairs),
@@ -63,6 +64,13 @@ def ndcg_at_k(recs, targets, k):
 def catalogue_coverage(recs, catalogue_size):
     """Share of the catalogue that appears in at least one recommendation list."""
     return len(set(chain.from_iterable(recs))) / catalogue_size
+
+
+def category_coverage(recs, category_of, n_categories):
+    """Share of all categories (e.g. wineries or grape varieties) that appear
+    in at least one recommendation list. category_of maps wine_id -> category."""
+    seen = {category_of[item] for item in chain.from_iterable(recs)}
+    return len(seen) / n_categories
 
 
 def tail_share(recs, tail_ids):

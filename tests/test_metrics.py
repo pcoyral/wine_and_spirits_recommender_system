@@ -3,6 +3,7 @@ import pytest
 
 from sensoryrec.metrics import (
     catalogue_coverage,
+    category_coverage,
     gini,
     hit_rate_at_k,
     intra_list_diversity,
@@ -66,6 +67,13 @@ def test_ndcg_rank_2():
 def test_catalogue_coverage():
     # Distinct wines recommended: {1, 2, 3} = 3 of a 10-wine catalogue
     assert catalogue_coverage([[1, 2], [2, 3]], catalogue_size=10) == pytest.approx(0.3)
+
+
+def test_category_coverage():
+    # Wines 1, 2 -> winery A; 3 -> B; 4 -> C. Recommended: 1, 2, 3 -> A and B of 3 wineries
+    winery = {1: "A", 2: "A", 3: "B", 4: "C"}
+    assert category_coverage([[1, 2], [2, 3]], winery, n_categories=3) == pytest.approx(2 / 3)
+    assert category_coverage([[1], [2]], winery, n_categories=3) == pytest.approx(1 / 3)
 
 
 def test_tail_share():

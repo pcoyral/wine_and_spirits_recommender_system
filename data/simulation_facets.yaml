@@ -1,0 +1,56 @@
+# Building blocks for the ~1,000 simulated customer queries (DECISIONS.md,
+# 12 Nov 2026). Each "brief" combines one `experience`, one `kind` and a random
+# selection of the `optional` wishes, drawn with the fixed seed, so the same
+# 1,000 briefs are rebuilt every time. The LLM only turns each brief into a
+# sentence. Drafted by Claude; edit the lists freely (plain everyday words).
+
+experience:        # who is asking (always one)
+  - knows nothing about wine
+  - drinks wine now and then
+  - is curious and wants to try something new
+
+kind:              # what they want (always one)
+  - a red wine
+  - a white wine
+  - a rosé
+  - a sparkling wine
+  - a sweet wine for dessert
+  - any kind of wine
+
+optional:          # each wish is included with probability `chance`
+  sweetness:       # skipped when `kind` is already the sweet wine
+    chance: 0.5
+    values: [sweet, a little sweet, not sweet at all]
+  weight:
+    chance: 0.5
+    values: [light, not too heavy, strong and heavy]
+  flavours:
+    chance: 0.7
+    pick: 2        # one or two of these
+    values: [red berries, dark berries, cherry, plum, lemon, green apple, peach,
+             tropical fruit, honey, vanilla, chocolate, coffee, spices, pepper,
+             flowers, herbs, nuts, butter, smoke, mushrooms]
+  feel:
+    chance: 0.4
+    values: [smooth, fresh, crisp, creamy, juicy, warming, easy to drink]
+  occasion:
+    chance: 0.5
+    values: [a barbecue, a romantic dinner, a picnic, a birthday party,
+             a gift for my boss, a quiet evening at home, Christmas dinner,
+             a hot summer afternoon, a cold winter night, pizza night,
+             a fish dinner, a cheese board, a spicy curry, a wedding toast,
+             watching a film]
+  budget:
+    chance: 0.35
+    values: [cheap, under 15 euros, under 25 euros, between 20 and 40 euros,
+             "price does not matter, it is a present"]
+  country:
+    chance: 0.2
+    values: [Italy, France, Spain, Portugal, Argentina, Chile, Australia,
+             America, Germany, Austria, New Zealand, South Africa, Greece]
+  also:
+    chance: 0.25
+    values: [something popular that everyone likes,
+             something unusual I have never heard of,
+             a safe choice that cannot go wrong,
+             something from a small producer]

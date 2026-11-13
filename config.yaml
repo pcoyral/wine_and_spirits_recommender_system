@@ -120,3 +120,51 @@ refinement:
   n_random: 10
   sommelier_cases: 10
   out_dir: results
+
+# Extra embedding models compared with Sentence-BERT ("semantic") in every
+# table (DECISIONS.md, 12 Nov 2026). Same recommender, another model.
+extra_embedding_models:
+  - name: semantic_bge
+    model: BAAI/bge-small-en-v1.5
+    revision: null
+    batch_size: 64
+    # From the model card: short queries get this instruction, the notes do not.
+    query_prefix: "Represent this sentence for searching relevant passages: "
+
+simulation:
+  # ~1,000 simulated customer queries for the coverage and diversity study
+  n_queries: 1000
+  facets: data/simulation_facets.yaml
+  out: data/queries/simulated_queries.csv
+  quality: results/simulated_queries_quality.csv
+  max_retries: 3
+  llm:
+    # Gemini free tier (DECISIONS.md B1). Set `model` to the exact model name
+    # used in the course notebook; `make simulate` refuses to run while it is
+    # null. The API key is NOT stored here: environment variable
+    # GEMINI_API_KEY (a GitHub secret in the workflow).
+    model: null
+    url: "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
+    temperature: 0
+    seed: 42
+    # seconds to wait after each call, to stay under the free requests per minute
+    pause_seconds: 4
+  # {experience} and {wishes} come from the brief, {banned} from the vocabulary
+  prompt: |
+    Write what a customer would say to a wine shop assistant to ask for a
+    wine, in one or two short sentences, in plain everyday words.
+
+    The customer {experience}. They want:
+    {wishes}
+
+    Rules:
+    - Include every wish above, in natural spoken language. Do not add other wishes.
+    - Do not name grapes, wineries or wine regions. A country is fine if it is among the wishes.
+    - Do not use these wine-expert words: {banned}.
+    - Reply with the customer's words only, without quotation marks or any introduction.
+  retry_prompt: |
+
+    Your previous answer was: "{previous}"
+    It used words that are not allowed: {problems}.
+    Rewrite it without those words, following the same rules.
+    Reply with the customer's words only.

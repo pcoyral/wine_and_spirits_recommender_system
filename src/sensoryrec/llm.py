@@ -1,4 +1,5 @@
-"""A local LLM (Ollama) behind a disk cache (CLAUDE.md rule 2).
+"""An LLM behind a disk cache (CLAUDE.md rule 2): a local model through
+Ollama (casual test queries, S2) or Gemini's API (simulated queries, S2b).
 
 Every answer is saved as data/llm_cache/<key>.json, where key is a hash of
 the model, its digest, the options (temperature 0, fixed seed) and the
@@ -13,6 +14,9 @@ ranks wines.
 import hashlib
 import json
 import logging
+import os
+import time
+import urllib.error
 import urllib.request
 from pathlib import Path
 
@@ -58,6 +62,58 @@ class CachedLLM:
                                          headers={"Content-Type": "application/json"})
         with urllib.request.urlopen(request, timeout=600) as response:
             return json.loads(response.read())["response"]
+
+
+def gemini_text(data):
+    """The text of a Gemini generateContent answer; "" if Gemini gave no text
+    (for example a blocked prompt), which the caller then flags."""
+    candidates = data.get("candidates") or [{}]
+    parts = candidates[0].get("content", {}).get("parts") or []
+    return "".join(part.get("text", "") for part in parts)
+
+
+def gemini_call(model, url, options, pause_seconds=0, key_name="GEMINI_API_KEY", waits=(30, 60, 120)):
+    """A function prompt -> text that asks Gemini through its HTTP API.
+
+    The API key is read from the environment variable (a GitHub secret in
+    the workflow); it is never written to the repo or the cache. On "too
+    many requests" (HTTP 429) or "busy" (503) it waits and tries again; if
+    the quota is used up it stops, and a later run continues from the cache."""
+    def call(prompt):
+        key = os.environ.get(key_name)
+        if not key:
+            raise SystemExit(f"Set the environment variable {key_name} (GitHub secret) to call Gemini.")
+        body = {"contents": [{"parts": [{"text": prompt}]}],
+                "generationConfig": {"temperature": options["temperature"], "seed": options["seed"]}}
+        request = urllib.request.Request(url.format(model=model), data=json.dumps(body).encode(),
+                                         headers={"Content-Type": "application/json", "x-goog-api-key": key})
+        for wait in [*waits, None]:
+            try:
+                with urllib.request.urlopen(request, timeout=120) as response:
+                    text = gemini_text(json.loads(response.read()))
+                time.sleep(pause_seconds)   # stay under the free tier's requests per minute
+                return text
+            except urllib.error.HTTPError as error:
+                if error.code not in (429, 503) or wait is None:
+                    reason = error.read().decode(errors="replace")[:300]   # Gemini's own explanation
+                    raise SystemExit(f"Gemini refused the request (HTTP {error.code}): {reason}\nIf the free "
+                                     "quota is used up, run again later: answers so far are in the cache.")
+                log.warning("Gemini is busy (HTTP %d), waiting %d s", error.code, wait)
+                time.sleep(wait)
+    return call
+
+
+def gemini_from_config(cfg, call=None):
+    """The cached Gemini LLM for the simulated queries (config: simulation.llm)."""
+    from sensoryrec.config import repo_path
+    c = cfg["simulation"]["llm"]
+    if not c["model"]:
+        raise SystemExit("Set simulation.llm.model in config.yaml to the exact Gemini model name "
+                         "(as in the course notebook) before `make simulate`.")
+    options = {"temperature": c["temperature"], "seed": c["seed"]}
+    call = call or gemini_call(c["model"], c["url"], options, c["pause_seconds"])
+    # For an API model the pinned model name plays the role of the digest.
+    return CachedLLM(c["model"], options, repo_path(cfg["llm"]["cache_dir"]), c["url"], digest=c["model"], call=call)
 
 
 def from_config(cfg, call=None):

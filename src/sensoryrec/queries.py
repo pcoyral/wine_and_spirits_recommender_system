@@ -45,25 +45,39 @@ def problems(query, wine, vocab):
     return expert_terms_used(query, vocab), leaked_names(query, wine, vocab["everyday"]), other
 
 
-def write_query(wine, llm, vocab, prompt, retry_prompt, max_retries):
-    """Ask for a query, check it, retry with feedback if needed."""
-    base = prompt.format(note=wine["description"], banned=", ".join(vocab["expert"]))
-    query = clean(llm.generate(base))
-    expert, leak, other = problems(query, wine, vocab)
-    first = {"first_expert": "; ".join(expert), "first_leak": "; ".join(leak + other)}
+def ask_until_clean(llm, base, retry_prompt, check, max_retries):
+    """Ask the LLM, check the answer, and retry with feedback while it has
+    problems. check(text) returns the list of problems (empty = clean).
+    Returns (text, attempts, first_problems, remaining_problems), where
+    attempts counts different answers only."""
+    text = clean(llm.generate(base))
+    first = found = check(text)
     attempts, retries = 1, 0   # attempts = different answers; retries = retry prompts sent
-    while (expert or leak or other) and retries < max_retries:
-        found = ", ".join(expert + leak + other)
-        new = clean(llm.generate(base + retry_prompt.format(previous=query, problems=found)))
+    while found and retries < max_retries:
+        new = clean(llm.generate(base + retry_prompt.format(previous=text, problems=", ".join(found))))
         retries += 1
-        if new == query:
+        if new == text:
             # Same answer again: the next retry prompt would be identical, and
             # with temperature 0 so would the answer. Stop trying.
             break
-        query, attempts = new, attempts + 1
-        expert, leak, other = problems(query, wine, vocab)
-    remaining = expert + leak + other
-    return {"wine_id": wine["wine_id"], "query": query, "attempts": attempts, **first,
+        text, attempts = new, attempts + 1
+        found = check(text)
+    return text, attempts, first, found
+
+
+def write_query(wine, llm, vocab, prompt, retry_prompt, max_retries):
+    """Ask for a query about one wine, check it, retry with feedback if needed."""
+    base = prompt.format(note=wine["description"], banned=", ".join(vocab["expert"]))
+
+    def check(text):
+        expert, leak, other = problems(text, wine, vocab)
+        return expert + leak + other
+
+    query, attempts, first, remaining = ask_until_clean(llm, base, retry_prompt, check, max_retries)
+    expert_first = [x for x in first if x in vocab["expert"]]
+    return {"wine_id": wine["wine_id"], "query": query, "attempts": attempts,
+            "first_expert": "; ".join(expert_first),
+            "first_leak": "; ".join(x for x in first if x not in expert_first),
             "violations": "; ".join(remaining), "flagged": bool(remaining)}
 
 

@@ -1,7 +1,7 @@
 PYTHON ?= python
 export PYTHONPATH := src
 
-.PHONY: data eda embed demo queries human-cards eval eval-dev refine compare-human test
+.PHONY: data eda embed demo queries human-cards eval eval-dev refine compare-human test simulate eval-simulated
 
 # Definition of done for S0: `make data` gives the cleaned parquet, the
 # test/dev IDs and all EDA figures. The two steps are recipe lines, not
@@ -37,6 +37,14 @@ eval:
 # Same on the dev queries, for tuning -> results/ablation_dev*.csv
 eval-dev:
 	$(PYTHON) -m sensoryrec.evaluate --split dev
+
+# ~1,000 simulated customer queries from Gemini (needs GEMINI_API_KEY); LIMIT=20 for a trial
+simulate:
+	$(PYTHON) -m sensoryrec.simulate $(if $(LIMIT),--limit $(LIMIT),)
+
+# Coverage and diversity of every model on the simulated queries -> results/simulated_coverage*.csv
+eval-simulated:
+	$(PYTHON) -m sensoryrec.evaluate --split simulated
 
 # Refinement: alpha on dev, evaluation on test -> results/refinement*.csv
 refine:

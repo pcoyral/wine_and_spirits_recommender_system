@@ -28,6 +28,7 @@ popularity?).
 | TF-IDF | Keyword match on tasting notes |
 | Attribute | Structured fields (variety, country, price, points) |
 | Semantic | SBERT `all-MiniLM-L6-v2` + cosine similarity |
+| Semantic (extra) | The same recommender with another embedding model (`extra_embedding_models` in `config.yaml`; first `BAAI/bge-small-en-v1.5`) |
 
 ## Setup
 
@@ -58,14 +59,16 @@ SHA-256 is recorded in `results/eda/data_manifest.json` by `make data`.
 |---|---|
 | `make data` | Clean the data, hold out test/dev wines, build all EDA tables and figures |
 | `make eda` | Rebuild only the EDA (needs `make data` once) |
-| `make embed` | Build the SBERT embedding cache (downloads the model on first use) |
-| `make demo` | Top-5 of all four models for the queries in `data/demo_queries.txt` |
+| `make embed` | Build the embedding cache of every embedding model (downloads the models on first use) |
+| `make demo` | Top-5 of every model for the queries in `data/demo_queries.txt` |
 | `make queries` | LLM casual queries for the test and dev wines (Ollama running) → `data/queries/`, `results/queries_quality.csv` |
 | `make human-cards` | Note cards and answer template for the 30 hand-written queries |
 | `make refine` | Refinement: α on dev, evaluation on test → `results/refinement*.csv` |
 | `make compare-human` | LLM vs hand-written queries → `results/llm_vs_human.csv` |
-| `make eval` | All four models on the casual test queries → `results/ablation.csv` (needs S2 queries) |
+| `make eval` | Every model on the casual test queries → `results/ablation.csv` (needs S2 queries) |
 | `make eval-dev` | The same on the dev queries, for tuning → `results/ablation_dev.csv` |
+| `make simulate` | ~1,000 simulated customer queries written by Gemini (needs `GEMINI_API_KEY`; `LIMIT=20` for a trial) → `data/queries/simulated_queries.csv` |
+| `make eval-simulated` | Coverage and diversity of every model on the simulated queries → `results/simulated_coverage*.csv` |
 | `make test` | Run unit tests |
 
 ## Evaluation
@@ -74,3 +77,24 @@ Self-retrieval: held-out tasting notes are rewritten as casual, novice-style
 queries, and each model must retrieve the original wine (HR@5, NDCG@5).
 Long-tail and beyond-accuracy metrics: catalogue coverage, tail share, Gini,
 novelty, intra-list diversity. All numbers come from `results/*.csv`.
+
+Simulated-query study: about 1,000 customer requests, built from seeded
+combinations of wishes (`data/simulation_facets.yaml`) and phrased by an LLM.
+They have no correct wine, so they measure only how widely and evenly each
+model recommends (coverage of wines, wineries and varieties, tail share,
+Gini, novelty, diversity), not accuracy.
+
+## Running in the cloud (GitHub Actions)
+
+Two manual workflows (Actions tab → pick one → "Run workflow") do the heavy
+steps on GitHub's machine and push their output to a branch:
+
+| Workflow | What it runs | Output branch |
+|---|---|---|
+| Demo | `make data`, `make embed`, `make demo` | `demo-results` |
+| Simulated queries | `make simulate`, `make embed`, `make eval-simulated` | `simulation-results` |
+
+"Simulated queries" needs the repository secret `GEMINI_API_KEY` (Settings →
+Secrets and variables → Actions) and `simulation.llm.model` set in
+`config.yaml`. The key is never written to the repo. If the free quota runs
+out, the answers so far are saved; run the workflow again to continue.

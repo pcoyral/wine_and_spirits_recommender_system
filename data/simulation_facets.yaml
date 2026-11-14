@@ -54,3 +54,26 @@ optional:          # each wish is included with probability `chance`
              something unusual I have never heard of,
              a safe choice that cannot go wrong,
              something from a small producer]
+
+# Wishes that are NOT offered for a kind of wine, so that briefs stay
+# plausible (DECISIONS.md, 14 Nov 2026): no white wine that tastes like
+# coffee, no "strong and heavy" rosé. "any kind of wine" has no limits.
+# Drafted by Claude; edit freely.
+not_for:
+  a red wine:
+    flavours: [lemon, green apple, peach, tropical fruit, honey, butter]
+    feel: [crisp, creamy]
+  a white wine:
+    flavours: [red berries, dark berries, cherry, plum, chocolate, coffee, pepper, smoke, mushrooms]
+    feel: [warming]
+  a rosé:
+    flavours: [dark berries, plum, honey, vanilla, chocolate, coffee, pepper, nuts, butter, smoke, mushrooms]
+    weight: [strong and heavy]
+    feel: [creamy, warming]
+  a sparkling wine:
+    flavours: [dark berries, plum, chocolate, coffee, spices, pepper, smoke, mushrooms]
+    weight: [strong and heavy]
+    feel: [warming]
+  a sweet wine for dessert:
+    flavours: [green apple, pepper, herbs, butter, smoke, mushrooms]
+    feel: [crisp]

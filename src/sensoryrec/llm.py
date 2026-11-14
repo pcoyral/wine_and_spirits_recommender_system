@@ -77,7 +77,8 @@ def gemini_call(model, url, options, pause_seconds=0, key_name="GEMINI_API_KEY",
 
     The API key is read from the environment variable (a GitHub secret in
     the workflow); it is never written to the repo or the cache. On "too
-    many requests" (HTTP 429) or "busy" (503) it waits and tries again; if
+    many requests" (HTTP 429), "busy" (503) or no answer within a minute it
+    waits and tries again; if
     the quota is used up it stops, and a later run continues from the cache."""
     def call(prompt):
         key = os.environ.get(key_name)
@@ -89,16 +90,23 @@ def gemini_call(model, url, options, pause_seconds=0, key_name="GEMINI_API_KEY",
                                          headers={"Content-Type": "application/json", "x-goog-api-key": key})
         for wait in [*waits, None]:
             try:
-                with urllib.request.urlopen(request, timeout=120) as response:
+                with urllib.request.urlopen(request, timeout=60) as response:
                     text = gemini_text(json.loads(response.read()))
                 time.sleep(pause_seconds)   # stay under the free tier's requests per minute
                 return text
             except urllib.error.HTTPError as error:
                 if error.code not in (429, 503) or wait is None:
-                    reason = error.read().decode(errors="replace")[:300]   # Gemini's own explanation
+                    reason = error.read().decode(errors="replace")[:3000]   # Gemini's own explanation, in full
                     raise SystemExit(f"Gemini refused the request (HTTP {error.code}): {reason}\nIf the free "
                                      "quota is used up, run again later: answers so far are in the cache.")
                 log.warning("Gemini is busy (HTTP %d), waiting %d s", error.code, wait)
+                time.sleep(wait)
+            except (TimeoutError, urllib.error.URLError) as error:
+                # No answer at all (the connection hung or dropped): same treatment as "busy".
+                if wait is None:
+                    raise SystemExit(f"Gemini did not answer ({error}). Run again later: "
+                                     "answers so far are in the cache.")
+                log.warning("Gemini did not answer (%s), waiting %d s", error, wait)
                 time.sleep(wait)
     return call
 

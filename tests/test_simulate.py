@@ -162,3 +162,24 @@ def test_gemini_gives_up_cleanly_after_the_last_wait(monkeypatch):
     call = gemini_call("some-model", "https://example.invalid/{model}", {"temperature": 0, "seed": 42}, waits=(0,))
     with pytest.raises(SystemExit, match="did not answer"):
         call("hello")
+
+
+def test_wishes_left_out_for_a_kind_of_wine():
+    facets = {**FACETS, "not_for": {"a red wine": {"flavours": ["lemon"]}}}
+    briefs = build_briefs(facets, 20, seed=42)
+    reds = [b for b in briefs if b["kind"] == "a red wine"]
+    others = [b for b in briefs if b["kind"] != "a red wine"]
+    assert reds and all("lemon" not in b["flavours"] for b in reds)
+    assert any("lemon" in b["flavours"] for b in others)   # still offered for the other kind
+
+
+def test_facets_file_rules_name_real_values():
+    import yaml
+    facets = yaml.safe_load(open(repo_path("data/simulation_facets.yaml"), encoding="utf-8"))
+    for kind, rules in facets["not_for"].items():
+        assert kind in facets["kind"]
+        for name, values in rules.items():
+            assert set(values) <= set(facets["optional"][name]["values"]), (kind, name)   # no typos
+    briefs = build_briefs(facets, 1000, seed=42)
+    whites = [b for b in briefs if b["kind"] == "a white wine" and "flavours" in b]
+    assert whites and not any("coffee" in b["flavours"] for b in whites)

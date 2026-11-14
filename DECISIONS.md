@@ -433,3 +433,11 @@ The supervisor asked for five things; the student approved these choices
   queries over two models (harder to defend); fewer queries. The few answers
   already written by 3.6 Flash are not used: the cache is keyed by model. The
   pause between calls is 5 seconds, under 15 requests per minute.
+- **Plausible briefs (option B, student's decision after the trial of 20).**
+  Fully random combinations gave requests no customer would make (a white
+  wine that tastes like coffee, a rosé that tastes like mushrooms). The
+  facets file now lists, per kind of wine, the flavours, weights and feels
+  that are not offered (`not_for`); "any kind of wine" has no limits. The
+  lists were drafted by Claude and are the student's to edit. Rejected (A):
+  keeping it fully random. The trial answers written before this change are
+  not part of the study unless the same brief comes up again.

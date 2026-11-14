@@ -36,12 +36,15 @@ log = logging.getLogger(__name__)
 def build_brief(facets, rng):
     """One brief: who is asking, the kind of wine, and some optional wishes."""
     brief = {"experience": str(rng.choice(facets["experience"])), "kind": str(rng.choice(facets["kind"]))}
+    # wishes that make no sense for this kind of wine (e.g. coffee in a white wine)
+    left_out = facets.get("not_for", {}).get(brief["kind"], {})
     for name, facet in facets["optional"].items():
         if name == "sweetness" and "sweet" in brief["kind"]:
             continue   # "a sweet wine" that is "not sweet at all" would contradict itself
         if rng.random() < facet["chance"]:
+            values = [v for v in facet["values"] if v not in left_out.get(name, [])]
             n_pick = int(rng.integers(1, facet.get("pick", 1) + 1))
-            picked = rng.choice(facet["values"], size=n_pick, replace=False)
+            picked = rng.choice(values, size=n_pick, replace=False)
             brief[name] = " and ".join(str(v) for v in picked)
     return brief
 

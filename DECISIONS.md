@@ -409,3 +409,17 @@ The supervisor asked for five things; the student approved these choices
   (an external service), which stays Future Work. The country-to-ISO table
   (`data/country_iso3.csv`) was written by Claude from the ISO 3166 standard
   ("England" is mapped to GBR, "Macedonia" to MKD).
+
+## 2026-11-14 — Gemini model for the simulated queries
+- **Model: `gemini-3.6-flash`** (student's decision). The course notebook
+  uses `gemini-2.5-flash`, which Google has retired ("no longer available to
+  new users"). Of the current models tested with one small request each,
+  `gemini-3.8-flash` (Google's suggested replacement) returned "high demand"
+  errors, also after several minutes of retries; `gemini-3.6-flash` and
+  `gemini-3.5-flash-lite` answered. Phrasing a short brief as one or two
+  sentences does not need the newest model, and 1,000 requests on an
+  overloaded model would take many runs. Rejected: `gemini-3.8-flash`
+  (availability), `gemini-3.5-flash-lite` (smaller model, kept as fallback).
+  The exact name is used, not an alias: `gemini-3.5-flash` was answered by
+  version 3.6 in the test. The model name is part of the cache key, so every
+  cached answer records which model wrote it.

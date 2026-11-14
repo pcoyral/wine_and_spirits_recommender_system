@@ -139,11 +139,10 @@ simulation:
   quality: results/simulated_queries_quality.csv
   max_retries: 3
   llm:
-    # Gemini free tier (DECISIONS.md B1). Set `model` to the exact model name
-    # used in the course notebook; `make simulate` refuses to run while it is
-    # null. The API key is NOT stored here: environment variable
-    # GEMINI_API_KEY (a GitHub secret in the workflow).
-    model: null
+    # Gemini free tier (DECISIONS.md B1, model chosen 14 Nov 2026). The API key
+    # is NOT stored here: environment variable GEMINI_API_KEY (a GitHub secret
+    # in the workflow).
+    model: gemini-3.6-flash
     url: "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
     temperature: 0
     seed: 42

@@ -96,7 +96,7 @@ def gemini_call(model, url, options, pause_seconds=0, key_name="GEMINI_API_KEY",
                 return text
             except urllib.error.HTTPError as error:
                 if error.code not in (429, 503) or wait is None:
-                    reason = error.read().decode(errors="replace")[:300]   # Gemini's own explanation
+                    reason = error.read().decode(errors="replace")[:3000]   # Gemini's own explanation, in full
                     raise SystemExit(f"Gemini refused the request (HTTP {error.code}): {reason}\nIf the free "
                                      "quota is used up, run again later: answers so far are in the cache.")
                 log.warning("Gemini is busy (HTTP %d), waiting %d s", error.code, wait)

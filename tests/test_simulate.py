@@ -133,3 +133,32 @@ def test_gemini_answers_are_cached_under_the_model_name(tmp_path):
     assert asked == ["hello"]                                  # the second time comes from the cache
     other = gemini_from_config(gemini_cfg(tmp_path, "model-b"), call=lambda p: "other")
     assert other.generate("hello") == "other"                  # another model, another cache entry
+
+
+def test_gemini_retries_when_there_is_no_answer(monkeypatch):
+    # First the connection hangs, then Gemini answers: one retry, no crash.
+    import io, json, urllib.request
+    monkeypatch.setenv("GEMINI_API_KEY", "test-key")
+    replies = [TimeoutError("The read operation timed out"),
+               io.BytesIO(json.dumps({"candidates": [{"content": {"parts": [{"text": "hi"}]}}]}).encode())]
+
+    def fake_urlopen(request, timeout):
+        reply = replies.pop(0)
+        if isinstance(reply, Exception):
+            raise reply
+        return reply
+    monkeypatch.setattr(urllib.request, "urlopen", fake_urlopen)
+    call = gemini_call("some-model", "https://example.invalid/{model}", {"temperature": 0, "seed": 42}, waits=(0,))
+    assert call("hello") == "hi" and replies == []
+
+
+def test_gemini_gives_up_cleanly_after_the_last_wait(monkeypatch):
+    import urllib.request
+    monkeypatch.setenv("GEMINI_API_KEY", "test-key")
+
+    def fake_urlopen(request, timeout):
+        raise TimeoutError("The read operation timed out")
+    monkeypatch.setattr(urllib.request, "urlopen", fake_urlopen)
+    call = gemini_call("some-model", "https://example.invalid/{model}", {"temperature": 0, "seed": 42}, waits=(0,))
+    with pytest.raises(SystemExit, match="did not answer"):
+        call("hello")

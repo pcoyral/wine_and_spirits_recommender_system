@@ -423,3 +423,13 @@ The supervisor asked for five things; the student approved these choices
   The exact name is used, not an alias: `gemini-3.5-flash` was answered by
   version 3.6 in the test. The model name is part of the cache key, so every
   cached answer records which model wrote it.
+- **Changed the same day to `gemini-3.5-flash-lite`** (student's decision).
+  The trial showed the free-tier limits in Google AI Studio: `gemini-3.6-flash`
+  and `gemini-3.8-flash` allow 5 requests per minute and 20 per day, so 1,000
+  queries would take about two months. The two "lite" models allow 15 per
+  minute and 500 per day, so the study takes about three daily runs. Chosen:
+  `gemini-3.5-flash-lite` (answered in the test). Rejected:
+  `gemini-3.1-flash-lite` (older, "high demand" in the test); splitting the
+  queries over two models (harder to defend); fewer queries. The few answers
+  already written by 3.6 Flash are not used: the cache is keyed by model. The
+  pause between calls is 5 seconds, under 15 requests per minute.

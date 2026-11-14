@@ -142,12 +142,13 @@ simulation:
     # Gemini free tier (DECISIONS.md B1, model chosen 14 Nov 2026). The API key
     # is NOT stored here: environment variable GEMINI_API_KEY (a GitHub secret
     # in the workflow).
-    model: gemini-3.6-flash
+    model: gemini-3.5-flash-lite
     url: "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
     temperature: 0
     seed: 42
-    # seconds to wait after each call, to stay under the free requests per minute
-    pause_seconds: 4
+    # seconds to wait after each call: the free tier allows 15 requests per
+    # minute and 500 per day for this model (seen in AI Studio, 14 Nov 2026)
+    pause_seconds: 5
   # {experience} and {wishes} come from the brief, {banned} from the vocabulary
   prompt: |
     Write what a customer would say to a wine shop assistant to ask for a

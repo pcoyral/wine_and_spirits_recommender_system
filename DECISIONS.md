@@ -599,3 +599,10 @@ recommended:
   `data/images/sources.csv`; (3) the drawn bottle for every other wine. The
   app prefers an approved photo, then an X-Wines photo, then the drawing.
   Rejected: AI-generated "photos" (not the real bottle).
+- **Open Food Facts photos: none usable** (16 Nov 2026). Searched for the 25
+  wines the app's demo shows: 23 candidates, none of them the actual bottle
+  (supermarket products of the same grape, or another wine of the same
+  producer). None was put to the student for approval. Result: 227 wines
+  have a real X-Wines photo (91 distinct bottles, same wine across
+  vintages), every other wine the drawn bottle. `make photos` stays
+  available for wines the student adds to `data/images/demo_extra_ids.csv`.

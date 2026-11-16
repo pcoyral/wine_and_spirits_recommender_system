@@ -75,21 +75,34 @@ GENERIC_NAME_WORDS = {"red", "white", "rose", "wine", "vino", "vin", "reserva", 
                       "sec", "tinto", "blanco", "bianco", "rosso", "the", "de", "la", "le", "di", "del", "do", "and"}
 
 
-def distinctive_words(wine_name, grapes):
-    """Words of an X-Wines wine name that identify it: not a grape, not a
-    generic word such as "red" or "reserva"."""
+def distinctive_words(wine_name, grapes, region=""):
+    """Words of an X-Wines wine name that identify it: not a grape, not the
+    region (e.g. "Napa Valley"), not a generic word such as "red" or
+    "reserva"."""
     grape_words = {g for grape in grapes for g in normalise(grape)}
-    return set(normalise(wine_name)) - grape_words - GENERIC_NAME_WORDS
+    return (set(normalise(wine_name)) - grape_words - set(normalise(region or ""))
+            - GENERIC_NAME_WORDS - {"s"})
+
+
+def same_grape(grapes, variety, title):
+    """The X-Wines grapes agree with our wine: a single-grape X-Wines wine
+    needs that grape in our variety; a blend needs our variety to be a blend
+    or to name one of its grapes."""
+    ours = set(normalise(variety))
+    if len(grapes) == 1:
+        return set(normalise(grapes[0])) <= ours
+    return "blend" in ours or any(set(normalise(g)) <= ours | set(normalise(title)) for g in grapes)
 
 
 def match_xwines(ours, theirs):
     """Wine Enthusiast wine_id -> X-Wines WineID, only for confident matches:
-    the same winery (normalised), EVERY distinctive word of the X-Wines wine
-    name in our title (a name made only of grape or generic words never
-    matches: "Riesling" from Dr. Loosen could be any of a dozen wines), and
-    our vintage among the X-Wines vintages. Ambiguous matches are skipped.
-    ours: wine_id, winery, title; theirs: WineID, WineryName, WineName,
-    Grapes, Vintages."""
+    the same winery (normalised); EVERY distinctive word of the X-Wines wine
+    name in our title (a name made only of grape, region or generic words
+    never matches: "Riesling" from Dr. Loosen could be any of a dozen
+    wines); the same grape (same_grape); and our vintage among the X-Wines
+    vintages. Ambiguous matches are skipped.
+    ours: wine_id, winery, title, variety; theirs: WineID, WineryName,
+    WineName, Grapes, Vintages and (optionally) RegionName."""
     by_winery = {}
     for r in theirs.itertuples():
         by_winery.setdefault(" ".join(normalise(r.WineryName)), []).append(r)
@@ -102,9 +115,11 @@ def match_xwines(ours, theirs):
         year = vintage(w.title)
         found = []
         for c in candidates:
-            name_words = distinctive_words(c.WineName, ast.literal_eval(c.Grapes))
+            grapes = ast.literal_eval(c.Grapes)
+            name_words = distinctive_words(c.WineName, grapes, getattr(c, "RegionName", ""))
             years = set(ast.literal_eval(c.Vintages)) if isinstance(c.Vintages, str) else set()
-            if name_words and name_words <= words and year in years:
+            if (name_words and name_words <= words and year in years
+                    and same_grape(grapes, w.variety, w.title)):
                 found.append(c.WineID)
         if len(found) == 1:
             matches[w.wine_id] = found[0]

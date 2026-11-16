@@ -51,3 +51,21 @@ def test_thumbnail(tmp_path):
     thumbnail(tmp_path / "big.png", tmp_path / "small.jpg", height=320)
     with Image.open(tmp_path / "small.jpg") as im:
         assert max(im.size) == 320 and im.format == "JPEG"
+
+
+def test_match_needs_same_grape_and_ignores_region_words():
+    ours = pd.DataFrame({"wine_id": [1, 2, 3, 4],
+                         "winery": ["Kendall-Jackson", "Kendall-Jackson", "Duckhorn", "Duckhorn"],
+                         "title": ["Kendall-Jackson 2011 Vintner's Reserve Merlot (Sonoma)",
+                                   "Kendall-Jackson 2011 Vintner's Reserve Zinfandel (Mendocino)",
+                                   "Duckhorn 2013 Sauvignon Blanc (Napa Valley)",
+                                   "Duckhorn 2012 Three Palms Merlot (Napa Valley)"],
+                         "variety": ["Merlot", "Zinfandel", "Sauvignon Blanc", "Merlot"]})
+    theirs = pd.DataFrame({"WineID": [7, 8, 9], "WineryName": ["Kendall-Jackson", "Duckhorn", "Duckhorn"],
+                           "WineName": ["Vintner's Reserve Merlot", "Napa Valley Merlot", "Three Palms Merlot"],
+                           "Grapes": ["['Merlot']", "['Merlot']", "['Merlot']"],
+                           "Vintages": ["[2011]", "[2013, 2012]", "[2012]"],
+                           "RegionName": ["Sonoma", "Napa Valley", "Napa Valley"]})
+    # 2: Zinfandel is not the Merlot; 3: "Napa Valley" is only the region and the grape differs
+    assert match_xwines(ours, theirs) == {1: 7, 4: 9}
+

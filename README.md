@@ -71,6 +71,7 @@ SHA-256 is recorded in `results/eda/data_manifest.json` by `make data`.
 | `make eval-simulated` | Coverage and diversity of every model on the simulated queries → `results/simulated_coverage*.csv` |
 | `make xwines` | Long tail and sparsity in consumer ratings (X-Wines, analysis only; put the Full version's two CSVs in `data/raw/xwines/`) → `results/xwines/` |
 | `make map-mockup` | Map MOCK-UP for Future Work (real origins of the top-5, invented shops) → `docs/map_mockup.html`; see `docs/map_libraries.md` |
+| `make app` | Chat **prototype** in the browser: request → top 5 → refine (needs `make data`, and `make embed` for the semantic models) |
 | `make test` | Run unit tests |
 
 ## Evaluation

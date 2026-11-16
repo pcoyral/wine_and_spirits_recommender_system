@@ -1,0 +1,16 @@
+{
+  "source": "X-Wines, https://github.com/rogerioxavier/X-Wines (CC0)",
+  "full_version": true,
+  "files": [
+    {
+      "name": "XWines_Full_100K_wines.csv",
+      "bytes": 35843110,
+      "sha256": "eac2d812b5eb94264f3c4ee1764ccdacf764cdf1c2599c26e3832ed91a4662cc"
+    },
+    {
+      "name": "XWines_Full_21M_ratings.csv",
+      "bytes": 1123619885,
+      "sha256": "847fb49139b7ebfc92c5745cc34e3efff9febea05e977e4332287afa2ea2ded2"
+    }
+  ]
+}

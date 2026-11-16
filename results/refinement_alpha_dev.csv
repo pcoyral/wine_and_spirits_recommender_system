@@ -1,0 +1,6 @@
+alpha,mean_success_dev,chosen
+0.05,0.1966,False
+0.1,0.2848,False
+0.2,0.4546,False
+0.3,0.5855,False
+0.5,0.7506,True

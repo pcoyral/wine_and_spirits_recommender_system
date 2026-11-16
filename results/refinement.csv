@@ -1,0 +1,14 @@
+alpha,refinement,trait,direction,n_queries,n_eligible,success_rate,random_success_rate,median_rank_change,n_target_in_topk_before,pct_target_left_topk,median_price_drop_pct,mean_relevance_cost
+0.5,sweeter,sweetness,more,200,200,0.88,0.063,527.0,1,0.0,,
+0.5,drier,sweetness,less,200,51,0.9412,0.3549,2559.0,1,100.0,,
+0.5,heavier,body,more,200,200,0.54,0.0425,4073.5,1,0.0,,
+0.5,lighter,body,less,200,40,0.95,0.3775,-162.0,1,0.0,,
+0.5,more fruity,fruitiness,more,200,198,0.3788,0.1359,8324.5,1,100.0,,
+0.5,less fruity,fruitiness,less,200,112,0.5982,0.3473,-933.5,1,0.0,,
+0.5,more oaky,oak,more,200,198,0.9545,0.1116,3265.5,1,100.0,,
+0.5,less oaky,oak,less,200,39,0.7692,0.2872,52.5,1,0.0,,
+0.5,more acidic,acidity,more,200,197,0.6954,0.2584,5316.5,1,100.0,,
+0.5,less acidic,acidity,less,200,150,0.8467,0.36,-985.0,1,0.0,,
+0.5,more tannic,tannin,more,200,200,0.62,0.0845,3834.5,1,100.0,,
+0.5,less tannic,tannin,less,200,35,0.7429,0.3657,-137.5,1,0.0,,
+0.5,cheaper,price,less,200,200,,,,1,100.0,20.0,0.0082

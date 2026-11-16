@@ -1,0 +1,11 @@
+# "French Maison" visual identity (student's design brief, 16 Nov 2026)
+[theme]
+base = "light"
+primaryColor = "#49272D"
+backgroundColor = "#F8F4EB"
+secondaryBackgroundColor = "#FFFFFF"
+textColor = "#292923"
+font = "sans serif"
+
+[browser]
+gatherUsageStats = false

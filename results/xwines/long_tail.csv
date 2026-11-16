@@ -1,0 +1,6 @@
+dataset,unit,event,n_units,n_events,mean_per_unit,median_per_unit,max_per_unit,gini,top_1pct_share,top_10pct_share,top_20pct_share,pct_units_with_1,pct_units_le_10
+X-Wines (consumers),wine,ratings,100646,21013536,208.7866,58.0,27415,0.7275,0.2184,0.6063,0.76,0.0,12.9543
+X-Wines (consumers),winery,ratings,30510,21013536,688.7426,96.0,98376,0.8289,0.3099,0.7416,0.8664,0.0,12.6778
+X-Wines (consumers),user,ratings,1056079,21013536,19.8977,11.0,2986,0.5011,0.1588,0.4277,0.5691,0.0,46.2386
+Wine Enthusiast (experts),winery,reviews,16755,119954,7.1593,3.0,211,0.6131,0.1153,0.4833,0.661,27.3471,81.8024
+Wine Enthusiast (experts),variety,reviews,707,119954,169.6662,5.0,12277,0.9294,0.499,0.9223,0.9657,21.6407,60.9618

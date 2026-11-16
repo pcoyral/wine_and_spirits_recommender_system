@@ -559,3 +559,7 @@ recommended:
   (16 Nov 2026):** collaborative filtering moves from OUT to IN, as a
   separate experiment on X-Wines (Wine Enthusiast has one review per wine,
   so CF cannot run on it). `CLAUDE.md` updated.
+- **Streamlit moved to `requirements-app.txt`** (16 Nov 2026): Streamlit
+  1.65 requires pyarrow < 26, which conflicts with the pipeline's pin
+  (pyarrow 26.0.0) and broke every workflow's install. The app gets its own
+  file (pyarrow 25.0.1); the pipeline's pins are unchanged.

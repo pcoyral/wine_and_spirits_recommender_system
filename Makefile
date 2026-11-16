@@ -1,7 +1,7 @@
 PYTHON ?= python
 export PYTHONPATH := src
 
-.PHONY: data eda embed demo queries human-cards eval eval-dev refine compare-human test simulate eval-simulated xwines map-mockup app
+.PHONY: data eda embed demo queries human-cards eval eval-dev refine compare-human test simulate eval-simulated xwines map-mockup app judge judge-agree
 
 # Definition of done for S0: `make data` gives the cleaned parquet, the
 # test/dev IDs and all EDA figures. The two steps are recipe lines, not
@@ -50,6 +50,14 @@ eval-simulated:
 xwines:
 	$(PYTHON) -m sensoryrec.xwines
 
+# LLM-as-a-judge on 150 simulated requests (needs GEMINI_API_KEY) -> results/judge/
+judge:
+	$(PYTHON) -m sensoryrec.judge
+
+# Agreement between your hand scores and the judge -> results/judge/agreement.csv
+judge-agree:
+	$(PYTHON) -m sensoryrec.judge --agree
+
 # Map MOCK-UP for Future Work -> docs/map_mockup.html (MODEL=tfidf to use another model)
 map-mockup:
 	$(PYTHON) -m sensoryrec.map_mockup $(if $(MODEL),--model $(MODEL),)
@@ -62,7 +70,7 @@ refine:
 compare-human:
 	$(PYTHON) -m sensoryrec.compare_human
 
-# Chat PROTOTYPE in the browser (S3, first version)
+# Chat PROTOTYPE in the browser (S3, first version); needs requirements-app.txt
 app:
 	PYTHONPATH=src $(PYTHON) -m streamlit run app/chat.py
 

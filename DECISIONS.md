@@ -460,3 +460,23 @@ The supervisor asked for five things; the student approved these choices
   of the first trials (`gemini-3.6-flash`, and the 3.5 Flash Lite trial before
   the per-wine-type limits). They are kept as the record of what the LLM
   wrote, but they belong to no brief of the final study.
+
+## 2026-11-16 — S2 queries and evaluation run on GitHub instead of the laptop
+- **What:** the casual test/dev queries (Llama 3.2 3B through Ollama), the
+  embeddings, `make eval`, `make eval-dev`, `make refine`, the demo and the
+  X-Wines analysis run in the workflow "S2 evaluation" on GitHub's machines,
+  at the student's request, so the results exist before the supervisor
+  meeting of 16 Nov 2026.
+- **Same method as D2:** same model tag, temperature 0, fixed seed, same
+  prompts and checks. The digest and Ollama version are read from the
+  machine that ran the model and pinned in `config.yaml` by the workflow,
+  exactly as the student would on the laptop. The cache in `data/llm_cache/`
+  remains the record of every answer.
+- **Difference:** the answers were written on a Linux CPU machine, not the
+  student's Mac. Temperature 0 is reproducible on the same machine and Ollama
+  version only; a laptop re-run could word some queries differently. The
+  committed cache is what the results are based on.
+- **X-Wines:** the Full version is downloaded from the authors' Google Drive
+  (CC0) inside the workflow; the data is not committed, only
+  `results/xwines/`.
+- **Not run:** `make compare-human` (no hand-written queries exist yet).

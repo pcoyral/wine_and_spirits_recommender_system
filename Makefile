@@ -1,7 +1,7 @@
 PYTHON ?= python
 export PYTHONPATH := src
 
-.PHONY: data eda embed demo queries human-cards eval eval-dev refine compare-human test simulate eval-simulated xwines map-mockup
+.PHONY: data eda embed demo queries human-cards eval eval-dev refine compare-human test simulate eval-simulated xwines map-mockup app
 
 # Definition of done for S0: `make data` gives the cleaned parquet, the
 # test/dev IDs and all EDA figures. The two steps are recipe lines, not
@@ -61,6 +61,10 @@ refine:
 # LLM vs hand-written queries on the shared test wines -> results/llm_vs_human.csv
 compare-human:
 	$(PYTHON) -m sensoryrec.compare_human
+
+# Chat PROTOTYPE in the browser (S3, first version)
+app:
+	PYTHONPATH=src $(PYTHON) -m streamlit run app/chat.py
 
 test:
 	$(PYTHON) -m pytest -q

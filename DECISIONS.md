@@ -460,3 +460,18 @@ The supervisor asked for five things; the student approved these choices
   of the first trials (`gemini-3.6-flash`, and the 3.5 Flash Lite trial before
   the per-wine-type limits). They are kept as the record of what the LLM
   wrote, but they belong to no brief of the final study.
+
+## 2026-11-16 — S3 chat prototype (first version)
+- Approved by the student the same day, for the supervisor meeting. Streamlit
+  (pinned), `make app`: request → top k of the chosen model → refinement →
+  the tasting notes. Same models and fitting as `make eval`.
+- Refinement in the prototype: the taste buttons use the direction vectors of
+  `make refine` (Semantic models only, as decided in S2) with the alpha chosen
+  on dev (`results/refinement_alpha_dev.csv`); until that file exists the
+  screen says the step size is a placeholder. "Cheaper" = at most the median
+  price of the wines on screen, as in `make refine`.
+- Not yet: the LLM explanation (rag.py, grounded in the retrieved notes) and
+  bottle images. The screen shows, instead, the words each note shares with
+  the request, labelled as a prototype hint.
+- `requirements.lock.txt` does not list Streamlit's own dependencies yet; it
+  is regenerated on Python 3.11 with the other pending lock update.

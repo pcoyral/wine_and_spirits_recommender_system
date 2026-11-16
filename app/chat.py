@@ -5,15 +5,23 @@ with one click. No LLM yet: the explanation box shows the words each tasting
 note shares with the request. Everything is ranked by the same models as in
 `make eval` (fitted with the test wines held out).
 """
+import html
+import sys
+from pathlib import Path
+
 import pandas as pd
 import streamlit as st
+
+sys.path.insert(0, str(Path(__file__).parent))   # app/style.py
+import style  # noqa: E402
 
 from sensoryrec import prototype
 from sensoryrec.config import load_config, repo_path
 from sensoryrec.recommenders import build_models
 from sensoryrec.refinement import Refiner, load_lexicons
 
-st.set_page_config(page_title="SensoryRec prototype", page_icon="🍷", layout="wide")
+st.set_page_config(page_title="SensoryRec · prototype", page_icon="🍷", layout="wide")
+st.markdown(style.CSS, unsafe_allow_html=True)
 cfg = load_config()
 K = cfg["k"]
 
@@ -24,6 +32,12 @@ def catalogue():
     wines = pd.read_parquet(processed / "wines.parquet")
     test_ids = pd.read_csv(processed / "test_ids.csv")["wine_id"]
     return wines, test_ids
+
+
+@st.cache_resource
+def variety_colour():
+    table = pd.read_csv(repo_path(cfg["attribute"]["colour_table"]))
+    return dict(zip(table["variety"], table["colour"]))
 
 
 @st.cache_resource(show_spinner="Preparing the model (first time only)…")
@@ -59,8 +73,14 @@ country = st.sidebar.selectbox("Country (optional)", ["any"] + sorted(wines["cou
 st.sidebar.caption("PROTOTYPE: no LLM explanation and no bottle images yet (S3, increment A).")
 
 # ---------------------------------------------------------------- request
-st.title("🍷 SensoryRec")
-st.caption("Describe a wine you would like, in your own words. **Prototype** for the supervisor meeting of 16 Nov 2026.")
+st.markdown('<div class="maison-nav"><span class="maison-brand">SensoryRec</span>'
+            '<span class="maison-proto">Research prototype · demonstration only</span></div>', unsafe_allow_html=True)
+st.markdown('<div class="maison-tag">Find your bottle</div>'
+            '<div class="maison-hero">Discover your next favourite bottle.</div>'
+            '<div class="maison-rule"></div>'
+            '<div class="maison-lead">Describe the wine you would like, in your own words, as you would to a '
+            'sommelier. We compare your words with 120,000 professional tasting notes and show you the closest.</div>',
+            unsafe_allow_html=True)
 with st.form("ask"):
     text = st.text_input("What would you like?", value=st.session_state.query,
                          placeholder="Something red that isn't too heavy, a bit fruity and easy to drink")
@@ -92,9 +112,10 @@ top = prototype.recommend(model, query, K, filters, steps,
 labels = [lex["more"] if s > 0 else lex["less"] for t, s in steps for lex in [lexicons[t]]]
 if st.session_state.max_price is not None:
     labels.append(f"at most ${st.session_state.max_price:.0f}")
-st.markdown(f"**You asked:** {query}" + (f"  \n**Refined:** {', '.join(labels)}" if labels else ""))
+st.markdown(f"### Our selection for you")
+st.markdown(f"*“{query}”*" + (f"  \n**Refined:** {', '.join(labels)}" if labels else ""))
 
-st.markdown("**Refine:**")
+st.markdown("**Refine the selection**")
 buttons = prototype.refinement_buttons(lexicons) if can_refine else []
 cols = st.columns(len(buttons) + 2)
 for col, (label, trait, sign) in zip(cols, buttons):
@@ -117,12 +138,17 @@ elif not alpha_from_dev:
 # ---------------------------------------------------------------- results
 if top.empty:
     st.warning("No wine passes these filters. Press 'start over'.")
+colours = variety_colour()
 for row in top.itertuples():
-    with st.container(border=True):
-        price = f"${row.price:.0f}" if pd.notna(row.price) else "price unknown"
-        st.markdown(f"**{row.rank}. {row.title}**  \n{row.variety} · {row.country} · {price} · {row.points} points")
-        st.write(row.description)
-        words = prototype.shared_words(query, row.description)
-        st.caption("Why this wine (prototype: words the note shares with your request): "
-                   + (", ".join(words) if words else "no shared words, matched on meaning")
-                   + ". *The LLM explanation grounded in this note comes in S3.*")
+    price = f"${row.price:.0f}" if pd.notna(row.price) else "price unknown"
+    words = prototype.shared_words(query, row.description)
+    why = ", ".join(words) if words else "no shared words; matched on meaning"
+    st.markdown(
+        f'<div class="maison-card"><div><span class="rank">{row.rank}</span>'
+        f'<span class="name">{html.escape(row.title)}</span>{style.badge(colours.get(row.variety))}</div>'
+        f'<div class="meta">{html.escape(str(row.variety))} · {html.escape(str(row.country))} · {price} · '
+        f'{row.points} points (Wine Enthusiast)</div>'
+        f'<div class="note">{html.escape(row.description)}</div>'
+        f'<div class="why"><b>Why this wine</b> (prototype: words the tasting note shares with your request): '
+        f'{html.escape(why)}. <i>A written explanation, grounded in this note, comes next (S3).</i></div></div>',
+        unsafe_allow_html=True)

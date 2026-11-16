@@ -475,3 +475,11 @@ The supervisor asked for five things; the student approved these choices
   the request, labelled as a prototype hint.
 - `requirements.lock.txt` does not list Streamlit's own dependencies yet; it
   is regenerated on Python 3.11 with the other pending lock update.
+- **Look: "French Maison"** (student's design brief, 16 Nov 2026): palette
+  (burgundy #49272D, champagne cream #F8F4EB, antique gold #B59A68, ivory,
+  charcoal), Cormorant Garamond for titles and wine names, Inter for text,
+  thin gold borders, pastel badge per wine category (red, white, rosé,
+  sparkling; from `data/variety_colour.csv`). Visual only: nothing changes
+  what is recommended. The parts of the brief outside the frozen scope
+  (spirits, "My Cellar", purchasing, a questionnaire replacing the free-text
+  request) are not built; they wait for the student's decision.

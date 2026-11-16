@@ -22,6 +22,7 @@ import json
 import logging
 import shutil
 import time
+import urllib.error
 import urllib.parse
 import urllib.request
 
@@ -31,17 +32,26 @@ from sensoryrec.config import load_config, repo_path
 from sensoryrec.images import GENERIC_NAME_WORDS, normalise, thumbnail, update_sources
 
 log = logging.getLogger(__name__)
-SEARCH = "https://world.openfoodfacts.org/cgi/search.pl"
+SEARCH = "https://search.openfoodfacts.org/search"          # the newer search service
+PRODUCT_API = "https://world.openfoodfacts.org/api/v2/product/{code}.json?fields=code,product_name,brands,image_front_url"
 PRODUCT_PAGE = "https://world.openfoodfacts.org/product/{code}"
 LICENCE = "CC BY-SA 3.0 (Open Food Facts contributors)"
 # A generic name: no personal details are sent to the external service.
 USER_AGENT = "SensoryRec-research-prototype/0.1"
 
 
-def get_json(url):
+def get_json(url, waits=(10, 30, 60)):
+    """GET a JSON answer; on "busy" (429/503) wait and try again."""
     request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
-    with urllib.request.urlopen(request, timeout=60) as response:
-        return json.loads(response.read())
+    for wait in [*waits, None]:
+        try:
+            with urllib.request.urlopen(request, timeout=60) as response:
+                return json.loads(response.read())
+        except urllib.error.HTTPError as error:
+            if error.code not in (429, 502, 503) or wait is None:
+                raise
+            log.info("Open Food Facts busy (HTTP %d), waiting %d s", error.code, wait)
+            time.sleep(wait)
 
 
 def download(url, path):
@@ -66,10 +76,15 @@ def overlap(title, candidate_name, brands):
     return len(ours & theirs) / len(ours) if ours else 0.0
 
 
+def brand_text(brands):
+    return " ".join(brands) if isinstance(brands, list) else str(brands or "")
+
+
 def best_candidate(wine, products):
-    """The product with an image whose name overlaps our title most, or None."""
-    scored = [(overlap(wine["title"], p.get("product_name", ""), p.get("brands", "")), p)
-              for p in products if p.get("image_front_url")]
+    """The product whose name and brand overlap our title most, or None.
+    (Search hits may lack the photo address; it is fetched afterwards.)"""
+    scored = [(overlap(wine["title"], p.get("product_name", ""), brand_text(p.get("brands"))), p)
+              for p in products if p.get("code")]
     scored = [x for x in scored if x[0] > 0]
     if not scored:
         return None, 0.0
@@ -78,8 +93,12 @@ def best_candidate(wine, products):
 
 
 def demo_set(cfg):
-    """wine_ids shown by the demo (all models), plus the student's extra list."""
-    ids = set(pd.read_csv(repo_path(cfg["demo"]["out_dir"]) / f"demo_top{cfg['k']}.csv")["wine_id"])
+    """wine_ids the app's engines show in the demo, plus the student's extra list."""
+    demo = pd.read_csv(repo_path(cfg["demo"]["out_dir"]) / f"demo_top{cfg['k']}.csv")
+    models = cfg["photos"].get("models")
+    if models and "model" in demo:
+        demo = demo[demo["model"].isin(models)]     # the engines the app shows
+    ids = set(demo["wine_id"])
     extra = repo_path(cfg["photos"]["extra_ids"])
     if extra.exists():
         ids |= set(pd.read_csv(extra)["wine_id"])
@@ -95,15 +114,23 @@ def find(cfg, get=get_json, fetch=download):
     rows = []
     for wine_id in demo_set(cfg):
         wine = wines.loc[wine_id]
-        params = {"search_terms": search_terms(wine), "search_simple": 1, "action": "process", "json": 1,
-                  "page_size": 20, "fields": "code,product_name,brands,image_front_url",
-                  "tagtype_0": "categories", "tag_contains_0": "contains", "tag_0": "wines"}
+        params = {"q": f'{search_terms(wine)} categories_tags:"en:wines"', "page_size": 20,
+                  "fields": "code,product_name,brands"}
         try:
-            products = get(f"{SEARCH}?{urllib.parse.urlencode(params)}").get("products", [])
+            products = get(f"{SEARCH}?{urllib.parse.urlencode(params)}").get("hits", [])
         except Exception as error:                 # one failed search must not stop the others
             log.warning("search failed for %s: %s", wine_id, error)
             products = []
         product, score = best_candidate(wine, products)
+        if product is not None:
+            try:
+                product = get(PRODUCT_API.format(code=product["code"])).get("product") or {}
+                product.setdefault("code", product.get("code"))
+            except Exception as error:
+                log.warning("product lookup failed for %s: %s", wine_id, error)
+                product = None
+            if product is not None and not product.get("image_front_url"):
+                product = None                     # no photo on that product
         row = {"wine_id": wine_id, "our_title": wine["title"], "candidate_name": None, "candidate_brand": None,
                "candidate_page": None, "image_url": None, "word_overlap": round(score, 2), "photo": None,
                "approved": ""}
@@ -114,7 +141,8 @@ def find(cfg, get=get_json, fetch=download):
                 fetch(product["image_front_url"], raw)
                 thumbnail(raw, path)
                 raw.unlink()
-                row.update(candidate_name=product.get("product_name"), candidate_brand=product.get("brands"),
+                row.update(candidate_name=product.get("product_name"),
+                           candidate_brand=brand_text(product.get("brands")),
                            candidate_page=PRODUCT_PAGE.format(code=product["code"]),
                            image_url=product["image_front_url"], photo=str(path.relative_to(repo_path("."))))
             except Exception as error:

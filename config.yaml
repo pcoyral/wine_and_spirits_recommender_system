@@ -283,4 +283,5 @@ photos:
   candidates_dir: data/images/candidates
   review: data/images/photo_review.csv        # fill `approved` with yes / no
   photos_dir: data/images/photos
+  models: [semantic]    # the demo wines of the engines the app shows
   pause_seconds: 7

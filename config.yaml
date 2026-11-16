@@ -133,6 +133,16 @@ extra_embedding_models:
     batch_size: 64
     # From the model card: short queries get this instruction, the notes do not.
     query_prefix: "Represent this sentence for searching relevant passages: "
+  - name: semantic_gemini
+    provider: gemini
+    model: gemini-embedding-001
+    # an API model has no download revision: the pinned model name is the version
+    revision: gemini-embedding-001
+    dims: 768
+    batch_size: 100      # notes per request (batchEmbedContents)
+    pause_seconds: 1
+    # Off until `make embed-gemini` has embedded all notes (DECISIONS.md, 16 Nov 2026)
+    enabled: false
 
 simulation:
   # ~1,000 simulated customer queries for the coverage and diversity study

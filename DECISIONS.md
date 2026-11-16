@@ -575,3 +575,11 @@ recommended:
   winery can have 98,000 ratings. Cold-start groups: users by training
   ratings (4–9, 10–29, 30+); target wines by training likes (0, 1–9,
   10–99, 100+).
+- **Gemini embeddings, implementation** (16 Nov 2026, within the approved
+  plan): notes sent 100 per request with task type RETRIEVAL_DOCUMENT,
+  requests with RETRIEVAL_QUERY, 768 dimensions, normalised. Note batches are
+  saved as they finish, so the free quota can be spread over several runs;
+  query embeddings are cached in `data/llm_cache/` and committed. The model
+  is called `semantic_gemini` and stays `enabled: false` (left out of every
+  comparison) until all notes are embedded, so no other run calls the API by
+  accident.

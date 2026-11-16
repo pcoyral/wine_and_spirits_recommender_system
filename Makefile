@@ -1,7 +1,7 @@
 PYTHON ?= python
 export PYTHONPATH := src
 
-.PHONY: data eda embed demo queries human-cards eval eval-dev refine compare-human test simulate eval-simulated xwines map-mockup app judge judge-agree xwines-cf
+.PHONY: data eda embed demo queries human-cards eval eval-dev refine compare-human test simulate eval-simulated xwines map-mockup app judge judge-agree xwines-cf embed-gemini
 
 # Definition of done for S0: `make data` gives the cleaned parquet, the
 # test/dev IDs and all EDA figures. The two steps are recipe lines, not
@@ -17,6 +17,10 @@ eda:
 # Build the SBERT embedding cache (downloads the model on first use)
 embed:
 	$(PYTHON) -m sensoryrec.recommenders.semantic
+
+# Gemini embeddings of every tasting note (needs GEMINI_API_KEY; resumable)
+embed-gemini:
+	$(PYTHON) -m sensoryrec.recommenders.semantic --only semantic_gemini
 
 # Top-5 of all four models for the queries in data/demo_queries.txt
 demo:

@@ -1,0 +1,63 @@
+# Gemini embeddings of the ~120,000 tasting notes (make embed-gemini).
+# The free quota may need several runs: each finished batch of 100 notes is
+# kept in the Actions cache (a new cache entry per run), and the next run
+# continues from there. Starts on a push to the branch `run-embed-gemini`.
+name: Gemini embeddings
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [run-embed-gemini]
+
+permissions:
+  contents: read
+
+jobs:
+  embed:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.11", cache: pip}
+      - name: Install
+        run: pip install -r requirements.txt && pip install -e .
+      - name: Raw data and cleaning
+        run: |
+          mkdir -p data/raw
+          curl -sSfL -o data/raw/winemag-data-130k-v2.csv \
+            https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2019/2019-05-28/winemag-data-130k-v2.csv
+          expected=$(python -c "import json; print(json.load(open('results/eda/data_manifest.json'))['raw_sha256'])")
+          echo "$expected  data/raw/winemag-data-130k-v2.csv" | sha256sum --check
+          make data
+      - name: Earlier embeddings (all models, and Gemini batches done so far)
+        uses: actions/cache/restore@v4
+        with:
+          path: data/processed/embeddings
+          key: embeddings-gemini-${{ github.run_id }}
+          restore-keys: |
+            embeddings-gemini-
+            embeddings-
+      - name: Gemini embeddings
+        id: embed
+        continue-on-error: true   # keep the finished batches when the quota runs out
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: make embed-gemini
+      - name: Keep the progress for the next run
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: data/processed/embeddings
+          key: embeddings-gemini-${{ github.run_id }}
+      - name: Summary page
+        if: always()
+        run: |
+          echo "### Gemini embeddings: ${{ steps.embed.outcome }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "Batches of 100 notes done: $(ls data/processed/embeddings/gemini_batches 2>/dev/null | wc -l) of 1,200" >> "$GITHUB_STEP_SUMMARY"
+          ls -la data/processed/embeddings >> "$GITHUB_STEP_SUMMARY" || true
+      - name: Stop here if not finished
+        if: steps.embed.outcome != 'success'
+        run: |
+          echo "Not finished (probably the quota). Push to run-embed-gemini again later: it continues from the cache."
+          exit 1

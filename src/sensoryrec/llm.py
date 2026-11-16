@@ -72,6 +72,35 @@ def gemini_text(data):
     return "".join(part.get("text", "") for part in parts)
 
 
+def post_json(url, body, key_name="GEMINI_API_KEY", waits=(30, 60, 120), timeout=60):
+    """POST a JSON body to a Gemini endpoint and return the parsed answer.
+    The key is read from the environment, never stored. Waits and retries on
+    "too many requests" (429), "busy" (503) or no answer; stops cleanly
+    otherwise, so a later run continues from whatever was cached."""
+    key = os.environ.get(key_name)
+    if not key:
+        raise SystemExit(f"Set the environment variable {key_name} (GitHub secret) to call Gemini.")
+    request = urllib.request.Request(url, data=json.dumps(body).encode(),
+                                     headers={"Content-Type": "application/json", "x-goog-api-key": key})
+    for wait in [*waits, None]:
+        try:
+            with urllib.request.urlopen(request, timeout=timeout) as response:
+                return json.loads(response.read())
+        except urllib.error.HTTPError as error:
+            if error.code not in (429, 503) or wait is None:
+                reason = error.read().decode(errors="replace")[:3000]   # Gemini's own explanation, in full
+                raise SystemExit(f"Gemini refused the request (HTTP {error.code}): {reason}\nIf the free "
+                                 "quota is used up, run again later: answers so far are in the cache.")
+            log.warning("Gemini is busy (HTTP %d), waiting %d s", error.code, wait)
+            time.sleep(wait)
+        except (TimeoutError, urllib.error.URLError) as error:
+            if wait is None:
+                raise SystemExit(f"Gemini did not answer ({error}). Run again later: "
+                                 "answers so far are in the cache.")
+            log.warning("Gemini did not answer (%s), waiting %d s", error, wait)
+            time.sleep(wait)
+
+
 def gemini_call(model, url, options, pause_seconds=0, key_name="GEMINI_API_KEY", waits=(30, 60, 120)):
     """A function prompt -> text that asks Gemini through its HTTP API.
 

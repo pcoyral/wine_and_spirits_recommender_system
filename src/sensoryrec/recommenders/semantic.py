@@ -106,8 +106,15 @@ class SemanticRecommender(Recommender):
             np.savez(self.cache_path(), embeddings=embeddings, wine_ids=ids, fingerprint=np.array(fp))
         return embeddings
 
+    def encode_queries(self, texts):
+        """Requests; an encoder with a separate query mode (Gemini) uses it."""
+        encoder = self.encoder()
+        if hasattr(encoder, "encode_queries"):
+            return unit_vectors(encoder.encode_queries(list(texts)))
+        return self.encode(texts)
+
     def score(self, query):
-        return self.embeddings @ self.encode([self.query_prefix + query])[0]
+        return self.embeddings @ self.encode_queries([self.query_prefix + query])[0]
 
     def vectors(self):
         """wine_id -> embedding, for the intra-list diversity metric."""
@@ -124,17 +131,39 @@ def extra_from_config(cfg):
     """The extra embedding models compared with Sentence-BERT (DECISIONS.md,
     12 Nov 2026): same recommender, another model."""
     cache_dir = cfg["semantic"]["cache_dir"]
-    return [SemanticRecommender(m["model"], revision=m["revision"], batch_size=m["batch_size"],
-                                cache_dir=cache_dir, name=m["name"], query_prefix=m.get("query_prefix", ""))
-            for m in cfg.get("extra_embedding_models") or []]
+    models = []
+    for m in cfg.get("extra_embedding_models") or []:
+        if not m.get("enabled", True):
+            continue          # e.g. Gemini, until its note embeddings exist
+        encoder = None
+        if m.get("provider") == "gemini":
+            from sensoryrec.gemini_embed import GeminiEncoder
+            encoder = GeminiEncoder(m["model"], m["dims"], repo_path(cache_dir) / "gemini_batches",
+                                    repo_path(cfg["llm"]["cache_dir"]), m["batch_size"], m.get("pause_seconds", 0))
+        models.append(SemanticRecommender(m["model"], revision=m["revision"], batch_size=m["batch_size"],
+                                          cache_dir=cache_dir, encoder=encoder, name=m["name"],
+                                          query_prefix=m.get("query_prefix", "")))
+    return models
 
 
 def main():
-    """`make embed`: build (or check) the embedding cache of every model."""
+    """`make embed`: build (or check) the embedding cache of every model.
+    `--only NAME` builds one model (e.g. semantic_gemini, even while it is
+    not enabled for the comparisons)."""
+    import argparse
     logging.basicConfig(level=logging.INFO, format="%(message)s")
+    parser = argparse.ArgumentParser(description="Build the embedding caches")
+    parser.add_argument("--only", default=None)
+    only = parser.parse_args().only
     cfg = load_config()
+    if only:
+        for m in cfg.get("extra_embedding_models") or []:
+            if m["name"] == only:
+                m["enabled"] = True
     wines = pd.read_parquet(repo_path(cfg["paths"]["processed_dir"]) / "wines.parquet")
     for model in [from_config(cfg), *extra_from_config(cfg)]:
+        if only and model.name != only:
+            continue
         model.fit(wines)
         log.info("%s: embeddings %s, cache %s", model.name, model.embeddings.shape, model.cache_path())
 

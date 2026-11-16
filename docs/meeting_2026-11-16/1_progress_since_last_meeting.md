@@ -211,7 +211,7 @@ larger one might work better (`results/refinement_alpha_dev.csv`).
 ## 7. First prototype of the chat app (S3)
 
 `make app` opens a page in the browser: describe a wine in your own words,
-choose a model, get the top 5 with their tasting notes, then refine with one
+get the top 5 from the Sentence-BERT engine with their tasting notes, then refine with one
 click (**sweeter / drier, heavier / lighter, more / less fruity, oaky,
 acidic**, or **cheaper**). The taste buttons move the query in embedding space
 with the direction vectors and step size of the refinement study; "cheaper"
@@ -223,9 +223,14 @@ the request), the complete worked example, and later the bottle images.
 
 ![Prototype: a request](img/prototype_query.png)
 
-*Screenshot with the TF-IDF model. Its first pick is a Chardonnay for a red
-request: it matched "not too heavy", not the meaning. That is exactly the
-weakness the semantic models address.*
+*This screenshot was taken with the TF-IDF model, because Sentence-BERT cannot
+download on the machine that built these documents; the app itself now uses
+Sentence-BERT only, with Gemini embeddings to be added as the alternative.
+TF-IDF's first pick is a Chardonnay for a red request: it matched "not too
+heavy", not the meaning.*
+
+An interactive version with the real Sentence-BERT results for the five demo
+requests: https://claude.ai/artifact/NnjKSqwn38iCqk68oVpD3x
 
 ![Prototype after "cheaper"](img/prototype_cheaper.png)
 

@@ -520,3 +520,8 @@ the numbers stay in the files.
 - **Refinement:** alpha chosen on dev is the largest value in the grid
   (`make refine` warns about this). Open: extend the grid, decided before
   looking at the test results again.
+- **The app shows Sentence-BERT only** (student's decision, 16 Nov 2026).
+  Gemini embeddings will be added as the single alternative engine later.
+  The baselines (Popularity, TF-IDF, Attribute) and bge-small remain in the
+  evaluation tables; whether the thesis comparison changes is a separate
+  question for the student and supervisor.

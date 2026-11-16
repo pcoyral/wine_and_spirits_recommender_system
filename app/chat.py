@@ -66,8 +66,13 @@ if "steps" not in st.session_state:
 
 # ---------------------------------------------------------------- sidebar
 st.sidebar.markdown("### Settings")
-names = [m.name for m in build_models(cfg)]
-model_name = st.sidebar.selectbox("Model", names, index=names.index("semantic") if "semantic" in names else 0)
+# The app shows the semantic engine only (student's decision, 16 Nov 2026);
+# Gemini embeddings will be added here as the one alternative. The baselines
+# stay in the evaluation (`make eval`), not in the app.
+APP_MODELS = ["semantic"]
+names = [m.name for m in build_models(cfg) if m.name in APP_MODELS]
+model_name = names[0] if len(names) == 1 else st.sidebar.selectbox("Engine", names)
+st.sidebar.caption(f"Engine: {model_name} (Sentence-BERT). Gemini embeddings come next.")
 wines, _ = catalogue()
 country = st.sidebar.selectbox("Country (optional)", ["any"] + sorted(wines["country"].dropna().unique()))
 st.sidebar.caption("PROTOTYPE: no LLM explanation and no bottle images yet (S3, increment A).")

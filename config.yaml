@@ -182,3 +182,68 @@ map_mockup:
   # One labelled mock-up for Future Work (DECISIONS.md, option E1)
   country_codes: data/country_iso3.csv
   out: docs/map_mockup.html
+
+judge:
+  # LLM-as-a-judge (DECISIONS.md, 16 Nov 2026; after Zhen's thesis, 3.6)
+  n_per_tier: 50
+  k: 5
+  models: [popularity, tfidf, attribute, semantic, semantic_bge]   # plus a random baseline
+  pairwise: [semantic, semantic_bge]
+  n_validation: 30
+  out_dir: results/judge
+  # the student's copy of results/judge/validation_sample.csv with the last column filled
+  validation_filled: data/judge_validation_filled.csv
+  llm:
+    model: gemini-3.1-flash-lite
+    url: "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
+    temperature: 0
+    seed: 42
+    response_mime_type: application/json
+    # 15 requests per minute on the free tier
+    pause_seconds: 5
+  # {request}, {wines}, {k}, {occasion_rule}, {occasion_field}; literal braces are doubled
+  prompt: |
+    You are an experienced sommelier judging a wine recommender. A customer
+    with no wine knowledge made this request:
+
+    "{request}"
+
+    The recommender suggested these {k} wines (described by a professional
+    tasting note):
+
+    {wines}
+
+    Rate how well each wine matches the request, using this scale:
+    5 = matches every wish in the request
+    4 = matches the main wishes, misses a minor one
+    3 = partly matches: right kind of wine but several wishes missed, or the reverse
+    2 = matches only a small part of the request
+    1 = does not match (wrong kind of wine, or contradicts a wish)
+    Judge only from the information given. A wish the information cannot
+    confirm (for example a price that is unknown) is neither a match nor a
+    mismatch.
+
+    Then rate the set:
+    - set_relevance: how useful the {k} wines are together as an answer to the request (1-5).
+    {occasion_rule}
+    Think briefly about each wine before scoring it. Answer with JSON only, in
+    this form:
+    {{"wines": [{{"reason": "<one sentence>", "relevance": <1-5>}}, ... one per wine, in order],
+     "set_relevance": <1-5>{occasion_field}}}
+  # {request}, {list_a}, {list_b}
+  pairwise_prompt: |
+    You are an experienced sommelier comparing two wine recommenders. A
+    customer with no wine knowledge made this request:
+
+    "{request}"
+
+    List A:
+    {list_a}
+
+    List B:
+    {list_b}
+
+    Which list answers the request better as a whole: relevance to every wish,
+    variety where the request leaves room, and fit for any occasion? If they
+    are equally good, say tie. Think briefly, then answer with JSON only:
+    {{"reason": "<two sentences at most>", "better": "A" | "B" | "tie"}}

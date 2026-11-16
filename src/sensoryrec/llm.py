@@ -84,8 +84,10 @@ def gemini_call(model, url, options, pause_seconds=0, key_name="GEMINI_API_KEY",
         key = os.environ.get(key_name)
         if not key:
             raise SystemExit(f"Set the environment variable {key_name} (GitHub secret) to call Gemini.")
-        body = {"contents": [{"parts": [{"text": prompt}]}],
-                "generationConfig": {"temperature": options["temperature"], "seed": options["seed"]}}
+        generation = {"temperature": options["temperature"], "seed": options["seed"]}
+        if options.get("response_mime_type"):
+            generation["responseMimeType"] = options["response_mime_type"]   # e.g. JSON for the judge
+        body = {"contents": [{"parts": [{"text": prompt}]}], "generationConfig": generation}
         request = urllib.request.Request(url.format(model=model), data=json.dumps(body).encode(),
                                          headers={"Content-Type": "application/json", "x-goog-api-key": key})
         for wait in [*waits, None]:
@@ -111,14 +113,17 @@ def gemini_call(model, url, options, pause_seconds=0, key_name="GEMINI_API_KEY",
     return call
 
 
-def gemini_from_config(cfg, call=None):
-    """The cached Gemini LLM for the simulated queries (config: simulation.llm)."""
+def gemini_from_config(cfg, call=None, section="simulation"):
+    """A cached Gemini LLM configured in `<section>.llm` of config.yaml:
+    "simulation" (writes the simulated queries) or "judge" (rates them)."""
     from sensoryrec.config import repo_path
-    c = cfg["simulation"]["llm"]
+    c = cfg[section]["llm"]
     if not c["model"]:
-        raise SystemExit("Set simulation.llm.model in config.yaml to the exact Gemini model name "
+        raise SystemExit(f"Set {section}.llm.model in config.yaml to the exact Gemini model name "
                          "(as in the course notebook) before `make simulate`.")
     options = {"temperature": c["temperature"], "seed": c["seed"]}
+    if c.get("response_mime_type"):
+        options["response_mime_type"] = c["response_mime_type"]
     call = call or gemini_call(c["model"], c["url"], options, c["pause_seconds"])
     # For an API model the pinned model name plays the role of the digest.
     return CachedLLM(c["model"], options, repo_path(cfg["llm"]["cache_dir"]), c["url"], digest=c["model"], call=call)

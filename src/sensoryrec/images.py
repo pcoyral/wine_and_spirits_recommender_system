@@ -94,12 +94,25 @@ def same_grape(grapes, variety, title):
     return "blend" in ours or any(set(normalise(g)) <= ours | set(normalise(title)) for g in grapes)
 
 
+def extra_words(ours, theirs, grapes):
+    """Identifying words of our title that the X-Wines wine does not have,
+    e.g. a vineyard: "Robert Weil Kiedrich Turmberg Trocken Riesling" is not
+    the X-Wines "Trocken Riesling". Ignores the winery, the year, the region
+    in brackets, grapes and generic words."""
+    core = str(ours.title).split("(")[0]
+    theirs_words = (set(normalise(theirs.WineName)) | set(normalise(getattr(theirs, "RegionName", "") or ""))
+                    | {g for grape in grapes for g in normalise(grape)})
+    ignore = set(normalise(ours.winery)) | set(normalise(ours.variety)) | GENERIC_NAME_WORDS | {"s"}
+    return {w for w in normalise(core) if not w.isdigit()} - ignore - theirs_words
+
+
 def match_xwines(ours, theirs):
     """Wine Enthusiast wine_id -> X-Wines WineID, only for confident matches:
     the same winery (normalised); EVERY distinctive word of the X-Wines wine
     name in our title (a name made only of grape, region or generic words
     never matches: "Riesling" from Dr. Loosen could be any of a dozen
-    wines); the same grape (same_grape); and our vintage among the X-Wines
+    wines); the same grape (same_grape); no identifying word of our title
+    missing from theirs (extra_words); and our vintage among the X-Wines
     vintages. Ambiguous matches are skipped.
     ours: wine_id, winery, title, variety; theirs: WineID, WineryName,
     WineName, Grapes, Vintages and (optionally) RegionName."""
@@ -119,7 +132,8 @@ def match_xwines(ours, theirs):
             name_words = distinctive_words(c.WineName, grapes, getattr(c, "RegionName", ""))
             years = set(ast.literal_eval(c.Vintages)) if isinstance(c.Vintages, str) else set()
             if (name_words and name_words <= words and year in years
-                    and same_grape(grapes, w.variety, w.title)):
+                    and same_grape(grapes, w.variety, w.title)
+                    and not extra_words(w, c, grapes)):
                 found.append(c.WineID)
         if len(found) == 1:
             matches[w.wine_id] = found[0]

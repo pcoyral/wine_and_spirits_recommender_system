@@ -69,3 +69,13 @@ def test_match_needs_same_grape_and_ignores_region_words():
     # 2: Zinfandel is not the Merlot; 3: "Napa Valley" is only the region and the grape differs
     assert match_xwines(ours, theirs) == {1: 7, 4: 9}
 
+
+def test_match_rejects_a_more_specific_wine():
+    ours = pd.DataFrame({"wine_id": [1, 2], "winery": ["Robert Weil", "Robert Weil"],
+                         "title": ["Robert Weil 2014 Trocken Riesling (Rheingau)",
+                                   "Robert Weil 2014 Kiedrich Turmberg Trocken Riesling (Rheingau)"],
+                         "variety": ["Riesling", "Riesling"]})
+    theirs = pd.DataFrame({"WineID": [5], "WineryName": ["Robert Weil"], "WineName": ["Trocken Riesling"],
+                           "Grapes": ["['Riesling']"], "Vintages": ["[2014]"], "RegionName": ["Rheingau"]})
+    assert match_xwines(ours, theirs) == {1: 5}       # 2 is a single-vineyard wine, not this bottle
+

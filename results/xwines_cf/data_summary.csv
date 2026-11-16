@@ -1,0 +1,9 @@
+metric,value
+users_sampled,50000
+ratings_used,981426
+train_ratings,931426
+train_likes,603671
+users_evaluated,10000
+wines,100646
+head_wines,20253
+wines_never_liked_in_train,32306

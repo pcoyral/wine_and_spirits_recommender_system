@@ -54,6 +54,9 @@ attribute:
 eval:
   queries_dir: data/queries
   out_dir: results
+  # Cut-offs reported by make eval / eval-simulated. k above stays the primary
+  # one (file names without suffix); the others get _k<k> (DECISIONS.md, 16 Nov 2026)
+  k_values: [5, 10]
   # Tail share is also reported at these thresholds (robustness check)
   robustness_tail: [5, 20]
 

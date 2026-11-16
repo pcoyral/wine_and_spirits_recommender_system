@@ -1,0 +1,64 @@
+# Re-runs the evaluation on GitHub's machines: make eval, make eval-dev and
+# make eval-simulated, at every k in eval.k_values (config.yaml), with the
+# committed queries and the cached embeddings. No LLM call.
+# Starts on a push to the branch `run-eval` (or by hand once on main).
+# Results are pushed to the branch `eval-results`.
+name: Evaluate
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [run-eval]
+
+permissions:
+  contents: write
+
+jobs:
+  evaluate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 150
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.11", cache: pip}
+      - name: Install
+        run: pip install -r requirements.txt && pip install -e .
+      - name: Unit tests
+        run: make test
+      - name: Raw data, cleaning, split unchanged
+        run: |
+          mkdir -p data/raw
+          curl -sSfL -o data/raw/winemag-data-130k-v2.csv \
+            https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2019/2019-05-28/winemag-data-130k-v2.csv
+          expected=$(python -c "import json; print(json.load(open('results/eda/data_manifest.json'))['raw_sha256'])")
+          echo "$expected  data/raw/winemag-data-130k-v2.csv" | sha256sum --check
+          make data
+          git diff --exit-code -- data/processed/test_ids.csv data/processed/dev_ids.csv
+          git checkout -- results/eda   # figures re-render with other fonts; keep the committed ones
+      - name: Embedding cache
+        uses: actions/cache@v4
+        with:
+          path: data/processed/embeddings
+          key: embeddings-${{ hashFiles('config.yaml', 'results/eda/data_manifest.json') }}
+          restore-keys: embeddings-
+      - name: Embeddings (only re-encoded if the model or notes changed)
+        run: make embed
+      - name: Evaluation
+        run: |
+          make eval
+          make eval-dev
+          make eval-simulated
+      - name: Summary page
+        if: always()
+        run: |
+          for f in results/ablation.csv results/ablation_k10.csv results/simulated_coverage.csv results/simulated_coverage_k10.csv; do
+            if [ -f "$f" ]; then echo "### $f"; echo '```'; cat "$f"; echo '```'; fi
+          done >> "$GITHUB_STEP_SUMMARY"
+      - name: Save on the branch eval-results
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -B eval-results
+          git add results/ablation*.csv results/simulated_coverage*.csv results/fig_simulated_coverage*.png
+          git commit -m "Evaluation at every k (run ${{ github.run_id }})" || true
+          git push --force origin eval-results

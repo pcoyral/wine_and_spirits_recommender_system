@@ -525,3 +525,37 @@ the numbers stay in the files.
   The baselines (Popularity, TF-IDF, Attribute) and bge-small remain in the
   evaluation tables; whether the thesis comparison changes is a separate
   question for the student and supervisor.
+
+## 2026-11-16 — Plan after the supervisor meeting of 16 Nov ("all recommended")
+The supervisor offered four options for the next two weeks (collaborative
+filtering, explaining the metric columns, LLM-as-a-judge, images) and asked
+for top 10 next to top 5. The student chose to do all of them, in this order:
+(1) top 10 + metric definitions, (2) LLM-as-a-judge, (3) collaborative
+filtering on X-Wines, (4) Gemini embeddings, (5) images. Decisions, all as
+recommended:
+1. **k:** report k = 5 and k = 10. k = 5 stays the primary cut-off for the
+   accuracy metrics (decided in S1, before any result); k = 10 answers the
+   supervisor's question on breadth. Rejected: 10 only; 5/10/20.
+2. **Judge model:** `gemini-3.1-flash-lite`, a different model from the one
+   that wrote the simulated queries (`gemini-3.5-flash-lite`), to limit
+   self-preference, with its own free quota. Temperature 0, cached, pinned.
+   Rejected: the same model as the query writer.
+3. **Query tiers** (from the wishes recorded in each brief): basic = 1–2
+   wishes besides the kind of wine and no occasion; medium = 3–4 wishes and
+   no occasion; complex = an occasion plus at least 2 other wishes. 50 per
+   tier, drawn with the seed. As in Zhen's thesis (150 queries, 3 tiers).
+4. **Judge validation:** the student scores 30 sets by hand; agreement with
+   the judge is reported. Rejected: sommelier only; no check.
+5. **CF data:** X-Wines Full, users with at least 5 ratings, a random sample
+   of 50,000 of them (fixed seed), so it runs on GitHub's machines.
+   Rejected: Slim (too small); all users.
+6. **"Liked" in CF:** a rating of 4 or more. Rejected: ≥ 4.5; raw scores.
+7. **Gemini embeddings:** `gemini-embedding-001`, 768 dimensions. Rejected:
+   3,072 dimensions (4× the storage); `gemini-embedding-2`.
+8. **Images:** bottle-shape illustrations by region/style, plus X-Wines label
+   images (CC0, Slim version) for wines matched by name. Rejected: X-Wines
+   labels only (they show other wines).
+- **Scope change, approved by the student after the supervisor proposed it
+  (16 Nov 2026):** collaborative filtering moves from OUT to IN, as a
+  separate experiment on X-Wines (Wine Enthusiast has one review per wine,
+  so CF cannot run on it). `CLAUDE.md` updated.

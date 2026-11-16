@@ -1,7 +1,7 @@
 PYTHON ?= python
 export PYTHONPATH := src
 
-.PHONY: data eda embed demo queries human-cards eval eval-dev refine compare-human test simulate eval-simulated xwines map-mockup app judge judge-agree
+.PHONY: data eda embed demo queries human-cards eval eval-dev refine compare-human test simulate eval-simulated xwines map-mockup app judge judge-agree xwines-cf
 
 # Definition of done for S0: `make data` gives the cleaned parquet, the
 # test/dev IDs and all EDA figures. The two steps are recipe lines, not
@@ -61,6 +61,10 @@ judge-agree:
 # Map MOCK-UP for Future Work -> docs/map_mockup.html (MODEL=tfidf to use another model)
 map-mockup:
 	$(PYTHON) -m sensoryrec.map_mockup $(if $(MODEL),--model $(MODEL),)
+
+# Collaborative filtering vs content on X-Wines (cold start) -> results/xwines_cf/
+xwines-cf:
+	$(PYTHON) -m sensoryrec.xwines_cf
 
 # Refinement: alpha on dev, evaluation on test -> results/refinement*.csv
 refine:

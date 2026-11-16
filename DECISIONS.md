@@ -563,3 +563,15 @@ recommended:
   1.65 requires pyarrow < 26, which conflicts with the pipeline's pin
   (pyarrow 26.0.0) and broke every workflow's install. The app gets its own
   file (pyarrow 25.0.1); the pipeline's pins are unchanged.
+- **X-Wines CF experiment, implementation choices** (16 Nov 2026, within the
+  approved plan): one rating per (user, wine), the latest (several vintages);
+  split by time, each user's latest rating held out, evaluated only if it is
+  liked (≥ 4), at most 10,000 evaluated users (seeded); models popularity,
+  item-kNN (cosine), PureSVD with 64 factors (Cremonesi et al. 2010) and a
+  TF-IDF content model on X-Wines attributes; standard settings, not tuned
+  (as for TF-IDF and Sentence-BERT). Long tail on X-Wines = wines outside
+  the head holding 80% of training likes (Pareto), because the Wine
+  Enthusiast rule (winery with ≤ 10 reviews) does not fit a dataset where a
+  winery can have 98,000 ratings. Cold-start groups: users by training
+  ratings (4–9, 10–29, 30+); target wines by training likes (0, 1–9,
+  10–99, 100+).

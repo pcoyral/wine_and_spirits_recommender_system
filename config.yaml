@@ -247,3 +247,14 @@ judge:
     variety where the request leaves room, and fit for any occasion? If they
     are equally good, say tie. Think briefly, then answer with JSON only:
     {{"reason": "<two sentences at most>", "better": "A" | "B" | "tie"}}
+
+xwines_cf:
+  # Collaborative filtering vs content on X-Wines (DECISIONS.md, 16 Nov 2026)
+  min_ratings: 5
+  n_users: 50000
+  n_eval_users: 10000   # users whose held-out wine is liked, sampled with the seed
+  like_threshold: 4.0
+  head_share: 0.8       # the most-liked wines holding 80% of likes are the head
+  n_factors: 64
+  k_values: [5, 10]
+  out_dir: results/xwines_cf

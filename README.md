@@ -74,6 +74,7 @@ SHA-256 is recorded in `results/eda/data_manifest.json` by `make data`.
 | `make app` | Chat **prototype** in the browser: request → top 5 → refine (needs `pip install -r requirements-app.txt`, `make data` and `make embed`) |
 | `make judge` | LLM-as-a-judge: Gemini rates every model's top 5 for 150 simulated requests in 3 tiers → `results/judge/` |
 | `make judge-agree` | Agreement between your hand scores (`data/judge_validation_filled.csv`) and the judge |
+| `make xwines-cf` | Collaborative filtering vs content on X-Wines consumer ratings, with cold-start groups → `results/xwines_cf/` |
 | `make test` | Run unit tests |
 
 ## Evaluation

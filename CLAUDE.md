@@ -10,7 +10,8 @@ IN: data pipeline, EDA, Popularity / TF-IDF / Attribute / SBERT recommenders, pl
 ADDED after the supervisor meeting of Nov 2026 (approved by the student, 12 Nov 2026; see DECISIONS.md): (1) a coverage/diversity study on ~1,000 LLM-simulated queries; (2) extra embedding models next to SBERT: an open model first, Gemini embeddings if the free quota allows; (3) an analysis-only look at consumer ratings from the open X-Wines dataset (CC0); (4) a note comparing Python map libraries plus one clearly labelled map mock-up.
 REQUIRED: one complete worked example in the demo (persona → query → top-5 with bottle images → refinement → grounded explanation).
 INCREMENTS (only after core is done, in this order): A) bottle images for a curated demo subset + generic fallback; B) group mode for two friends; C) restaurant wine-list photo → OCR → rank menu wines (stretch).
-OUT: collaborative filtering, context-aware recommendation, location/availability and maps (Future Work; at most a clearly labelled mock-up), external purchase APIs, spirits, fine-tuning models.
+ADDED after the supervisor meeting of 16 Nov 2026 (approved by the student the same day; see DECISIONS.md): top 10 next to top 5; LLM-as-a-judge evaluation; collaborative filtering as a separate experiment on X-Wines; Gemini embeddings; bottle images (illustrations + CC0 X-Wines labels).
+OUT: context-aware recommendation, location/availability and maps (Future Work; at most a clearly labelled mock-up), external purchase APIs, spirits, fine-tuning models.
 NEVER scrape sites whose Terms of Service forbid it (e.g. Vivino, Google); for consumer data use published open datasets such as X-Wines. API keys never go in the repo: environment variable or GitHub secret only. Every external image must have its source and licence logged in `data/images/sources.csv`.
 If a task seems to need something in OUT, stop and ask.
 

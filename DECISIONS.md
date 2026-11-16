@@ -590,3 +590,12 @@ recommended:
   "reserva", ...) in the Wine Enthusiast title, the same winery and a listed
   vintage; a name made only of a grape never matches. Photos are stored as
   320-pixel JPEG thumbnails (the originals totalled ~580 MB).
+- **Real bottle photos** (student's request and approval, 16 Nov 2026):
+  real photos everywhere are not legally possible (shops' terms forbid
+  copying, CLAUDE.md), so: (1) X-Wines bottle photos (CC0) for every wine
+  that matches; (2) for the demo set, candidate photos from Open Food Facts
+  (CC BY-SA, credit required) that the student approves one by one in
+  `data/images/photo_review.csv` before they are used, each credited in
+  `data/images/sources.csv`; (3) the drawn bottle for every other wine. The
+  app prefers an approved photo, then an X-Wines photo, then the drawing.
+  Rejected: AI-generated "photos" (not the real bottle).

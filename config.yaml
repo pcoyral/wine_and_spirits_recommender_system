@@ -276,3 +276,11 @@ images:
   labels_dir: data/images/labels           # matched label images (CC0, committed)
   sources: data/images/sources.csv         # source and licence of every image (CLAUDE.md)
   coverage: results/images_coverage.csv
+
+photos:
+  # Real bottle photos for the demo set, checked by the student (DECISIONS.md, 16 Nov 2026)
+  extra_ids: data/images/demo_extra_ids.csv   # optional: column wine_id, more wines to cover
+  candidates_dir: data/images/candidates
+  review: data/images/photo_review.csv        # fill `approved` with yes / no
+  photos_dir: data/images/photos
+  pause_seconds: 7

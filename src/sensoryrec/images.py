@@ -120,6 +120,15 @@ def thumbnail(src, dst, height=320):
         im.save(dst, "JPEG", quality=80, optimize=True)
 
 
+def update_sources(path, rows, source_prefix):
+    """Replace the rows of one source in data/images/sources.csv, keeping the
+    rows of every other source."""
+    cols = ["wine_id", "file", "source", "url", "licence", "matched_by"]
+    old = pd.read_csv(path) if path.exists() else pd.DataFrame(columns=cols)
+    kept = old[~old["source"].astype(str).str.startswith(source_prefix)]
+    pd.concat([kept, pd.DataFrame(rows, columns=cols)], ignore_index=True).to_csv(path, index=False)
+
+
 def load_shapes(path):
     t = pd.read_csv(path)
     return dict(zip(t["variety"], t["shape"]))
@@ -154,8 +163,7 @@ def main():
                      "source": f"X-Wines Slim label image, WineID {xw_id}",
                      "url": "https://github.com/rogerioxavier/X-Wines", "licence": "CC0 1.0",
                      "matched_by": "winery + distinctive name words + vintage (sensoryrec.images.match_xwines)"})
-    pd.DataFrame(rows, columns=["wine_id", "file", "source", "url", "licence", "matched_by"]) \
-        .to_csv(repo_path(c["sources"]), index=False)
+    update_sources(repo_path(c["sources"]), rows, "X-Wines")   # keeps the approved photos' credits
     coverage = pd.DataFrame([("wines_in_catalogue", len(ours)), ("xwines_slim_wines", len(theirs)),
                              ("label_images_available", len(labels)), ("wines_with_label_image", len(rows)),
                              ("wines_with_drawn_bottle", len(ours))], columns=["metric", "value"])

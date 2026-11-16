@@ -39,12 +39,18 @@ def bottle_info():
     """Shapes by grape, and the label photos that exist (data/images/sources.csv)."""
     shapes = images.load_shapes(repo_path(cfg["images"]["shapes"]))
     sources = repo_path(cfg["images"]["sources"])
-    labels = dict(zip(*pd.read_csv(sources)[["wine_id", "file"]].T.values)) if sources.exists() else {}
+    labels = {}
+    if sources.exists():
+        t = pd.read_csv(sources)
+        # a photo checked by the student (Open Food Facts) comes before an X-Wines label photo
+        t = t.assign(order=(~t["source"].astype(str).str.startswith("Open Food Facts")).astype(int))
+        t = t.sort_values("order").drop_duplicates("wine_id")
+        labels = dict(zip(t["wine_id"], t["file"]))
     return shapes, labels
 
 
 def picture(row, colour):
-    """The wine's label photo if we have one (CC0, X-Wines), else its drawn bottle."""
+    """A real photo if we have one (approved Open Food Facts photo, or X-Wines label), else the drawn bottle."""
     shapes, labels = bottle_info()
     if row.wine_id in labels:
         import base64

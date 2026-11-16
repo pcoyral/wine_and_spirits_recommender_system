@@ -1,7 +1,7 @@
 PYTHON ?= python
 export PYTHONPATH := src
 
-.PHONY: data eda embed demo queries human-cards eval eval-dev refine compare-human test simulate eval-simulated xwines map-mockup app judge judge-agree xwines-cf embed-gemini images
+.PHONY: data eda embed demo queries human-cards eval eval-dev refine compare-human test simulate eval-simulated xwines map-mockup app judge judge-agree xwines-cf embed-gemini images photos photos-apply
 
 # Definition of done for S0: `make data` gives the cleaned parquet, the
 # test/dev IDs and all EDA figures. The two steps are recipe lines, not
@@ -73,6 +73,14 @@ xwines-cf:
 # Bottle images: X-Wines label photos (CC0) for matched wines -> data/images/, results/images_coverage.csv
 images:
 	$(PYTHON) -m sensoryrec.images
+
+# Real bottle photos for the demo wines: candidates + review sheet (needs internet)
+photos:
+	$(PYTHON) -m sensoryrec.photos
+
+# Use only the photos approved in data/images/photo_review.csv
+photos-apply:
+	$(PYTHON) -m sensoryrec.photos --apply
 
 # Refinement: alpha on dev, evaluation on test -> results/refinement*.csv
 refine:

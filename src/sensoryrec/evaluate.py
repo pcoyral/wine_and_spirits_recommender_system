@@ -154,17 +154,23 @@ def evaluate_simulated(models, wines, queries, holdout_ids, vectors, k, tail_max
     return pd.DataFrame(table), pd.DataFrame(curve)
 
 
-def plot_coverage_curve(curve, path):
+def plot_coverage_curve(curve, path, k=5):
     fig, ax = plt.subplots(figsize=(7.5, 4.8))
     for model, g in curve.groupby("model", sort=False):
         ax.plot(g["n_queries"], g["distinct_wines"], marker="o", ms=3, label=model)
     ax.set_xlabel("Simulated queries so far")
     ax.set_ylabel("Distinct wines recommended")
-    ax.set_title("How many different wines each model surfaces")
+    ax.set_title(f"How many different wines each model surfaces (top {k})")
     ax.legend()
     fig.tight_layout()
     fig.savefig(path, dpi=200)
     plt.close(fig)
+
+
+def k_values(cfg):
+    """The cut-offs to report: eval.k_values, always including the primary k."""
+    ks = cfg["eval"].get("k_values") or [cfg["k"]]
+    return sorted(set(ks) | {cfg["k"]})
 
 
 def load_simulated(cfg):
@@ -215,24 +221,26 @@ def main():
     models = build_models(cfg)
     for model in models:
         model.fit(wines, holdout_ids=test_ids)
-    settings = dict(holdout_ids=set(test_ids), vectors=ild_vectors(models), k=cfg["k"],
-                    tail_max=cfg["tail"]["max_reviews"], robustness=cfg["eval"]["robustness_tail"])
     out_dir = repo_path(cfg["eval"]["out_dir"])
     out_dir.mkdir(parents=True, exist_ok=True)
-
-    if split == "simulated":
-        table, curve = evaluate_simulated(models, wines, queries, **settings)
-        table.round(4).to_csv(out_dir / "simulated_coverage.csv", index=False)
-        curve.round(6).to_csv(out_dir / "simulated_coverage_curve.csv", index=False)
-        plot_coverage_curve(curve, out_dir / "fig_simulated_coverage.png")
-        log.info("\n%s", table.round(4).to_string(index=False))
-        return
-
-    overall, by_band = evaluate(models, wines, queries, **settings)
-    suffix = "" if split == "test" else "_dev"
-    overall.round(4).to_csv(out_dir / f"ablation{suffix}.csv", index=False)
-    by_band.round(4).to_csv(out_dir / f"ablation{suffix}_by_band.csv", index=False)
-    log.info("\n%s", overall.round(4).to_string(index=False))
+    # The primary cut-off (config k) keeps the original file names; every other
+    # k in eval.k_values gets "_k<k>" in its file names (DECISIONS.md, 16 Nov 2026).
+    for k in k_values(cfg):
+        tag = "" if k == cfg["k"] else f"_k{k}"
+        settings = dict(holdout_ids=set(test_ids), vectors=ild_vectors(models), k=k,
+                        tail_max=cfg["tail"]["max_reviews"], robustness=cfg["eval"]["robustness_tail"])
+        if split == "simulated":
+            table, curve = evaluate_simulated(models, wines, queries, **settings)
+            table.round(4).to_csv(out_dir / f"simulated_coverage{tag}.csv", index=False)
+            curve.round(6).to_csv(out_dir / f"simulated_coverage_curve{tag}.csv", index=False)
+            plot_coverage_curve(curve, out_dir / f"fig_simulated_coverage{tag}.png", k)
+            log.info("k = %d\n%s", k, table.round(4).to_string(index=False))
+            continue
+        overall, by_band = evaluate(models, wines, queries, **settings)
+        suffix = ("" if split == "test" else "_dev") + tag
+        overall.round(4).to_csv(out_dir / f"ablation{suffix}.csv", index=False)
+        by_band.round(4).to_csv(out_dir / f"ablation{suffix}_by_band.csv", index=False)
+        log.info("k = %d\n%s", k, overall.round(4).to_string(index=False))
 
 
 if __name__ == "__main__":

@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from sensoryrec.evaluate import (coverage_curve, evaluate, evaluate_simulated, item_popularity,
+from sensoryrec.evaluate import (coverage_curve, evaluate, evaluate_simulated, item_popularity, k_values,
                                  load_queries, load_simulated, winery_counts)
 from sensoryrec.recommenders import ild_vectors
 from sensoryrec.recommenders.attribute import AttributeRecommender
@@ -141,3 +141,9 @@ def test_load_simulated_leaves_out_flagged(tmp_path):
     pd.DataFrame({"query_id": [1, 2], "query": ["ok", "firm tannins"], "flagged": [False, True]}) \
         .to_csv(cfg["simulation"]["out"], index=False)
     assert load_simulated(cfg)["query"].tolist() == ["ok"]
+
+
+def test_k_values_always_include_the_primary_k():
+    assert k_values({"k": 5, "eval": {"k_values": [10, 5]}}) == [5, 10]
+    assert k_values({"k": 5, "eval": {"k_values": [10]}}) == [5, 10]
+    assert k_values({"k": 5, "eval": {}}) == [5]

@@ -503,3 +503,20 @@ The supervisor asked for five things; the student approved these choices
   what is recommended. The parts of the brief outside the frozen scope
   (spirits, "My Cellar", purchasing, a questionnaire replacing the free-text
   request) are not built; they wait for the student's decision.
+
+## 2026-11-16 — First S2 results: observations and open decisions
+Results of the cloud run (`results/ablation*.csv`, `results/refinement*.csv`,
+`results/queries_quality.csv`). Recorded here because they raise decisions;
+the numbers stay in the files.
+- **Exact-wine test:** TF-IDF has the highest HR@5 and NDCG@5 on the test
+  queries; both semantic models are lower. Likely causes: the LLM queries
+  copy part of the note's wording (`copy_share_*`), which favours keyword
+  matching, and one correct wine among ~120,000 penalises models that return
+  similar but different wines. Not changed after seeing the result.
+- **Open (student and supervisor to decide):** add graded relevance
+  (sommelier ratings of the top 5, already planned) and/or a closeness
+  measure (rank of the target, hits in a larger top k). Any new metric must
+  be fixed before its numbers are looked at.
+- **Refinement:** alpha chosen on dev is the largest value in the grid
+  (`make refine` warns about this). Open: extend the grid, decided before
+  looking at the test results again.

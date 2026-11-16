@@ -145,9 +145,9 @@ has not saturated: more queries would still surface new wines.
   front of the query (`query_prefix`, from the model card) change.
 - It appears in every table, the demo and `make eval` (once the S2 queries
   exist), so the comparison is not limited to the simulated study.
-- Gemini embeddings (`gemini-embedding-001`) were the alternative. They need
-  one request per note: ~120,000 notes against a free daily quota makes it
-  impractical; kept as Future Work.
+- Gemini embeddings (`gemini-embedding-001`) are the next candidate. ~120,000
+  notes is a lot for a free daily quota; whether batch requests (many notes
+  per request) make it feasible is still to be checked.
 
 ## 7. Reproducibility
 

@@ -9,7 +9,7 @@
 2. A real **label image** where one exists: X-Wines (CC0) publishes label
    photos for its 1,007-wine Slim version. `match_xwines` links a Wine
    Enthusiast wine to an X-Wines wine only when the winery, a word of the
-   wine's name or grape, and the vintage all agree. Every image used is
+   distinctive words of the wine's name, and the vintage all agree. Every image used is
    listed in data/images/sources.csv with its source and licence (CLAUDE.md).
 """
 import ast
@@ -71,12 +71,25 @@ def vintage(title):
     return int(m.group(1)) if m else None
 
 
+GENERIC_NAME_WORDS = {"red", "white", "rose", "wine", "vino", "vin", "reserva", "reserve", "riserva", "brut", "dry",
+                      "sec", "tinto", "blanco", "bianco", "rosso", "the", "de", "la", "le", "di", "del", "do", "and"}
+
+
+def distinctive_words(wine_name, grapes):
+    """Words of an X-Wines wine name that identify it: not a grape, not a
+    generic word such as "red" or "reserva"."""
+    grape_words = {g for grape in grapes for g in normalise(grape)}
+    return set(normalise(wine_name)) - grape_words - GENERIC_NAME_WORDS
+
+
 def match_xwines(ours, theirs):
     """Wine Enthusiast wine_id -> X-Wines WineID, only for confident matches:
-    same winery (normalised), at least one word of the X-Wines wine name or a
-    grape present in our title or variety, and our vintage among the X-Wines
-    vintages. ours: wine_id, winery, title, variety; theirs: WineID,
-    WineryName, WineName, Grapes, Vintages."""
+    the same winery (normalised), EVERY distinctive word of the X-Wines wine
+    name in our title (a name made only of grape or generic words never
+    matches: "Riesling" from Dr. Loosen could be any of a dozen wines), and
+    our vintage among the X-Wines vintages. Ambiguous matches are skipped.
+    ours: wine_id, winery, title; theirs: WineID, WineryName, WineName,
+    Grapes, Vintages."""
     by_winery = {}
     for r in theirs.itertuples():
         by_winery.setdefault(" ".join(normalise(r.WineryName)), []).append(r)
@@ -85,18 +98,26 @@ def match_xwines(ours, theirs):
         candidates = by_winery.get(" ".join(normalise(w.winery)), [])
         if not candidates:
             continue
-        words = set(normalise(w.title)) | set(normalise(w.variety))
+        words = set(normalise(w.title))
         year = vintage(w.title)
         found = []
         for c in candidates:
-            name_words = set(normalise(c.WineName)) - {"red", "white", "wine", "reserva", "reserve"}
-            grapes = {g for grape in ast.literal_eval(c.Grapes) for g in normalise(grape)}
+            name_words = distinctive_words(c.WineName, ast.literal_eval(c.Grapes))
             years = set(ast.literal_eval(c.Vintages)) if isinstance(c.Vintages, str) else set()
-            if (name_words & words or grapes & words) and year in years:
+            if name_words and name_words <= words and year in years:
                 found.append(c.WineID)
-        if len(found) == 1:            # ambiguous matches are skipped
+        if len(found) == 1:
             matches[w.wine_id] = found[0]
     return matches
+
+
+def thumbnail(src, dst, height=320):
+    """Copy an image as a small JPEG (the originals are ~150 KB each)."""
+    from PIL import Image
+    with Image.open(src) as im:
+        im = im.convert("RGB")
+        im.thumbnail((height, height))
+        im.save(dst, "JPEG", quality=80, optimize=True)
 
 
 def load_shapes(path):
@@ -110,7 +131,6 @@ def main():
     Needs data/raw/xwines_slim/ with XWines_Slim_1K_wines.csv and the
     unzipped label images (named <WineID>.<ext>)."""
     import logging
-    import shutil
 
     from sensoryrec.config import load_config, repo_path
     logging.basicConfig(level=logging.INFO, format="%(message)s")
@@ -128,12 +148,12 @@ def main():
     rows = []
     for wine_id, xw_id in sorted(matches.items()):
         image = labels[str(xw_id)]
-        target = out / f"{wine_id}{image.suffix.lower()}"
-        shutil.copyfile(image, target)
+        target = out / f"{wine_id}.jpg"
+        thumbnail(image, target)
         rows.append({"wine_id": wine_id, "file": str(target.relative_to(repo_path("."))),
                      "source": f"X-Wines Slim label image, WineID {xw_id}",
                      "url": "https://github.com/rogerioxavier/X-Wines", "licence": "CC0 1.0",
-                     "matched_by": "winery + name/grape word + vintage (sensoryrec.images.match_xwines)"})
+                     "matched_by": "winery + distinctive name words + vintage (sensoryrec.images.match_xwines)"})
     pd.DataFrame(rows, columns=["wine_id", "file", "source", "url", "licence", "matched_by"]) \
         .to_csv(repo_path(c["sources"]), index=False)
     coverage = pd.DataFrame([("wines_in_catalogue", len(ours)), ("xwines_slim_wines", len(theirs)),

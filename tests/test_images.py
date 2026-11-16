@@ -29,14 +29,25 @@ def test_vintage():
 
 
 def test_match_xwines_is_conservative():
-    ours = pd.DataFrame({"wine_id": [1, 2, 3, 4],
-                         "winery": ["Casa Valduga", "Casa Valduga", "Aurora", "Nobody"],
+    ours = pd.DataFrame({"wine_id": [1, 2, 3, 4, 5],
+                         "winery": ["Casa Valduga", "Casa Valduga", "Dr. Loosen", "Nobody", "Casa Valduga"],
                          "title": ["Casa Valduga 2018 Origem Merlot (Serra)", "Casa Valduga 2001 Origem Merlot",
-                                   "Aurora 2015 Reserva Chardonnay", "Nobody 2015 Red"],
-                         "variety": ["Merlot", "Merlot", "Chardonnay", "Red Blend"]})
-    theirs = pd.DataFrame({"WineID": [100062, 100191], "WineryName": ["Casa Valduga", "Aurora"],
-                           "WineName": ["Origem Merlot", "Reserva Chardonnay"],
-                           "Grapes": ["['Merlot']", "['Chardonnay']"],
+                                   "Dr. Loosen 2015 Wehlener Sonnenuhr Kabinett Riesling (Mosel)", "Nobody 2015 Red",
+                                   "Casa Valduga 2018 Raizes Merlot"],
+                         "variety": ["Merlot", "Merlot", "Riesling", "Red Blend", "Merlot"]})
+    theirs = pd.DataFrame({"WineID": [100062, 106552], "WineryName": ["Casa Valduga", "Dr. Loosen"],
+                           "WineName": ["Origem Merlot", "Riesling"],
+                           "Grapes": ["['Merlot']", "['Riesling']"],
                            "Vintages": ["[2020, 2019, 2018]", "[2016, 2015]"]})
-    # wine 2: vintage 2001 not listed; wine 4: no such winery
-    assert match_xwines(ours, theirs) == {1: 100062, 3: 100191}
+    # 2: vintage 2001 not listed; 3: the X-Wines name is only a grape, so it could be any
+    # Dr. Loosen Riesling; 4: no such winery; 5: "Origem" is missing from the title
+    assert match_xwines(ours, theirs) == {1: 100062}
+
+
+def test_thumbnail(tmp_path):
+    from PIL import Image
+    from sensoryrec.images import thumbnail
+    Image.new("RGB", (900, 1200), "white").save(tmp_path / "big.png")
+    thumbnail(tmp_path / "big.png", tmp_path / "small.jpg", height=320)
+    with Image.open(tmp_path / "small.jpg") as im:
+        assert max(im.size) == 320 and im.format == "JPEG"

@@ -583,3 +583,10 @@ recommended:
   is called `semantic_gemini` and stays `enabled: false` (left out of every
   comparison) until all notes are embedded, so no other run calls the API by
   accident.
+- **Label images, stricter matching** (16 Nov 2026): the first run matched
+  on a shared grape word and gave one Georges Duboeuf label to 162 different
+  Duboeuf wines, which would show the wrong bottle. A match now needs every
+  distinctive word of the X-Wines wine name (not a grape, not "red",
+  "reserva", ...) in the Wine Enthusiast title, the same winery and a listed
+  vintage; a name made only of a grape never matches. Photos are stored as
+  320-pixel JPEG thumbnails (the originals totalled ~580 MB).

@@ -1,0 +1,2 @@
+n_queries,n_distinct_queries,pct_expert_first,pct_regenerated,mean_attempts,pct_flagged,words_mean,words_median,words_min,words_max
+1000,1000,3.5,3.5,1.035,0.0,22.607,22.0,8,43

@@ -28,9 +28,9 @@ k: 5
 
 semantic:
   model: sentence-transformers/all-MiniLM-L6-v2
-  # Pin the exact model version after the first download: copy the commit
-  # hash from ~/.cache/huggingface/hub/models--sentence-transformers--all-MiniLM-L6-v2/refs/main
-  revision: null
+  # Exact model version, pinned from the simulated-study run of 16 Nov 2026
+  # (results/simulated_model_revisions.txt)
+  revision: 1110a243fdf4706b3f48f1d95db1a4f5529b4d41
   batch_size: 64
   cache_dir: data/processed/embeddings
 
@@ -126,7 +126,7 @@ refinement:
 extra_embedding_models:
   - name: semantic_bge
     model: BAAI/bge-small-en-v1.5
-    revision: null
+    revision: 5c38ec7c405ec4b44b94cc5a9bb96e735b38267a   # pinned 16 Nov 2026, as above
     batch_size: 64
     # From the model card: short queries get this instruction, the notes do not.
     query_prefix: "Represent this sentence for searching relevant passages: "

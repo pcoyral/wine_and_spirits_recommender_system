@@ -1,0 +1,10 @@
+{
+  "model": "gemini-3.5-flash-lite",
+  "digest": "gemini-3.5-flash-lite",
+  "options": {
+    "temperature": 0,
+    "seed": 42
+  },
+  "prompt": "Write what a customer would say to a wine shop assistant to ask for a\nwine, in one or two short sentences, in plain everyday words.\n\nThe customer is curious and wants to try something new. They want:\n- kind: a red wine\n- sweetness: a little sweet\n- weight: not too heavy\n- feel: warming\n- budget: under 25 euros\n- also: a safe choice that cannot go wrong\n\nRules:\n- Include every wish above, in natural spoken language. Do not add other wishes.\n- Do not name grapes, wineries or wine regions. A country is fine if it is among the wishes.\n- Do not use these wine-expert words: acidity, acidic, acid, tannin, tannic, palate, finish, nose, bouquet, aromas, aromatic, mouthfeel, structure, structured, body, bodied, weight, core, length, grip, extraction, concentration, integrated, layered, polished, racy, oak, oaky, oaked, barrel, barrique, toast, toasty, toasted, malolactic, lees, residual sugar, terroir, varietal, vintage, cuvée, appellation, estate, bottling, cassis, currant, black fruit, red fruit, dark fruit, stone fruit, baking spice, forest floor, leather, tobacco, cedar, graphite, petrol, flint, brioche, garrigue, anise, whiff, notes of, hints of, drink now, ready to drink, cellar, cellaring, decant, age-worthy, complex, complexity, elegant, depth, intensity, dense, concentrated, tight, lean, firm, chewy, texture, textured, mineral, minerality.\n- Reply with the customer's words only, without quotation marks or any introduction.\n",
+  "response": "Could you suggest an easy-going red wine under 25 euros that's a bit sweet, cozy, and warming? I'd love to try something new that's a safe choice and can't go wrong."
+}

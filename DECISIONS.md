@@ -441,3 +441,22 @@ The supervisor asked for five things; the student approved these choices
   lists were drafted by Claude and are the student's to edit. Rejected (A):
   keeping it fully random. The trial answers written before this change are
   not part of the study unless the same brief comes up again.
+
+## 2026-11-16 — Simulated study run; model versions pinned
+- **Run:** the 1,000 simulated queries were written over three daily runs
+  (free-tier limit of 500 requests per day) and evaluated in the run of
+  16 Nov 2026. Queries: `data/queries/simulated_queries.csv`; results:
+  `results/simulated_*.csv`, `results/fig_simulated_coverage.png`.
+- **Model versions pinned** in `config.yaml` from
+  `results/simulated_model_revisions.txt`, i.e. the versions that produced
+  the results. Pinning after the run changes no number; it makes later runs
+  use the same versions.
+- **"Wedding toast":** the occasion contains "toast", which is on the
+  expert list ("toasty oak"). Queries for this occasion needed one retry each
+  and all passed after it; the retry rate in
+  `results/simulated_queries_quality.csv` is caused by this. Left as it is:
+  changing the wish now would rewrite queries already written.
+- **Cache entries not used by the study:** the cache also holds the answers
+  of the first trials (`gemini-3.6-flash`, and the 3.5 Flash Lite trial before
+  the per-wine-type limits). They are kept as the record of what the LLM
+  wrote, but they belong to no brief of the final study.

@@ -1,11 +1,14 @@
 # Checks that the repository secret GEMINI_API_KEY works, with one tiny
 # request per Gemini model the project uses. Prints only "works" or Google's
 # error message; the key itself is never printed (GitHub also masks it).
-# Actions tab -> "Check Gemini key" -> Run workflow.
+# Runs by itself on every push to the branch gemini-key-check, or by hand
+# (Actions tab -> "Check Gemini key" -> Run workflow) once it is on main.
 name: Check Gemini key
 
 on:
   workflow_dispatch:
+  push:
+    branches: [gemini-key-check]
 
 permissions:
   contents: read

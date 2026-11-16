@@ -268,3 +268,11 @@ xwines_cf:
   n_factors: 64
   k_values: [5, 10]
   out_dir: results/xwines_cf
+
+images:
+  # Increment A (DECISIONS.md, 16 Nov 2026)
+  shapes: data/bottle_shapes.csv
+  xwines_slim_dir: data/raw/xwines_slim    # X-Wines Slim wines + unzipped label images (not committed)
+  labels_dir: data/images/labels           # matched label images (CC0, committed)
+  sources: data/images/sources.csv         # source and licence of every image (CLAUDE.md)
+  coverage: results/images_coverage.csv

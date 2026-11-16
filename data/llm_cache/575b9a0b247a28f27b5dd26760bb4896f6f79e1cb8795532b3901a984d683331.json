@@ -1,0 +1,10 @@
+{
+  "model": "llama3.2:3b-instruct-q4_K_M",
+  "digest": "a80c4f17acd5",
+  "options": {
+    "temperature": 0,
+    "seed": 42
+  },
+  "prompt": "Here is a professional wine tasting note:\n\n\"With its expressive notes of espressso and black olive, this Shiraz is on the savory side, but it still carries enough plummy fruit to provide balance. It's mouthfilling and generous, while a bit of tartness on the finish serves to highlight the coffee and earth flavors. Drink now-2017.\"\n\nImagine a person who knows nothing about wine has just tasted this wine.\nWrite what they would say to a friend about how it tastes, in one or two\nshort sentences, using plain everyday words.\n\nRules:\n- Describe only the taste and how it feels in the mouth. You may say\n  whether it is red, white, rosé or sparkling.\n- Do not mention food, occasions, prices or numbers.\n- Do not name the grape, the winery, the region or the country.\n- Do not use these wine-expert words: acidity, acidic, acid, tannin, tannic, palate, finish, nose, bouquet, aromas, aromatic, mouthfeel, structure, structured, body, bodied, weight, core, length, grip, extraction, concentration, integrated, layered, polished, racy, oak, oaky, oaked, barrel, barrique, toast, toasty, toasted, malolactic, lees, residual sugar, terroir, varietal, vintage, cuvée, appellation, estate, bottling, cassis, currant, black fruit, red fruit, dark fruit, stone fruit, baking spice, forest floor, leather, tobacco, cedar, graphite, petrol, flint, brioche, garrigue, anise, whiff, notes of, hints of, drink now, ready to drink, cellar, cellaring, decant, age-worthy, complex, complexity, elegant, depth, intensity, dense, concentrated, tight, lean, firm, chewy, texture, textured, mineral, minerality.\n- Reply with the description only, without quotation marks or any introduction.\n",
+  "response": "This red wine tastes like strong coffee and olives, with a bit of sourness that makes it feel a bit bitter on the tongue."
+}

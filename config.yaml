@@ -64,8 +64,8 @@ llm:
   # (`ollama --version`). Check the tag on the Ollama library page.
   # `make queries` refuses to call the model while `digest` is null.
   model: llama3.2:3b-instruct-q4_K_M
-  digest: null
-  ollama_version: null
+  digest: a80c4f17acd5
+  ollama_version: "0.40.16"
   url: http://localhost:11434/api/generate
   temperature: 0
   seed: 42

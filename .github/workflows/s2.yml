@@ -1,0 +1,179 @@
+# Everything that otherwise runs on the student's laptop, on GitHub's machines
+# (DECISIONS.md, 16 Nov 2026): the casual test/dev queries from the local LLM
+# (Ollama), the embeddings, `make eval`, `make eval-dev`, `make refine`, the
+# demo and the map mock-up; and, in parallel, the X-Wines analysis.
+#
+# Started by a push to the branch `s2-run` or by hand (Actions tab).
+# Outputs are pushed to the branches `s2-results` and `xwines-results`.
+name: S2 evaluation
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [s2-run]
+
+permissions:
+  contents: write
+
+env:
+  RAW_URL: https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2019/2019-05-28/winemag-data-130k-v2.csv
+
+jobs:
+  queries:
+    # test and dev on two machines at once, to halve the time
+    strategy:
+      matrix:
+        split: [test, dev]
+    runs-on: ubuntu-latest
+    timeout-minutes: 150
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.11", cache: pip}
+      - name: Install
+        run: pip install -r requirements.txt && pip install -e .
+      - name: Raw data and cleaning (the queries are written from the notes)
+        run: |
+          mkdir -p data/raw && curl -sSfL -o data/raw/winemag-data-130k-v2.csv "$RAW_URL"
+          expected=$(python -c "import json; print(json.load(open('results/eda/data_manifest.json'))['raw_sha256'])")
+          echo "$expected  data/raw/winemag-data-130k-v2.csv" | sha256sum --check
+          make data
+          git diff --exit-code -- data/processed/test_ids.csv data/processed/dev_ids.csv
+      - name: Ollama and the pinned model
+        run: |
+          curl -fsSL https://ollama.com/install.sh | sh
+          (ollama serve > /tmp/ollama.log 2>&1 &)
+          for i in $(seq 1 30); do curl -s localhost:11434 > /dev/null && break; sleep 2; done
+          model=$(python -c "import yaml; print(yaml.safe_load(open('config.yaml'))['llm']['model'])")
+          ollama pull "$model"
+          ollama list
+      - name: Pin digest and Ollama version in config.yaml (as the student would)
+        run: |
+          model=$(python -c "import yaml; print(yaml.safe_load(open('config.yaml'))['llm']['model'])")
+          digest=$(ollama list | awk -v m="$model" '$1 == m {print $2}')
+          version=$(ollama --version | awk '{print $NF}')
+          test -n "$digest" && test -n "$version"
+          sed -i "s/^  digest: null/  digest: $digest/; s/^  ollama_version: null/  ollama_version: \"$version\"/" config.yaml
+          git diff config.yaml
+      - name: Casual queries (${{ matrix.split }})
+        run: python -m sensoryrec.queries --split ${{ matrix.split }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: queries-${{ matrix.split }}
+          path: |
+            data/llm_cache
+            data/queries/${{ matrix.split }}_queries.csv
+            config.yaml
+
+  embed:
+    runs-on: ubuntu-latest
+    timeout-minutes: 150
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.11", cache: pip}
+      - name: Install
+        run: pip install -r requirements.txt && pip install -e .
+      - name: Raw data and cleaning
+        run: |
+          mkdir -p data/raw && curl -sSfL -o data/raw/winemag-data-130k-v2.csv "$RAW_URL"
+          make data
+      - name: Embedding cache
+        uses: actions/cache@v4
+        with:
+          path: data/processed/embeddings
+          key: embeddings-${{ hashFiles('config.yaml', 'results/eda/data_manifest.json') }}
+          restore-keys: embeddings-
+      - name: Embeddings (both models)
+        run: make embed
+
+  evaluate:
+    needs: [queries, embed]
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.11", cache: pip}
+      - name: Install
+        run: pip install -r requirements.txt && pip install -e .
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: queries-*
+          path: .
+          merge-multiple: true
+      - name: Raw data and cleaning
+        run: |
+          mkdir -p data/raw && curl -sSfL -o data/raw/winemag-data-130k-v2.csv "$RAW_URL"
+          make data
+      - name: Embedding cache (built by the embed job)
+        uses: actions/cache@v4
+        with:
+          path: data/processed/embeddings
+          key: embeddings-${{ hashFiles('config.yaml', 'results/eda/data_manifest.json') }}
+          restore-keys: embeddings-
+      - name: Query files and quality table again, from the cache only (no LLM call)
+        run: |
+          python - <<'PY'
+          from unittest import mock
+          from sensoryrec import queries
+          with mock.patch("sensoryrec.llm.CachedLLM.ask_ollama", side_effect=RuntimeError("not cached")):
+              import sys; sys.argv = ["queries", "--split", "all"]; queries.main()
+          PY
+      - name: Evaluation, refinement, demo, map mock-up
+        run: |
+          make eval
+          make eval-dev
+          make refine
+          make demo
+          make map-mockup
+      - name: Summary page
+        if: always()
+        run: |
+          for f in results/queries_quality.csv results/ablation.csv results/refinement.csv; do
+            if [ -f "$f" ]; then echo "### $f"; echo '```'; cat "$f"; echo '```'; fi
+          done >> "$GITHUB_STEP_SUMMARY"
+      - name: Save everything on the branch s2-results
+        if: always()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -B s2-results
+          git add config.yaml data/llm_cache data/queries results docs/map_mockup.html
+          git commit -m "S2: casual queries, evaluation, refinement and demo (run ${{ github.run_id }})" || true
+          git push --force origin s2-results
+
+  xwines:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.11", cache: pip}
+      - name: Install
+        run: pip install -r requirements.txt && pip install -e . && pip install gdown==5.2.0
+      - name: Raw data and cleaning (for the expert-review comparison)
+        run: |
+          mkdir -p data/raw && curl -sSfL -o data/raw/winemag-data-130k-v2.csv "$RAW_URL"
+          make data
+      - name: X-Wines Full version from the authors' Google Drive (CC0)
+        run: |
+          mkdir -p /tmp/xw data/raw/xwines
+          gdown --folder "https://drive.google.com/drive/folders/1LqguJNV-aKh1PuWMVx5ELA61LPfGfuu_" -O /tmp/xw --remaining-ok || true
+          find /tmp/xw -type f -exec ls -la {} \;
+          for z in $(find /tmp/xw -name "*.zip"); do unzip -o -q "$z" -d /tmp/xw/unzipped || true; done
+          find /tmp/xw -type f -name "*.csv" -exec ls -la {} \;
+          wines=$(find /tmp/xw -type f -name "*100K_wines*.csv" | grep -v -i slim | head -1)
+          ratings=$(find /tmp/xw -type f -name "*21M_ratings*.csv" | head -1)
+          test -n "$wines" && test -n "$ratings"
+          cp "$wines" "$ratings" data/raw/xwines/
+      - name: Analysis
+        run: make xwines
+      - name: Save on the branch xwines-results
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -B xwines-results
+          git add results/xwines
+          git commit -m "X-Wines Full: consumer long-tail analysis (run ${{ github.run_id }})"
+          git push --force origin xwines-results

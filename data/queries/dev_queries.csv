@@ -1,0 +1,101 @@
+wine_id,query,attempts,first_expert,first_leak,violations,flagged
+1537,"This red wine tastes sweet and spicy, with ripe fruit flavors that feel smooth and easy to drink.",1,,,,False
+2006,"It tastes really fresh and clean, like a light, crisp drink.",1,,,,False
+4104,"This red wine tastes like cherry and berries, but also feels a bit rough and rubbery.",1,,,,False
+5710,"This white wine tastes like a mix of pear and lemon, it's really refreshing and feels clean and crisp in my mouth.",1,,,,False
+5822,"This sparkling wine tastes sweet and fruity, with a bit of a tickly sensation on my tongue.",1,,,,False
+6679,This red wine tastes like ripe cherries with a spicy kick and feels smooth and silky in my mouth.,1,,,,False
+6779,"It tastes like cola and cherry, but also has a weird, funky smell that goes away when it sits for a bit.",1,,,,False
+8408,"This red wine tastes a bit flat and has a weird mix of bitter and sweet flavors that come and go quickly, with some purple berries and tar flavors that leave a weird aftertaste.",1,,,,False
+8518,"This red wine tastes sweet and fruity, with a smooth, easy-to-drink feel.",1,,,,False
+10064,"This red wine tastes very dry and bitter, with a strong, unpleasant sensation in my mouth.",1,,,,False
+11153,"This white wine tastes creamy and rich, with flavors of sweet citrus.",2,texture,,,False
+11170,"It tastes like a sweet, fruity soda with a hint of vanilla and honey.",1,,,,False
+12118,"This wine tastes like a mix of spices and herbs with some bitter, dry flavors that leave a strong sensation in your mouth.",1,,,,False
+15078,"It tastes smooth and sweet, with flavors of orange peel, vanilla, and honey.",1,,,,False
+17217,"It tastes sweet and fruity, with a sharp, citrusy kick.",1,,,,False
+17670,"It tastes like a rich, bold red wine with a strong, dry sensation that leaves a slight bitterness.",1,,,,False
+18557,"This red wine tastes like a mix of earthy and fruity flavors, with a strong, dry sensation that makes it feel a bit rough on the tongue.",1,,,,False
+20342,"This red wine tastes sweet and fruity, with a lot of cherry flavor. It's crisp and refreshing, with a nice balance of flavors.",1,,,,False
+20432,"It tastes sweet and fruity, with a hint of tropical flavors like apricot and pineapple.",1,,,,False
+20660,"This white wine tastes creamy and fruity, with a hint of grapefruit, and it feels smooth and refreshing in my mouth.",1,,,,False
+20759,"This red wine tastes sweet and overly ripe, with a strong, unpleasant flavor that feels sticky and syrupy in my mouth.",1,,,,False
+21278,"This red wine tastes like dark cherries and earth, with a gritty, chalky feeling on my tongue.",2,texture,,,False
+23374,"This red wine tastes smooth and rich, with flavors of dark berries and a hint of earthy spice.",1,,,,False
+23411,"This white wine tastes sweet and fruity, like sugary orange tea and pineapple jam, with a buttery and caramel flavor.",1,,,,False
+23606,"This red wine tastes rich and fruity, with a dry, slightly bitter taste that feels a bit rough on the tongue, but is balanced by a sweet, juicy quality that makes it feel smooth and refreshing.",1,,,,False
+25002,"It tastes sweet and fruity, with a smooth, soft feel that feels gentle on my tongue.",2,texture,,,False
+25851,"This wine tastes fruity and slightly spicy, with a crisp, refreshing feeling in my mouth.",1,,,,False
+28873,"This white wine tastes sweet and fruity, with a hint of bitterness. It's smooth and easy to drink.",1,,,,False
+29778,"This wine tastes sweet and fruity, with a smooth, creamy feel that feels fresh and cool on my tongue.",2,texture,,,False
+31841,"This red wine tastes like cherry pie with a spicy kick and feels a bit rough on the tongue, but it's still smooth and leaves a nice aftertaste.",1,,,,False
+32333,"It tastes like a soft, smoky berry wine with a juicy feel and a bit of dryness at the end.",1,,,,False
+34088,"This red wine tastes earthy and grassy at first, but then it's sweet and fruity with a sharp, bitter feeling that lingers.",1,,,,False
+34352,"This wine tastes sweet and fruity, with a hint of spice. It feels smooth and easy to drink.",1,,,,False
+34840,"This red wine tastes sweet and fruity, with a smooth, easy-to-drink feel.",1,,,,False
+38041,"This white wine tastes like citrus and green apple, with a hint of grassy freshness.",1,,,,False
+39715,"It tastes sweet and fruity, with a bright, zesty feeling that makes your mouth water.",1,,,,False
+41748,"This red wine tastes like sweet berries and cherries, with a slightly earthy and smoky undertone. It feels smooth and a bit messy in my mouth, with a warm, spicy sensation at the end.",1,,,,False
+43622,"This red wine tastes like dark berries and coffee, with a smooth, slightly bitter feel in my mouth.",1,,,,False
+44259,"This white wine tastes sweet and fruity, with a refreshing and tangy taste that makes it feel cool and crisp in your mouth.",1,,,,False
+44270,"This white sparkling wine tastes like a combination of apple and citrus, with a hint of bread. It feels crisp and refreshing.",1,,,,False
+46182,This red wine tastes like a mix of cherry and boysenberry flavors with a dry sensation that lingers a bit.,2,firm,,,False
+49022,"It tastes like a soft, fruity red wine with a gentle, dry feeling in the mouth.",1,,,,False
+50450,"This white wine tastes like a mix of pear and citrus, with a bit of a sharp, crisp feeling in my mouth.",1,,,,False
+51999,"This red wine tastes like espresso and dark cherries, with a strong, bitter aftertaste that feels heavy and long-lasting.",1,,,,False
+52448,"This white wine tastes rich and creamy, with a smooth, velvety feel that coats your tongue. It has a sweet, slightly nutty flavor with a hint of citrus and a lingering aftertaste of chocolate and orange peel.",2,texture,,,False
+54910,"This white wine tastes sweet and fruity, with a strong, heavy flavor that makes it feel rich in my mouth.",2,oak,,,False
+58455,"This white wine tastes sweet and fruity, with a hint of saltiness and a creamy aftertaste.",1,,,,False
+58548,This white wine tastes very dry and feels refreshing on my tongue. It has a citrusy and slightly bitter taste with a hint of grassy flavor.,1,,,,False
+60106,This red wine tastes sweet and fruity with a slightly bitter aftertaste.,1,,,,False
+60730,"This white wine tastes sharp and sour, with a bitter lemony flavor that feels dry and puckering on my tongue.",1,,,,False
+60892,"This red wine tastes sweet and fruity, but it's also a bit rough and feels a bit tough in the mouth.",2,chewy,,,False
+62444,"This red wine tastes rich and fruity, with a smooth, velvety feel that feels nice on my tongue.",2,texture,,,False
+63508,"It tastes sweet and fruity, with a refreshing, cool sensation in my mouth.",1,,,,False
+68479,"This red wine tastes like a mix of berries with a smoky, woody flavor that lingers a bit. It's smooth and rich, with a slightly bitter aftertaste.",2,dark fruit,,,False
+68978,"This wine tastes spicy and fruity, with a cool, refreshing minty flavor. It's a bit heavy and rich, but it's balanced and easy to drink.",1,,,,False
+69171,"It tastes like a sweet, fruity drink with a slightly bitter aftertaste.",1,,,,False
+70823,"It tastes sweet and fruity, with a soft, smooth feel that feels gentle on my tongue.",2,texture,,,False
+71895,"This white wine tastes fresh and citrusy, with a slightly spicy kick.",1,,,,False
+73858,"This red wine tastes sweet and fruity with a rich, smooth feel.",2,texture,,,False
+74251,"This sweet, golden wine tastes like honey and lemon, it's very smooth and rich.",2,texture,,,False
+75106,"This white wine tastes sweet and fruity, with flavors of apple, pear, and peach. It feels smooth and refreshing in my mouth.",1,,,,False
+76365,"This red wine tastes like a mix of berries and rubber, with a weird, sticky feeling on my tongue.",1,,,,False
+77274,"It tastes sweet and fruity, with a hint of vanilla.",1,,,,False
+77360,"It tastes like a strong, dry red wine with a lot of bitterness and a bit of sweetness.",1,,,,False
+77792,"This white wine tastes sweet and fruity, with a lot of pineapple flavor. It feels refreshing and easy to drink.",1,,,,False
+83834,"This red wine tastes like medicine and tastes really rough, with a lot of sandpaper-like grit.",1,,,,False
+85146,"This white wine tastes sweet and apricot-like, with a strong apricot flavor that's really intense.",1,,,,False
+85801,"This wine tastes like sweet and tart berries with a hint of spice, and it feels smooth and refreshing in my mouth.",1,,,,False
+86682,"It tastes sweet and fruity, with a hint of tartness.",1,,,,False
+87559,"It tastes like citrus and melon, and it feels refreshing and fruity.",1,,,,False
+88468,"This red wine tastes like blackberries and blueberries with a dry, dry feeling in my mouth.",2,firm,,,False
+89107,"This red wine tastes really rich and full, with a strong, bitter feeling that hits your tongue first. It has a sweet, chocolatey flavor with a herbal and slightly bitter taste that lingers.",2,tannin,,,False
+89154,"It tastes sweet and fruity, with a hint of citrus, and it feels smooth and refreshing in my mouth.",1,,,,False
+90451,"It tastes like a mix of citrus and tropical fruit, with a bit of a sour taste that makes your tongue pucker.",1,,,,False
+91368,"This wine tastes spicy and fruity, with a dry sensation in the mouth.",2,firm,,,False
+91999,"It tastes like cherry and herbs, with a spicy kick. It's a soft, smooth red wine that feels gentle on your tongue.",1,,,,False
+92000,"It tastes like a mix of sweet and sour flavors, with a smoky, buttery taste that's a bit rich and heavy.",1,,,,False
+93077,"This red wine tastes like a mix of sweet and spicy flavors, with a smooth and juicy taste that feels nice on my tongue.",1,,,,False
+93360,"It tastes sweet and fruity, with a bright, refreshing quality that makes it feel cool and crisp in your mouth.",1,,,,False
+93658,"It tastes sweet and fruity, with a smooth, silky feel.",2,texture,,,False
+99799,"This red wine tastes spicy and bitter, with a strong, dry sensation that makes your mouth feel dry and puckered.",2,tight,,,False
+100814,"This red wine tastes like berries and chocolate, with a spicy kick.",1,,,,False
+102254,"This full-bodied red wine tastes rich and spicy, with sweet and fruity flavors that feel heavy and linger on your tongue.",1,bodied,,bodied,True
+103150,"This white wine tastes like a mix of citrus and green things, and it's really refreshing and clean.",1,,,,False
+103974,"This red wine tastes like plastic and feels rough and jagged in my mouth, with a strong, bitter taste that lingers.",1,,,,False
+108446,"It tastes sweet and fruity, with a hint of bitterness, and it feels smooth and creamy in my mouth.",1,,,,False
+109445,"This wine tastes like rich, ripe berries with a hint of rose and game. It's a bit bitter and leaves a dry, astringent feeling in your mouth.",1,,,,False
+110200,"It tastes sweet and fruity with a bit of bitterness, and it feels a bit prickly on my tongue.",1,,,,False
+110592,"This red wine tastes like a mix of berries and spices, with a slightly bitter aftertaste.",1,,,,False
+111985,"This red wine tastes like ripe cherries and plums with a spicy kick, and it feels smooth and rich in my mouth.",1,,,,False
+112388,"This white wine tastes sweet but also has a sharp, citrusy feeling that cuts through it. It feels a bit dry and has a crunchy, apple-like quality.",2,firm; texture,,,False
+113293,"It tastes like sweet strawberries and citrus, and it feels light and smooth in my mouth.",1,,,,False
+115139,"This white wine tastes sweet and fruity, with a strong, dry sensation that makes your mouth feel clean.",1,,,,False
+119466,"It tastes like citrus and peaches, but it's a bit sour and dry.",1,,,,False
+122845,"This white wine tastes sweet and fruity with a hint of something floral, and it feels smooth and refreshing in my mouth.",1,,,,False
+124902,"This red wine tastes sweet and fruity, with a smooth, soft feeling in my mouth.",1,,,,False
+125386,"This white wine tastes like lemon and pear, with a bit of bitterness, and it feels sharp and sour in my mouth.",1,,,,False
+126696,"This red wine tastes really rich and intense, with a lot of strong cherry flavor that hits you right away.",1,,,,False
+127356,This wine tastes like a mix of fresh berries with a dry sensation in the mouth.,2,firm,,,False
+129729,"This red wine tastes like a mix of berries and spices, with a strong, bitter feeling that lingers.",1,,,,False

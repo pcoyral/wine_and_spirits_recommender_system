@@ -606,3 +606,13 @@ recommended:
   have a real X-Wines photo (91 distinct bottles, same wine across
   vintages), every other wine the drawn bottle. `make photos` stays
   available for wines the student adds to `data/images/demo_extra_ids.csv`.
+- **Featured bottles** (student's decision, 17 Nov 2026): the app's start
+  page and the prototype page show 8 wines that have a real X-Wines photo,
+  one per photographed bottle (its best-rated vintage), alternating
+  red / white / sparkling, order drawn with the seed. Recommendations
+  themselves are unchanged: real photo where one exists, drawn bottle
+  otherwise.
+- **Gemini embeddings: free tier only for now** (student, 17 Nov 2026); the
+  full catalogue needs ~120 days of free quota, so option A (billing) is
+  set aside. Choice between B (open EmbeddingGemma) and C (Gemini API on a
+  10,000-wine sub-catalogue) pending.

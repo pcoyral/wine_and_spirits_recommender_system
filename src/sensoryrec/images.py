@@ -158,6 +158,27 @@ def update_sources(path, rows, source_prefix):
     pd.concat([kept, pd.DataFrame(rows, columns=cols)], ignore_index=True).to_csv(path, index=False)
 
 
+def featured(sources, wines, colour_of, n, seed):
+    """Up to n wines with a real photo for the "Featured bottles" row: one
+    wine per photographed bottle (its best-rated vintage), then taken in turn
+    from each colour (red, white, sparkling, rosé, other) so the row is
+    varied; the order within a colour is drawn with the seed.
+    sources: data/images/sources.csv; wines: indexed by wine_id."""
+    rows = sources.merge(wines[["points"]], left_on="wine_id", right_index=True)
+    rows = rows.sort_values(["points", "wine_id"], ascending=[False, True]).drop_duplicates("source")
+    rows = rows.assign(colour=rows["wine_id"].map(lambda i: colour_of.get(wines.loc[i, "variety"])))
+    groups = []
+    for colour in ["red", "white", "sparkling", "rosé", None]:
+        g = rows[rows["colour"].isna()] if colour is None else rows[rows["colour"] == colour]
+        groups.append(g.sample(frac=1, random_state=seed)["wine_id"].tolist())
+    picked = []
+    while len(picked) < n and any(groups):
+        for g in groups:
+            if g and len(picked) < n:
+                picked.append(g.pop(0))
+    return picked
+
+
 def load_shapes(path):
     t = pd.read_csv(path)
     return dict(zip(t["variety"], t["shape"]))

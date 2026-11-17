@@ -59,6 +59,33 @@ def picture(row, colour):
     return images.bottle_svg(images.bottle_shape(row.variety, colour, shapes), colour, 140)
 
 
+def show_featured(n=8):
+    """A row of bottles we have real photos of (X-Wines, CC0), before the first request."""
+    sources = repo_path(cfg["images"]["sources"])
+    if not sources.exists():
+        return
+    wines, _ = catalogue()
+    by_id = wines.set_index("wine_id")
+    ids = images.featured(pd.read_csv(sources), by_id, variety_colour(), n, cfg["seed"])
+    if not ids:
+        return
+    st.markdown("### Featured bottles")
+    st.caption("Wines from the catalogue that we have a real bottle photo of (X-Wines, CC0). "
+               "Scores and notes: Wine Enthusiast.")
+    shapes, labels = bottle_info()
+    cols = st.columns(4)
+    for i, wine_id in enumerate(ids):
+        w = by_id.loc[wine_id]
+        price = f"${w['price']:.0f}" if pd.notna(w["price"]) else "price unknown"
+        with cols[i % 4]:
+            st.image(str(repo_path(labels[wine_id])), use_container_width=True)
+            st.markdown(f'<div class="maison-serif" style="font-size:1.15rem;line-height:1.2">'
+                        f'{html.escape(w["title"])}</div><div class="meta" style="font-size:.72rem;'
+                        f'letter-spacing:.06em;text-transform:uppercase;color:#6b665e">'
+                        f'{html.escape(str(w["variety"]))} · {html.escape(str(w["country"]))} · {price} · '
+                        f'{w["points"]} pts</div>', unsafe_allow_html=True)
+
+
 @st.cache_resource
 def variety_colour():
     table = pd.read_csv(repo_path(cfg["attribute"]["colour_table"]))
@@ -121,6 +148,7 @@ with st.form("ask"):
 query = st.session_state.query
 if not query:
     st.info("Try: *A fresh white that tastes like lemon and green apple, not sweet*")
+    show_featured()
     st.stop()
 
 model = fitted_model(model_name)

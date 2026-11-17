@@ -18,6 +18,7 @@ env/
 data/raw/winemag-data*.csv
 # X-Wines consumer ratings (open dataset, downloaded by hand; see src/sensoryrec/xwines.py)
 data/raw/xwines/
+data/raw/xwines_slim/
 data/processed/*
 !data/processed/.gitkeep
 

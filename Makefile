@@ -1,7 +1,7 @@
 PYTHON ?= python
 export PYTHONPATH := src
 
-.PHONY: data eda embed demo queries human-cards eval eval-dev refine compare-human test simulate eval-simulated xwines map-mockup app
+.PHONY: data eda embed demo queries human-cards eval eval-dev refine compare-human test simulate eval-simulated xwines map-mockup app judge judge-agree xwines-cf embed-gemini images photos photos-apply
 
 # Definition of done for S0: `make data` gives the cleaned parquet, the
 # test/dev IDs and all EDA figures. The two steps are recipe lines, not
@@ -17,6 +17,10 @@ eda:
 # Build the SBERT embedding cache (downloads the model on first use)
 embed:
 	$(PYTHON) -m sensoryrec.recommenders.semantic
+
+# Gemini embeddings of every tasting note (needs GEMINI_API_KEY; resumable)
+embed-gemini:
+	$(PYTHON) -m sensoryrec.recommenders.semantic --only semantic_gemini
 
 # Top-5 of all four models for the queries in data/demo_queries.txt
 demo:
@@ -50,9 +54,33 @@ eval-simulated:
 xwines:
 	$(PYTHON) -m sensoryrec.xwines
 
+# LLM-as-a-judge on 150 simulated requests (needs GEMINI_API_KEY) -> results/judge/
+judge:
+	$(PYTHON) -m sensoryrec.judge
+
+# Agreement between your hand scores and the judge -> results/judge/agreement.csv
+judge-agree:
+	$(PYTHON) -m sensoryrec.judge --agree
+
 # Map MOCK-UP for Future Work -> docs/map_mockup.html (MODEL=tfidf to use another model)
 map-mockup:
 	$(PYTHON) -m sensoryrec.map_mockup $(if $(MODEL),--model $(MODEL),)
+
+# Collaborative filtering vs content on X-Wines (cold start) -> results/xwines_cf/
+xwines-cf:
+	$(PYTHON) -m sensoryrec.xwines_cf
+
+# Bottle images: X-Wines label photos (CC0) for matched wines -> data/images/, results/images_coverage.csv
+images:
+	$(PYTHON) -m sensoryrec.images
+
+# Real bottle photos for the demo wines: candidates + review sheet (needs internet)
+photos:
+	$(PYTHON) -m sensoryrec.photos
+
+# Use only the photos approved in data/images/photo_review.csv
+photos-apply:
+	$(PYTHON) -m sensoryrec.photos --apply
 
 # Refinement: alpha on dev, evaluation on test -> results/refinement*.csv
 refine:
@@ -62,7 +90,7 @@ refine:
 compare-human:
 	$(PYTHON) -m sensoryrec.compare_human
 
-# Chat PROTOTYPE in the browser (S3, first version)
+# Chat PROTOTYPE in the browser (S3, first version); needs requirements-app.txt
 app:
 	PYTHONPATH=src $(PYTHON) -m streamlit run app/chat.py
 

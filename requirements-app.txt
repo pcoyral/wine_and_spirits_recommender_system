@@ -1,0 +1,6 @@
+# The chat prototype only (`make app`). Kept apart from requirements.txt:
+# Streamlit 1.65 requires pyarrow < 26, while the pipeline pins pyarrow 26.0.0.
+# Install in a separate environment:  pip install -r requirements-app.txt
+-r requirements.txt
+pyarrow==25.0.1
+streamlit==1.65.0

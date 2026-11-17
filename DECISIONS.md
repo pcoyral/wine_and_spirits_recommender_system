@@ -559,3 +559,50 @@ recommended:
   (16 Nov 2026):** collaborative filtering moves from OUT to IN, as a
   separate experiment on X-Wines (Wine Enthusiast has one review per wine,
   so CF cannot run on it). `CLAUDE.md` updated.
+- **Streamlit moved to `requirements-app.txt`** (16 Nov 2026): Streamlit
+  1.65 requires pyarrow < 26, which conflicts with the pipeline's pin
+  (pyarrow 26.0.0) and broke every workflow's install. The app gets its own
+  file (pyarrow 25.0.1); the pipeline's pins are unchanged.
+- **X-Wines CF experiment, implementation choices** (16 Nov 2026, within the
+  approved plan): one rating per (user, wine), the latest (several vintages);
+  split by time, each user's latest rating held out, evaluated only if it is
+  liked (≥ 4), at most 10,000 evaluated users (seeded); models popularity,
+  item-kNN (cosine), PureSVD with 64 factors (Cremonesi et al. 2010) and a
+  TF-IDF content model on X-Wines attributes; standard settings, not tuned
+  (as for TF-IDF and Sentence-BERT). Long tail on X-Wines = wines outside
+  the head holding 80% of training likes (Pareto), because the Wine
+  Enthusiast rule (winery with ≤ 10 reviews) does not fit a dataset where a
+  winery can have 98,000 ratings. Cold-start groups: users by training
+  ratings (4–9, 10–29, 30+); target wines by training likes (0, 1–9,
+  10–99, 100+).
+- **Gemini embeddings, implementation** (16 Nov 2026, within the approved
+  plan): notes sent 100 per request with task type RETRIEVAL_DOCUMENT,
+  requests with RETRIEVAL_QUERY, 768 dimensions, normalised. Note batches are
+  saved as they finish, so the free quota can be spread over several runs;
+  query embeddings are cached in `data/llm_cache/` and committed. The model
+  is called `semantic_gemini` and stays `enabled: false` (left out of every
+  comparison) until all notes are embedded, so no other run calls the API by
+  accident.
+- **Label images, stricter matching** (16 Nov 2026): the first run matched
+  on a shared grape word and gave one Georges Duboeuf label to 162 different
+  Duboeuf wines, which would show the wrong bottle. A match now needs every
+  distinctive word of the X-Wines wine name (not a grape, not "red",
+  "reserva", ...) in the Wine Enthusiast title, the same winery and a listed
+  vintage; a name made only of a grape never matches. Photos are stored as
+  320-pixel JPEG thumbnails (the originals totalled ~580 MB).
+- **Real bottle photos** (student's request and approval, 16 Nov 2026):
+  real photos everywhere are not legally possible (shops' terms forbid
+  copying, CLAUDE.md), so: (1) X-Wines bottle photos (CC0) for every wine
+  that matches; (2) for the demo set, candidate photos from Open Food Facts
+  (CC BY-SA, credit required) that the student approves one by one in
+  `data/images/photo_review.csv` before they are used, each credited in
+  `data/images/sources.csv`; (3) the drawn bottle for every other wine. The
+  app prefers an approved photo, then an X-Wines photo, then the drawing.
+  Rejected: AI-generated "photos" (not the real bottle).
+- **Open Food Facts photos: none usable** (16 Nov 2026). Searched for the 25
+  wines the app's demo shows: 23 candidates, none of them the actual bottle
+  (supermarket products of the same grape, or another wine of the same
+  producer). None was put to the student for approval. Result: 227 wines
+  have a real X-Wines photo (91 distinct bottles, same wine across
+  vintages), every other wine the drawn bottle. `make photos` stays
+  available for wines the student adds to `data/images/demo_extra_ids.csv`.

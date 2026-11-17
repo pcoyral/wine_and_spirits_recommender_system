@@ -1,0 +1,50 @@
+# Bottle images (make images): downloads the X-Wines Slim wines and label
+# photos (CC0) from the authors' Google Drive, keeps the labels of the wines
+# that match ours, and pushes them with data/images/sources.csv to the branch
+# images-results. Starts on a push to the branch `run-images`.
+name: Images
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [run-images]
+
+permissions:
+  contents: write
+
+jobs:
+  images:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.11", cache: pip}
+      - name: Install
+        run: pip install -r requirements.txt && pip install -e . && pip install gdown==5.2.0
+      - name: Raw data and cleaning
+        run: |
+          mkdir -p data/raw
+          curl -sSfL -o data/raw/winemag-data-130k-v2.csv \
+            https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2019/2019-05-28/winemag-data-130k-v2.csv
+          make data
+          git checkout -- results/eda
+      - name: X-Wines Slim wines and labels
+        run: |
+          mkdir -p /tmp/xw data/raw/xwines_slim
+          gdown --folder "https://drive.google.com/drive/folders/1LqguJNV-aKh1PuWMVx5ELA61LPfGfuu_" -O /tmp/xw --remaining-ok || true
+          cp "$(find /tmp/xw -name '*Slim_1K_wines.csv' | head -1)" data/raw/xwines_slim/
+          unzip -o -q "$(find /tmp/xw -name 'XWines_Slim_1K_labels.zip' | head -1)" -d data/raw/xwines_slim/labels
+          find data/raw/xwines_slim -type f | head -5
+          echo "files: $(find data/raw/xwines_slim -type f | wc -l)"
+      - name: Match and copy
+        run: make images
+      - name: Save on the branch images-results
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -B images-results
+          git add data/images results/images_coverage.csv
+          git commit -m "Bottle label images, sources and coverage (run ${{ github.run_id }})" || true
+          git push --force origin images-results
+          cat results/images_coverage.csv >> "$GITHUB_STEP_SUMMARY"

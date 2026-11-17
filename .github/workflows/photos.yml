@@ -1,0 +1,42 @@
+# Candidate bottle photos from Open Food Facts (CC BY-SA) for the demo wines,
+# plus the review sheet the student fills in (make photos). Nothing is used
+# until approved (make photos-apply). Results go to the branch photos-results.
+# Starts on a push to the branch `run-photos`.
+name: Photos
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [run-photos]
+
+permissions:
+  contents: write
+
+jobs:
+  photos:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.11", cache: pip}
+      - name: Install
+        run: pip install -r requirements.txt && pip install -e .
+      - name: Raw data and cleaning
+        run: |
+          mkdir -p data/raw
+          curl -sSfL -o data/raw/winemag-data-130k-v2.csv \
+            https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2019/2019-05-28/winemag-data-130k-v2.csv
+          make data
+          git checkout -- results/eda
+      - name: Search candidate photos
+        run: make photos
+      - name: Save on the branch photos-results
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -B photos-results
+          git add data/images/candidates data/images/photo_review.csv
+          git commit -m "Candidate bottle photos for review (run ${{ github.run_id }})" || true
+          git push --force origin photos-results
+          echo "Candidates: $(ls data/images/candidates | wc -l)" >> "$GITHUB_STEP_SUMMARY"

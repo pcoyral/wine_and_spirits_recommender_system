@@ -9,6 +9,7 @@ PyYAML==6.0.3
 
 # Figures
 matplotlib==3.11.2
+pillow==12.3.0
 
 # Recommenders (S1)
 scikit-learn==1.9.1
@@ -18,9 +19,6 @@ torch==2.14.0
 
 # Map mock-up (Future Work only, docs/map_libraries.md)
 plotly==7.1.0
-
-# Chat prototype (S3)
-streamlit==1.65.0
 
 # Notebooks
 jupyter==1.1.1

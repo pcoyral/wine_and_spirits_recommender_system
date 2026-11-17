@@ -1,0 +1,81 @@
+# LLM-as-a-judge (make judge) on GitHub's machines. Gemini's free quota
+# (500 requests a day) needs about three runs: each run continues from the
+# answers cached by the previous one (saved on the branch judge-results).
+# Starts on a push to the branch `run-judge` (or by hand once on main).
+name: Judge
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [run-judge]
+
+permissions:
+  contents: write
+
+jobs:
+  judge:
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.11", cache: pip}
+      - name: Install
+        run: pip install -r requirements.txt && pip install -e .
+      - name: Unit tests
+        run: make test
+      - name: Earlier judge answers (from the branch judge-results, if it exists)
+        run: |
+          if git ls-remote --exit-code --heads origin judge-results > /dev/null; then
+            git fetch --depth 1 origin judge-results
+            git checkout FETCH_HEAD -- data/llm_cache || echo "no cached answers yet"
+          fi
+      - name: Raw data, cleaning, split unchanged
+        run: |
+          mkdir -p data/raw
+          curl -sSfL -o data/raw/winemag-data-130k-v2.csv \
+            https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2019/2019-05-28/winemag-data-130k-v2.csv
+          expected=$(python -c "import json; print(json.load(open('results/eda/data_manifest.json'))['raw_sha256'])")
+          echo "$expected  data/raw/winemag-data-130k-v2.csv" | sha256sum --check
+          make data
+          git diff --exit-code -- data/processed/test_ids.csv data/processed/dev_ids.csv
+          git checkout -- results/eda
+      - name: Embedding cache
+        uses: actions/cache@v4
+        with:
+          path: data/processed/embeddings
+          key: embeddings-${{ hashFiles('config.yaml', 'results/eda/data_manifest.json') }}
+          restore-keys: embeddings-
+      - name: Embeddings
+        run: make embed
+      - name: Judge
+        id: judge
+        continue-on-error: true   # keep the answers so far when the daily quota runs out
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: make judge
+      - name: Summary page
+        if: always()
+        run: |
+          {
+            echo "### Judge: ${{ steps.judge.outcome }}"
+            echo "LLM answers in the cache: $(ls data/llm_cache | wc -l)"
+            for f in results/judge/summary.csv results/judge/pairwise_summary.csv; do
+              if [ -f "$f" ]; then echo '```'; cat "$f"; echo '```'; fi
+            done
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Save answers and results on the branch judge-results
+        if: always()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -B judge-results
+          git add data/llm_cache
+          if [ "${{ steps.judge.outcome }}" = "success" ]; then git add results/judge; fi
+          git commit -m "Judge: answers and results (run ${{ github.run_id }})" || true
+          git push --force origin judge-results
+      - name: Stop here if the judge did not finish
+        if: steps.judge.outcome != 'success'
+        run: |
+          echo "make judge did not finish (probably the daily quota). Push to run-judge again tomorrow: it continues from the cache."
+          exit 1

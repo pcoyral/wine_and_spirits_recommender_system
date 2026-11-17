@@ -15,7 +15,7 @@ import streamlit as st
 sys.path.insert(0, str(Path(__file__).parent))   # app/style.py
 import style  # noqa: E402
 
-from sensoryrec import prototype
+from sensoryrec import images, prototype
 from sensoryrec.config import load_config, repo_path
 from sensoryrec.recommenders import build_models
 from sensoryrec.refinement import Refiner, load_lexicons
@@ -32,6 +32,31 @@ def catalogue():
     wines = pd.read_parquet(processed / "wines.parquet")
     test_ids = pd.read_csv(processed / "test_ids.csv")["wine_id"]
     return wines, test_ids
+
+
+@st.cache_resource
+def bottle_info():
+    """Shapes by grape, and the label photos that exist (data/images/sources.csv)."""
+    shapes = images.load_shapes(repo_path(cfg["images"]["shapes"]))
+    sources = repo_path(cfg["images"]["sources"])
+    labels = {}
+    if sources.exists():
+        t = pd.read_csv(sources)
+        # a photo checked by the student (Open Food Facts) comes before an X-Wines label photo
+        t = t.assign(order=(~t["source"].astype(str).str.startswith("Open Food Facts")).astype(int))
+        t = t.sort_values("order").drop_duplicates("wine_id")
+        labels = dict(zip(t["wine_id"], t["file"]))
+    return shapes, labels
+
+
+def picture(row, colour):
+    """A real photo if we have one (approved Open Food Facts photo, or X-Wines label), else the drawn bottle."""
+    shapes, labels = bottle_info()
+    if row.wine_id in labels:
+        import base64
+        data = base64.b64encode(repo_path(labels[row.wine_id]).read_bytes()).decode()
+        return f'<img src="data:image/jpeg;base64,{data}" alt="label" style="height:140px">'
+    return images.bottle_svg(images.bottle_shape(row.variety, colour, shapes), colour, 140)
 
 
 @st.cache_resource
@@ -69,13 +94,14 @@ st.sidebar.markdown("### Settings")
 # The app shows the semantic engine only (student's decision, 16 Nov 2026);
 # Gemini embeddings will be added here as the one alternative. The baselines
 # stay in the evaluation (`make eval`), not in the app.
-APP_MODELS = ["semantic"]
-names = [m.name for m in build_models(cfg) if m.name in APP_MODELS]
-model_name = names[0] if len(names) == 1 else st.sidebar.selectbox("Engine", names)
-st.sidebar.caption(f"Engine: {model_name} (Sentence-BERT). Gemini embeddings come next.")
+APP_MODELS = {"semantic": "Sentence-BERT", "semantic_gemini": "Gemini embeddings"}
+names = [m.name for m in build_models(cfg) if m.name in APP_MODELS]   # Gemini appears once enabled
+model_name = names[0] if len(names) == 1 else st.sidebar.selectbox(
+    "Engine", names, format_func=APP_MODELS.get)
+st.sidebar.caption(f"Engine: {APP_MODELS[model_name]}." + ("" if len(names) > 1 else " Gemini embeddings come next."))
 wines, _ = catalogue()
 country = st.sidebar.selectbox("Country (optional)", ["any"] + sorted(wines["country"].dropna().unique()))
-st.sidebar.caption("PROTOTYPE: no LLM explanation and no bottle images yet (S3, increment A).")
+st.sidebar.caption("PROTOTYPE: no LLM explanation yet (S3). Bottles are drawn by shape and colour; label photos (X-Wines, CC0) where a wine matches.")
 
 # ---------------------------------------------------------------- request
 st.markdown('<div class="maison-nav"><span class="maison-brand">SensoryRec</span>'
@@ -148,12 +174,15 @@ for row in top.itertuples():
     price = f"${row.price:.0f}" if pd.notna(row.price) else "price unknown"
     words = prototype.shared_words(query, row.description)
     why = ", ".join(words) if words else "no shared words; matched on meaning"
+    colour = colours.get(row.variety)
     st.markdown(
-        f'<div class="maison-card"><div><span class="rank">{row.rank}</span>'
-        f'<span class="name">{html.escape(row.title)}</span>{style.badge(colours.get(row.variety))}</div>'
+        f'<div class="maison-card" style="display:grid;grid-template-columns:70px 1fr;gap:20px">'
+        f'<div style="display:flex;align-items:flex-end;justify-content:center;background:#EFE6D4">{picture(row, colour)}</div><div>'
+        f'<div><span class="rank">{row.rank}</span>'
+        f'<span class="name">{html.escape(row.title)}</span>{style.badge(colour)}</div>'
         f'<div class="meta">{html.escape(str(row.variety))} · {html.escape(str(row.country))} · {price} · '
         f'{row.points} points (Wine Enthusiast)</div>'
         f'<div class="note">{html.escape(row.description)}</div>'
         f'<div class="why"><b>Why this wine</b> (prototype: words the tasting note shares with your request): '
-        f'{html.escape(why)}. <i>A written explanation, grounded in this note, comes next (S3).</i></div></div>',
+        f'{html.escape(why)}. <i>A written explanation, grounded in this note, comes next (S3).</i></div></div></div>',
         unsafe_allow_html=True)

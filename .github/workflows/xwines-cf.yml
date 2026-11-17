@@ -1,0 +1,56 @@
+# Collaborative filtering vs content on X-Wines (make xwines-cf) on GitHub's
+# machines. Downloads the Full version from the authors' Google Drive (CC0);
+# the data is not committed. Results go to the branch xwines-cf-results.
+# Starts on a push to the branch `run-xwines-cf` (or by hand once on main).
+name: X-Wines CF
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [run-xwines-cf]
+
+permissions:
+  contents: write
+
+jobs:
+  cf:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.11", cache: pip}
+      - name: Install
+        run: pip install -r requirements.txt && pip install -e . && pip install gdown==5.2.0
+      - name: Unit tests
+        run: make test
+      - name: X-Wines Full from the authors' Google Drive
+        run: |
+          mkdir -p /tmp/xw data/raw/xwines
+          gdown --folder "https://drive.google.com/drive/folders/1LqguJNV-aKh1PuWMVx5ELA61LPfGfuu_" -O /tmp/xw --remaining-ok || true
+          wines=$(find /tmp/xw -type f -name "*Full_100K_wines.csv" | head -1)
+          ratings=$(find /tmp/xw -type f -name "*Full_21M_ratings.csv" | head -1)
+          if [ -z "$ratings" ]; then
+            for z in $(find /tmp/xw -name "*Full*.zip"); do unzip -o -q "$z" -d /tmp/xw/unzipped || true; done
+            wines=$(find /tmp/xw -type f -name "*Full_100K_wines.csv" | head -1)
+            ratings=$(find /tmp/xw -type f -name "*Full_21M_ratings.csv" | head -1)
+          fi
+          test -n "$wines" && test -n "$ratings"
+          cp "$wines" "$ratings" data/raw/xwines/
+          ls -la data/raw/xwines
+      - name: Experiment
+        run: make xwines-cf
+      - name: Summary page
+        if: always()
+        run: |
+          for f in results/xwines_cf/data_summary.csv results/xwines_cf/summary.csv results/xwines_cf/by_item_group.csv; do
+            if [ -f "$f" ]; then echo "### $f"; echo '```'; cat "$f"; echo '```'; fi
+          done >> "$GITHUB_STEP_SUMMARY"
+      - name: Save on the branch xwines-cf-results
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -B xwines-cf-results
+          git add results/xwines_cf
+          git commit -m "X-Wines CF experiment (run ${{ github.run_id }})"
+          git push --force origin xwines-cf-results

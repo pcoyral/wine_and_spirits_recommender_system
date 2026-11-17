@@ -1,0 +1,41 @@
+variety,shape,note
+Cabernet Sauvignon,bordeaux,
+Merlot,bordeaux,
+Bordeaux-style Red Blend,bordeaux,
+Cabernet Franc,bordeaux,
+Malbec,bordeaux,
+Carmenère,bordeaux,
+Petit Verdot,bordeaux,
+Sauvignon Blanc,bordeaux,usually a Bordeaux bottle (Bordeaux and New Zealand)
+Bordeaux-style White Blend,bordeaux,
+Sémillon,bordeaux,
+Sangiovese,bordeaux,Chianti and Tuscan bottles are mostly Bordeaux-shaped
+Sangiovese Grosso,bordeaux,
+Tempranillo,bordeaux,Rioja uses the Bordeaux shape
+Tempranillo Blend,bordeaux,
+Zinfandel,bordeaux,
+Red Blend,bordeaux,most common default for blends
+Portuguese Red,bordeaux,
+Pinot Noir,burgundy,
+Chardonnay,burgundy,
+Gamay,burgundy,Beaujolais
+Syrah,burgundy,Rhône uses the Burgundy shape
+Shiraz,burgundy,
+Rhône-style Red Blend,burgundy,
+Grenache,burgundy,
+Viognier,burgundy,
+Nebbiolo,burgundy,Barolo and Barbaresco
+Barbera,burgundy,
+Pinot Blanc,burgundy,
+Chenin Blanc,burgundy,Loire
+Petite Sirah,burgundy,
+Riesling,flute,Alsace and German flute
+Gewürztraminer,flute,
+Grüner Veltliner,flute,
+Pinot Gris,flute,Alsace
+Pinot Grigio,flute,
+Sparkling Blend,champagne,
+Champagne Blend,champagne,
+Glera,champagne,Prosecco
+Port,port,
+Sherry,port,

@@ -1,7 +1,9 @@
-# Gemini embeddings of the ~120,000 tasting notes (make embed-gemini).
-# The free quota may need several runs: each finished batch of 100 notes is
-# kept in the Actions cache (a new cache entry per run), and the next run
-# continues from there. Starts on a push to the branch `run-embed-gemini`.
+# Gemini embeddings on the 10,000-wine sub-catalogue and every model compared
+# there (make gemini-subcatalogue; DECISIONS.md, 17 Nov 2026).
+# The free quota embeds about 1,000 texts a day, so it takes ~12 daily runs:
+# each run continues from the note batches and query embeddings saved by the
+# previous one on the branch gemini-results.
+# Starts on a push to the branch `run-embed-gemini`.
 name: Gemini embeddings
 
 on:
@@ -10,7 +12,7 @@ on:
     branches: [run-embed-gemini]
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   embed:
@@ -22,7 +24,16 @@ jobs:
         with: {python-version: "3.11", cache: pip}
       - name: Install
         run: pip install -r requirements.txt && pip install -e .
-      - name: Raw data and cleaning
+      - name: Unit tests
+        run: make test
+      - name: Earlier progress (from the branch gemini-results, if it exists)
+        run: |
+          if git ls-remote --exit-code --heads origin gemini-results > /dev/null; then
+            git fetch --depth 1 origin gemini-results
+            git checkout FETCH_HEAD -- data/llm_cache || echo "no cached query embeddings yet"
+            git checkout FETCH_HEAD -- data/processed/embeddings_subcatalogue/gemini_batches || echo "no note batches yet"
+          fi
+      - name: Raw data, cleaning, split unchanged
         run: |
           mkdir -p data/raw
           curl -sSfL -o data/raw/winemag-data-130k-v2.csv \
@@ -30,34 +41,37 @@ jobs:
           expected=$(python -c "import json; print(json.load(open('results/eda/data_manifest.json'))['raw_sha256'])")
           echo "$expected  data/raw/winemag-data-130k-v2.csv" | sha256sum --check
           make data
-      - name: Earlier embeddings (all models, and Gemini batches done so far)
-        uses: actions/cache/restore@v4
-        with:
-          path: data/processed/embeddings
-          key: embeddings-gemini-${{ github.run_id }}
-          restore-keys: |
-            embeddings-gemini-
-            embeddings-
-      - name: Gemini embeddings
+          git diff --exit-code -- data/processed/test_ids.csv data/processed/dev_ids.csv data/processed/subcatalogue_ids.csv
+          git checkout -- results/eda
+      - name: Gemini on the sub-catalogue
         id: embed
-        continue-on-error: true   # keep the finished batches when the quota runs out
+        continue-on-error: true   # keep the progress when the daily quota runs out
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-        run: make embed-gemini
-      - name: Keep the progress for the next run
-        if: always()
-        uses: actions/cache/save@v4
-        with:
-          path: data/processed/embeddings
-          key: embeddings-gemini-${{ github.run_id }}
+        run: make gemini-subcatalogue
       - name: Summary page
         if: always()
         run: |
-          echo "### Gemini embeddings: ${{ steps.embed.outcome }}" >> "$GITHUB_STEP_SUMMARY"
-          echo "Batches of 100 notes done: $(ls data/processed/embeddings/gemini_batches 2>/dev/null | wc -l) of 1,200" >> "$GITHUB_STEP_SUMMARY"
-          ls -la data/processed/embeddings >> "$GITHUB_STEP_SUMMARY" || true
+          {
+            echo "### Gemini sub-catalogue: ${{ steps.embed.outcome }}"
+            echo "Note batches done: $(ls data/processed/embeddings_subcatalogue/gemini_batches 2>/dev/null | wc -l) of 100"
+            for f in results/subcatalogue/ablation.csv results/subcatalogue/simulated_coverage.csv; do
+              if [ -f "$f" ]; then echo '```'; cat "$f"; echo '```'; fi
+            done
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Save progress and results on the branch gemini-results
+        if: always()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -B gemini-results
+          git add data/llm_cache
+          git add -f data/processed/embeddings_subcatalogue/gemini_batches || true
+          if [ "${{ steps.embed.outcome }}" = "success" ]; then git add results/subcatalogue; fi
+          git commit -m "Gemini sub-catalogue: progress (run ${{ github.run_id }})" || true
+          git push --force origin gemini-results
       - name: Stop here if not finished
         if: steps.embed.outcome != 'success'
         run: |
-          echo "Not finished (probably the quota). Push to run-embed-gemini again later: it continues from the cache."
+          echo "Not finished (probably the daily quota). Push to run-embed-gemini again tomorrow: it continues from gemini-results."
           exit 1

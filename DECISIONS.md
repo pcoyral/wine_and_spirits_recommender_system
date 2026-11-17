@@ -616,3 +616,20 @@ recommended:
   full catalogue needs ~120 days of free quota, so option A (billing) is
   set aside. Choice between B (open EmbeddingGemma) and C (Gemini API on a
   10,000-wine sub-catalogue) pending.
+- **Gemini embeddings on a 10,000-wine sub-catalogue** (student's decision
+  C, 17 Nov 2026). Every test and dev wine (300, the S2 query targets) plus
+  9,700 wines drawn at random with SEED 42, listed once in
+  `data/processed/subcatalogue_ids.csv`. Every model of the main comparison
+  (Popularity, TF-IDF, Attribute, Sentence-BERT, bge-small) plus Gemini is
+  refitted on these wines, test wines held out, and evaluated on the S2 test
+  queries and the ~1,000 simulated queries (top 5 and top 10):
+  `make gemini-subcatalogue` → `results/subcatalogue/`. Coverage is relative
+  to the 10,000 wines; tail share and novelty count winery reviews in the
+  full catalogue, so "tail winery" keeps its meaning. These numbers compare
+  models within this study only, not with the full-catalogue tables (a
+  smaller catalogue makes the exact-wine test easier for every model).
+  Cost: 10,000 notes + ~1,200 queries ≈ 11,200 embedding requests, about
+  12 daily runs of the free quota (one minute between batches of 100).
+  Rejected: B, the open EmbeddingGemma on the full catalogue (it would not be
+  the Gemini API the supervisor asked about). Gemini stays out of the
+  full-catalogue tables.

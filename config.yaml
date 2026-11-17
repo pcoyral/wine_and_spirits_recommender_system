@@ -140,9 +140,21 @@ extra_embedding_models:
     revision: gemini-embedding-001
     dims: 768
     batch_size: 100      # notes per request (batchEmbedContents)
-    pause_seconds: 1
-    # Off until `make embed-gemini` has embedded all notes (DECISIONS.md, 16 Nov 2026)
+    # The free tier counts every note as one request; a minute between batches
+    # of 100 stays under a per-minute limit.
+    pause_seconds: 60
+    # Off in the full-catalogue comparisons: the free quota cannot embed all
+    # ~120,000 notes. Compared on the 10,000-wine sub-catalogue instead
+    # (section subcatalogue; DECISIONS.md, 17 Nov 2026).
     enabled: false
+
+subcatalogue:
+  # Gemini embeddings on a smaller catalogue (student's decision C, 17 Nov 2026):
+  # every test and dev wine plus random wines (seed) up to `size`.
+  size: 10000
+  ids: data/processed/subcatalogue_ids.csv
+  embeddings_dir: data/processed/embeddings_subcatalogue
+  out_dir: results/subcatalogue
 
 simulation:
   # ~1,000 simulated customer queries for the coverage and diversity study

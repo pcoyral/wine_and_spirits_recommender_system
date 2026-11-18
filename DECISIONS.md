@@ -633,3 +633,9 @@ recommended:
   Rejected: B, the open EmbeddingGemma on the full catalogue (it would not be
   the Gemini API the supervisor asked about). Gemini stays out of the
   full-catalogue tables.
+- **Judge finished; blind validation sheet** (18 Nov 2026). The judge ran
+  in three daily runs (free quota) and all 900 set answers and 150 pairwise
+  answers are cached; results in `results/judge/`. The validation sheet for
+  the student no longer shows which model made each list (it did, in a
+  column named model_hidden): the model is in `validation_key.csv`, joined
+  back by case number in `make judge-agree`, so the hand scores are blind.

@@ -210,17 +210,23 @@ def pairwise_summary(pairwise, names):
 
 
 def validation_sample(sets, sample, lists, wines, n, seed):
-    """n judged sets (all models mixed, model hidden) for the student to
-    score by hand with the same rubric; `agreement` compares afterwards."""
+    """n judged sets (all models mixed) for the student to score by hand with
+    the same rubric; `agreement` compares afterwards. The model column goes
+    to a separate key file (split_validation), so the scoring is blind."""
     done = sets[sets["parsed"]].sample(n=min(n, int(sets["parsed"].sum())), random_state=seed)
     query = sample.set_index("query_id")["query"]
     rows = []
     for r in done.itertuples():
-        rows.append({"case": len(rows) + 1, "query_id": r.query_id, "model_hidden": r.model,
+        rows.append({"case": len(rows) + 1, "query_id": r.query_id, "model": r.model,
                      "request": query[r.query_id],
                      "wines": describe(wines, lists[r.model][r.query_id]),
                      "your_set_relevance_1_to_5": ""})
     return pd.DataFrame(rows)
+
+
+def split_validation(sample):
+    """(sheet for the student without the model, key with case -> model)."""
+    return sample.drop(columns="model"), sample[["case", "query_id", "model"]]
 
 
 def agreement(human, judge):
@@ -249,7 +255,9 @@ def main():
     if args.agree:
         filled = pd.read_csv(repo_path(j["validation_filled"]))
         filled = filled[pd.to_numeric(filled["your_set_relevance_1_to_5"], errors="coerce").notna()]
-        human = filled.rename(columns={"model_hidden": "model", "your_set_relevance_1_to_5": "human"})
+        key = pd.read_csv(out / "validation_key.csv")
+        human = filled[["case", "your_set_relevance_1_to_5"]].merge(key, on="case") \
+            .rename(columns={"your_set_relevance_1_to_5": "human"})
         human["human"] = human["human"].astype(int)
         judge = pd.read_csv(out / "sets.csv").rename(columns={"set_relevance": "judge"})
         result = agreement(human[["query_id", "model", "human"]], judge[["query_id", "model", "judge"]])
@@ -290,8 +298,9 @@ def main():
     pw.to_csv(out / "pairwise.csv", index=False)
     pairwise_summary(pw, names).round(2).to_csv(out / "pairwise_summary.csv", index=False)
 
-    validation_sample(sets, sample, lists, by_id, j["n_validation"], cfg["seed"]) \
-        .to_csv(out / "validation_sample.csv", index=False)
+    sheet, key = split_validation(validation_sample(sets, sample, lists, by_id, j["n_validation"], cfg["seed"]))
+    sheet.to_csv(out / "validation_sample.csv", index=False)
+    key.to_csv(out / "validation_key.csv", index=False)
     log.info("\n%s", summarise(items, sets).round(2).to_string(index=False))
 
 

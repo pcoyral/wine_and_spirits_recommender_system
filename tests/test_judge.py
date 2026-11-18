@@ -146,3 +146,12 @@ def test_summarise_and_agreement():
     judge = pd.DataFrame({"query_id": [1, 2, 3], "model": ["m"] * 3, "judge": [4, 3, 3]})
     a = agreement(human, judge)
     assert a["n"] == 3 and a["pct_exact"] == pytest.approx(100 / 3) and a["pct_within_1"] == pytest.approx(200 / 3)
+
+
+def test_validation_sheet_hides_the_model():
+    from sensoryrec.judge import split_validation
+    sample = pd.DataFrame({"case": [1, 2], "query_id": [7, 8], "model": ["semantic", "random"],
+                           "request": ["a", "b"], "wines": ["x", "y"], "your_set_relevance_1_to_5": ["", ""]})
+    sheet, key = split_validation(sample)
+    assert "model" not in sheet.columns and list(key.columns) == ["case", "query_id", "model"]
+    assert key["model"].tolist() == ["semantic", "random"]

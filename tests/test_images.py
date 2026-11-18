@@ -79,3 +79,19 @@ def test_match_rejects_a_more_specific_wine():
                            "Grapes": ["['Riesling']"], "Vintages": ["[2014]"], "RegionName": ["Rheingau"]})
     assert match_xwines(ours, theirs) == {1: 5}       # 2 is a single-vineyard wine, not this bottle
 
+
+def test_featured_one_per_bottle_and_varied():
+    from sensoryrec.images import featured
+    wines = pd.DataFrame({"wine_id": [1, 2, 3, 4, 5], "points": [90, 95, 88, 91, 87],
+                          "variety": ["Merlot", "Merlot", "Riesling", "Chardonnay", "Brut"]}).set_index("wine_id")
+    sources = pd.DataFrame({"wine_id": [1, 2, 3, 4, 5],
+                            "source": ["X-Wines Slim label image, WineID 9", "X-Wines Slim label image, WineID 9",
+                                       "X-Wines Slim label image, WineID 7", "X-Wines Slim label image, WineID 6",
+                                       "X-Wines Slim label image, WineID 5"]})
+    colour = {"Merlot": "red", "Riesling": "white", "Chardonnay": "white", "Brut": "sparkling"}
+    picked = featured(sources, wines, colour, n=3, seed=1)
+    assert len(picked) == 3
+    assert 1 not in picked                       # same bottle as wine 2, which has more points
+    assert picked[0] == 2 and 5 in picked        # red first, then white, then sparkling
+    assert picked == featured(sources, wines, colour, n=3, seed=1)
+

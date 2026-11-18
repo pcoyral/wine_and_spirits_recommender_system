@@ -37,22 +37,27 @@ from sensoryrec.recommenders import build_models, ild_vectors
 log = logging.getLogger(__name__)
 
 
-def winery_counts(wines, holdout_ids):
+def winery_counts(wines, holdout_ids, reference=None):
     """For every wine, the number of reviews of its winery, counted without
-    the held-out wines (the same count as Popularity and the tail label)."""
-    seen = wines[~wines["wine_id"].isin(holdout_ids)]
+    the held-out wines (the same count as Popularity and the tail label).
+    reference: the wines to count in (default: `wines` itself). The
+    sub-catalogue study counts in the full catalogue, so "tail winery" keeps
+    the same meaning."""
+    ref = wines if reference is None else reference
+    seen = ref[~ref["wine_id"].isin(holdout_ids)]
     return wines["winery"].map(seen["winery"].value_counts()).fillna(0).astype(int)
 
 
-def item_popularity(wines, holdout_ids):
+def item_popularity(wines, holdout_ids, reference=None):
     """p for novelty: the wine's winery share of reviews, with one extra review
     added to every winery (add-one smoothing, DECISIONS.md):
         p = (winery reviews + 1) / (reviews counted + number of wineries)
     so p > 0 even for a winery whose only wines are held out. The shares of
     all wineries still add up to 1."""
-    counts = winery_counts(wines, holdout_ids)
-    n_seen = int((~wines["wine_id"].isin(holdout_ids)).sum())
-    p = (counts + 1) / (n_seen + wines["winery"].nunique())
+    ref = wines if reference is None else reference
+    counts = winery_counts(wines, holdout_ids, ref)
+    n_seen = int((~ref["wine_id"].isin(holdout_ids)).sum())
+    p = (counts + 1) / (n_seen + ref["winery"].nunique())
     return dict(zip(wines["wine_id"], p))
 
 
@@ -84,9 +89,9 @@ def metric_row(recs, targets, ctx):
             **beyond_accuracy(recs, ctx)}
 
 
-def context(wines, holdout_ids, vectors, k, tail_max, robustness):
+def context(wines, holdout_ids, vectors, k, tail_max, robustness, reference=None):
     """Everything the metrics need that is the same for every model."""
-    counts = winery_counts(wines, holdout_ids)
+    counts = winery_counts(wines, holdout_ids, reference)
     return {
         "k": k, "tail_max": tail_max, "robustness": robustness,
         "n_wines": len(wines),
@@ -96,19 +101,19 @@ def context(wines, holdout_ids, vectors, k, tail_max, robustness):
         "n_varieties": wines["variety"].nunique(),
         "all_wines": wines["wine_id"].tolist(),
         "all_wineries": wines["winery"].unique().tolist(),
-        "popularity": item_popularity(wines, holdout_ids),
+        "popularity": item_popularity(wines, holdout_ids, reference),
         "vectors": vectors,
     }
 
 
-def evaluate(models, wines, queries, holdout_ids, vectors, k, tail_max, robustness):
+def evaluate(models, wines, queries, holdout_ids, vectors, k, tail_max, robustness, reference=None):
     """Run every (fitted) model on every query and compute the metrics.
 
     queries: DataFrame with wine_id, query and band.
     vectors: wine_id -> SBERT embedding, used for ILD for every model.
     Returns (overall, by_band) DataFrames.
     """
-    ctx = context(wines, holdout_ids, vectors, k, tail_max, robustness)
+    ctx = context(wines, holdout_ids, vectors, k, tail_max, robustness, reference)
     queries = queries.reset_index(drop=True)
     targets = queries["wine_id"].tolist()
     overall, by_band = [], []
@@ -136,10 +141,11 @@ def coverage_curve(recs, n_wines, step):
     return rows
 
 
-def evaluate_simulated(models, wines, queries, holdout_ids, vectors, k, tail_max, robustness, step=50):
+def evaluate_simulated(models, wines, queries, holdout_ids, vectors, k, tail_max, robustness, step=50,
+                       reference=None):
     """The simulated study: queries without a correct wine, so only the
     beyond-accuracy metrics. Returns (table, curve) DataFrames."""
-    ctx = context(wines, holdout_ids, vectors, k, tail_max, robustness)
+    ctx = context(wines, holdout_ids, vectors, k, tail_max, robustness, reference)
     table, curve = [], []
     for model in models:
         log.info("simulated study: %s on %d queries", model.name, len(queries))

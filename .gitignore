@@ -50,3 +50,4 @@ dist/
 # The held-out IDs are committed so the split is fixed and auditable
 !data/processed/test_ids.csv
 !data/processed/dev_ids.csv
+!data/processed/subcatalogue_ids.csv

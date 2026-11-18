@@ -606,3 +606,36 @@ recommended:
   have a real X-Wines photo (91 distinct bottles, same wine across
   vintages), every other wine the drawn bottle. `make photos` stays
   available for wines the student adds to `data/images/demo_extra_ids.csv`.
+- **Featured bottles** (student's decision, 17 Nov 2026): the app's start
+  page and the prototype page show 8 wines that have a real X-Wines photo,
+  one per photographed bottle (its best-rated vintage), alternating
+  red / white / sparkling, order drawn with the seed. Recommendations
+  themselves are unchanged: real photo where one exists, drawn bottle
+  otherwise.
+- **Gemini embeddings: free tier only for now** (student, 17 Nov 2026); the
+  full catalogue needs ~120 days of free quota, so option A (billing) is
+  set aside. Choice between B (open EmbeddingGemma) and C (Gemini API on a
+  10,000-wine sub-catalogue) pending.
+- **Gemini embeddings on a 10,000-wine sub-catalogue** (student's decision
+  C, 17 Nov 2026). Every test and dev wine (300, the S2 query targets) plus
+  9,700 wines drawn at random with SEED 42, listed once in
+  `data/processed/subcatalogue_ids.csv`. Every model of the main comparison
+  (Popularity, TF-IDF, Attribute, Sentence-BERT, bge-small) plus Gemini is
+  refitted on these wines, test wines held out, and evaluated on the S2 test
+  queries and the ~1,000 simulated queries (top 5 and top 10):
+  `make gemini-subcatalogue` → `results/subcatalogue/`. Coverage is relative
+  to the 10,000 wines; tail share and novelty count winery reviews in the
+  full catalogue, so "tail winery" keeps its meaning. These numbers compare
+  models within this study only, not with the full-catalogue tables (a
+  smaller catalogue makes the exact-wine test easier for every model).
+  Cost: 10,000 notes + ~1,200 queries ≈ 11,200 embedding requests, about
+  12 daily runs of the free quota (one minute between batches of 100).
+  Rejected: B, the open EmbeddingGemma on the full catalogue (it would not be
+  the Gemini API the supervisor asked about). Gemini stays out of the
+  full-catalogue tables.
+- **Judge finished; blind validation sheet** (18 Nov 2026). The judge ran
+  in three daily runs (free quota) and all 900 set answers and 150 pairwise
+  answers are cached; results in `results/judge/`. The validation sheet for
+  the student no longer shows which model made each list (it did, in a
+  column named model_hidden): the model is in `validation_key.csv`, joined
+  back by case number in `make judge-agree`, so the hand scores are blind.

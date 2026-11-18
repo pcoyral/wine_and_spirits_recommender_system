@@ -1,0 +1,151 @@
+query_id,tier,query
+60,basic,"Do you have a light, sweet sparkling wine?"
+72,basic,"Can you help me find a dry wine that tastes like tropical fruit? I don't know much about wine, just whatever kind you think fits that."
+96,basic,I am looking to try something totally new today. Do you have any wine here made by a small independent maker?
+101,basic,"Hi, I am looking for a sweet rosé wine that tastes like lemon."
+112,basic,"Hi, I am looking for a rosé that is a little sweet and goes down really easy."
+118,basic,"Hi, can you help me find a bottle of wine that isn't too heavy and tastes like herbs?"
+189,basic,Can you help me find a sweet rosé wine that is nice and light?
+219,basic,"Hi, do you have a sweet sparkling wine that tastes like vanilla and nuts?"
+224,basic,"Hi, I am looking for a dry sparkling wine that tastes like butter and nuts."
+246,basic,Can you help me find a sweet dessert wine that tastes really fresh? I want to spend between 20 and 40 euros.
+254,basic,Could you help me find a white wine that isn't too heavy?
+282,basic,"Can you help me find a light, sweet wine with some spice to have with dessert?"
+291,basic,Can I get a rosé that is a little sweet and feels smooth? I'm curious and want to try something new.
+296,basic,Can you help me find a red wine that is really sweet and also light?
+310,basic,Can you help me find a sweet dessert wine that isn't too heavy and tastes like peach and spices?
+324,basic,"Hi, I'm looking for any bottle of wine that costs less than 15 euros, can you help me find one?"
+366,basic,I want to try a new red wine that tastes like pepper and nuts. Can you find me something good between 20 and 40 euros?
+368,basic,Do you have any sparkling wine that tastes like honey and cherry and feels really creamy?
+387,basic,Can you help me find a red wine that is not too heavy and is a really safe choice?
+428,basic,"Can you find me some weird, totally unknown sweet dessert wine that tastes like coffee and lemon?"
+439,basic,Can I get some sparkling wine that is something really unusual I have never heard of before?
+451,basic,Can you recommend a sweet dessert wine that isn't too heavy and tastes like lemon and red berries?
+452,basic,"I am looking for a sweet dessert wine that tastes like tropical fruit, and I would love to try something new today."
+454,basic,"Can you recommend a sparkling wine that tastes buttery, and costs under 25 euros?"
+508,basic,"Hi, I need a sweet wine to go with dessert that has a nutty taste. Do you have anything like that?"
+556,basic,Can you recommend a dry white wine that tastes like vanilla and tropical fruit? I want to try something totally new today.
+584,basic,"I am looking for a light sweet wine to have with dessert, and I want to spend between 20 and 40 euros."
+612,basic,"Hi, I sometimes like to drink a glass of rosé that tastes like peach, can you help me find one?"
+613,basic,Do you have a cheap sweet wine that tastes like coffee for after dinner?
+615,basic,"I'm looking for a nice sparkling wine to give as a gift, and price doesn't matter since I want to try something completely new."
+634,basic,Do you have a sweet dessert wine that tastes like spices and honey? I'd love something that feels really creamy in the mouth.
+644,basic,I am looking for a sparkling wine under 15 euros and I would love to try something new today.
+663,basic,"I want to get a nice red wine as a gift, and I'd love to try something completely new that tastes like red berries and cherry. Price doesn't matter at all, what do you suggest?"
+671,basic,"Can I get a sparkling wine that tastes like honey? Also, I want something really unusual that I have never heard of."
+680,basic,"Hi, I'm looking to try something new and want a white wine that isn't too heavy, costing under 15 euros."
+688,basic,Do you have any sparkling wine that tastes like red berries and honey with a really creamy feel?
+692,basic,"I want to try a new kind of wine that tastes like nuts, and I want to spend under 25 euros."
+708,basic,"I just drink wine once in a while, and I want something really strong and heavy today."
+710,basic,"Hi, I am looking for a bottle of wine to drink tonight that tastes like red berries."
+715,basic,"I want to try something new, like a sweet dessert wine that tastes like vanilla and red berries."
+758,basic,Can I get a sparkling wine from Argentina that tastes like vanilla? I am curious to try something new.
+822,basic,Do you have a red wine from Argentina that isn't too heavy?
+823,basic,I am looking for a red wine from Spain that tastes like dark berries. Can you help me find one?
+830,basic,Can you help me find a red wine from France that is not sweet at all?
+834,basic,I am looking for a sweet dessert wine that tastes like red berries and lemon.
+853,basic,"Hi, I am looking for a cheap bottle of white wine. Can you help me find one?"
+894,basic,I want to try something new today. Can you help me find a bottle that is a little sweet?
+913,basic,Do you have any sparkling wine that feels nice and creamy?
+946,basic,Can you help me find a sweet dessert wine that tastes like tropical fruit and isn't too heavy?
+952,basic,"Hi, I am looking for a sweet red wine that tastes like nuts."
+1,medium,"I need a nice sweet wine for a dessert present, nothing too heavy, that tastes like cherry and dark berries, and price doesn't matter at all."
+6,medium,"Do you have any sparkling wine from a small maker that is light and a little sweet, with flavours of honey and herbs?"
+36,medium,"Hi, I am looking for any kind of wine that is not too heavy and goes down really easily, and I want to spend between 20 and 40 euros."
+49,medium,"Hi, I am looking for a cheap bottle of wine that is a little sweet with some vanilla, but still tastes fresh and crisp."
+53,medium,"Hi, I am looking to try something new and want a light red wine that is a little sweet and tastes like flowers and mushrooms."
+113,medium,"Can I try something new and get a dry rosé that is light, tastes like cherry, and feels really juicy?"
+132,medium,Can I try a light wine from New Zealand that tastes like red berries and coffee?
+140,medium,"I want to try a new red wine that is a little sweet and not too heavy, with some spices, and costs between 20 and 40 euros."
+205,medium,"Hi, I am looking for a white wine from Chile that is a little sweet and light, with some spice flavors."
+206,medium,"I need a really popular white wine that's sweet and light, and cost doesn't matter because it's a gift."
+212,medium,Can you help me find a sweet American wine for dessert that tastes like coffee and is really easy to drink?
+214,medium,"Can you recommend a white wine from Greece that is a little sweet, and maybe made by a small family vineyard? I'm curious and want to try something new."
+218,medium,"Can I get some sort of sparkling wine that tastes like vanilla and feels really smooth, but something totally unusual I have never heard of?"
+232,medium,Can you help me find a crisp wine that tastes like vanilla and isn't sweet at all?
+241,medium,"Hi, I am looking for a sparkling wine that tastes like cherry and red berries, feels really fresh, and is not too heavy. My budget is under 25 euros."
+255,medium,I am looking for a French rosé that is light and tastes like flowers. Can you recommend something new for me to try?
+365,medium,"Hi, I am looking for a sparkling wine from a small maker that feels nice and creamy. My budget is between 20 and 40 euros."
+369,medium,"I am looking for an unusual rosé I have never heard of that is light, tastes like green apple, and feels really fresh."
+376,medium,"Hi, I am looking for a light Greek dessert wine that tastes like tropical fruit and goes down really smooth."
+427,medium,Can you recommend a really popular red wine that is not too heavy and tastes a bit spicy?
+434,medium,"I need a really nice bottle of rosé as a present, something juicy packed with red berry flavors, and price is not an issue at all."
+445,medium,"Can I try a rosé that is a little sweet, easy to drink, and nice and smooth? I want to taste something new today."
+455,medium,"I am looking for an easy, safe red wine that tastes like flowers and feels really juicy."
+472,medium,"Can I get a light French sparkling wine that tastes like cherry for under 15 euros? I don't drink fancy stuff, just something nice for every once in a while."
+496,medium,Do you have a fresh white wine from a small maker that isn't too heavy and tastes like honey and butter?
+541,medium,"Can you help me find a light, a little sweet, sparkling wine from a small producer in Australia to try something new?"
+564,medium,"Can I get a rosé that is a little sweet and nice and crisp, but something unusual I have never heard of?"
+570,medium,Do you have an easy-to-drink sparkling wine that is a little sweet and tastes like peach and cherry?
+587,medium,"I need a sparkling wine that is not sweet at all, tastes like lemon, and is light. It is for a present, so the price does not matter."
+595,medium,"Can I get a red wine that is a little sweet, strong and heavy, with pepper?"
+607,medium,"Can you help me find a light, sweet dessert wine that tastes like plum and honey and feels nice and creamy?"
+624,medium,"I need a sparkling wine as a present, so price doesn't matter. I'm looking for something smooth that isn't too heavy and tastes like tropical fruit."
+754,medium,"Can I try something new and get a strong, heavy red wine that tastes like plum and vanilla? I want it to feel really juicy."
+779,medium,"I need a nice, light sweet wine for a present that tastes like peach and lemon, and price doesn't matter."
+786,medium,"Hi, I am looking for a dry red wine that tastes like coffee and vanilla, and I want something totally safe that cannot go wrong. My budget is between twenty and forty euros."
+807,medium,I am looking for a sweet dessert wine that tastes like spices and goes down really smoothly without feeling too heavy.
+835,medium,Do you have a light sparkling wine that tastes like peach for under 15 euros?
+841,medium,Can I try a crisp sparkling wine from a small producer in Greece? I am curious to taste something new.
+864,medium,"Can I get a popular white wine that everyone likes, not too heavy, with some spices and herbs?"
+866,medium,"Can I get a rosé that's light, tastes like green apple and red berries, and is something super unusual I've never heard of?"
+874,medium,"I need to buy a present for someone, and price is no object. Can you help me find a bottle from Chile that tastes like cherry and plum and feels creamy?"
+884,medium,I am looking for a sweet New Zealand dessert wine that tastes like chocolate and feels juicy.
+890,medium,Do you have an easy-drinking sweet rosé that tastes like peach and spices?
+908,medium,"I need a nice white wine that tastes like honey and butter, but something light. Price doesn't matter since it's a present, and I'd love to try a new bottle."
+919,medium,"Can I get a smooth Australian red wine that tastes like herbs and chocolate, for somewhere between twenty and forty euros?"
+947,medium,"Can you suggest a really popular sweet dessert wine that packs a strong punch, costing somewhere between twenty and forty euros?"
+971,medium,"Hi, I need a safe bottle of wine for under 15 euros that is not too heavy and tastes like pepper and vanilla."
+972,medium,"Can I get a dry, light rosé that tastes like green apple and herbs for somewhere between twenty and forty euros?"
+980,medium,"Can I try a sweet, strong, and cheap wine that goes down super easy and is something totally new for me?"
+994,medium,"Can you recommend a light Greek rosé that is a little sweet, and costs under 15 euros? I want to try something new."
+21,complex,Can you recommend a sweet red wine from Germany? I want to try something new while watching a film tonight.
+84,complex,"Can you recommend a really popular wine for under 25 euros that everyone likes, tastes a bit sweet and peppery with cherry flavors, isn't too heavy, and is nice for drinking on a cold winter night?"
+93,complex,"Can I get an unusual white wine that is sweet, smooth, and tastes like flowers and nuts? I want to give it to my boss, and it has to be something I have never heard of before."
+105,complex,Can you help me find a light red wine that goes down super easy for a pizza night?
+155,complex,Can you recommend a light rosé from a small maker that tastes like flowers and peach to go with our cheese board? I am keen to try something new today.
+163,complex,"Hey, I need a popular sparkling wine for a barbecue that tastes like lemon, feels light and creamy, and that everyone will like."
+170,complex,"I need a special rosé gift for people to raise their glasses with, and since price doesn't matter, I'd love to try something new that's a little sweet with peach and cherry flavours."
+181,complex,"Can you help me find a sweet dessert wine with a coffee taste that isn't too heavy, to drink while watching a film?"
+183,complex,"Can I get a strong, heavy, sweet white wine with a lemony taste for under 25 euros to go with a cheese board?"
+261,complex,"Can you recommend a popular sparkling wine to raise a glass at a wedding that tastes a little sweet with nuts and honey, costing between 20 and 40 euros?"
+266,complex,"Can you help me find a strong, heavy sweet white wine that tastes like peach and spices for a cheese board?"
+283,complex,Can you recommend a light Greek rosé under 25 euros that tastes like peach and goes well with a spicy curry?
+307,complex,Can I get a light rosé that tastes like red berries and feels smooth to drink for raising our glasses at a wedding?
+317,complex,"Hi, I need a bottle of any wine that tastes like chocolate and feels really smooth to go with our cheese board."
+326,complex,"I need a sparkling wine that is sweet and tastes like peach with a crisp feel, to give as a present for a spicy curry, and the price does not matter."
+353,complex,"It is freezing tonight, so I am looking for a light wine that everyone always likes."
+360,complex,"Hi, I need a light white wine for a picnic that tastes like vanilla and herbs, and I'd like to spend between 20 and 40 euros."
+382,complex,"I am looking for a cheap, light wine for a birthday party, and I want to try something totally new today."
+383,complex,Can you help me find a sweet rosé that tastes like peach and spices for under 15 euros to go with our fish dinner?
+389,complex,"Can you suggest an Australian wine for a picnic under 25 euros that tastes like honey and isn't too heavy, since I'd love to try something totally new?"
+394,complex,"Can you help me find a sweet white wine with spice flavors and a creamy feel for a picnic, for under 15 euros?"
+400,complex,"Can I get any safe bottle for a quiet night in that tastes like green apple and red berries, just something that cannot go wrong?"
+402,complex,"Do you have any light, a little sweet wine that tastes like green apple and spices, with a warming feel for a romantic dinner? I am curious and want to try something new."
+405,complex,I need a light sweet wine that tastes like plum to have at a barbecue.
+413,complex,"I need a really strong, heavy wine from Portugal that tastes like herbs to use when everyone drinks to the bride and groom."
+417,complex,Can you recommend a slightly sweet rosé from Argentina to go with our cheese board? I am curious to try something new today.
+426,complex,"Hi, I need a white wine that is a little sweet to drink on a hot summer afternoon, and I want to spend under 15 euros."
+432,complex,I need a bottle of white wine as a gift for my boss that tastes like flowers and nuts and feels creamy.
+453,complex,"Can you give me a really strong wine that tastes like coffee and flowers, something totally weird I've never heard of, to go with a spicy curry?"
+500,complex,"My partner and I are having a romantic dinner tonight and I am looking for a light, sweet dessert wine that tastes like coffee and vanilla."
+505,complex,"I need a strong, heavy, sweet dessert wine for a barbecue, and I want something safe that can't go wrong."
+516,complex,"Could you recommend a safe, foolproof sweet Australian white wine that is light, tastes like tropical fruit, and goes well with a spicy curry? I am curious to try something new."
+568,complex,"Hi, I need a white wine for a romantic dinner that is a little sweet and feels strong, and it has to be under 25 euros."
+586,complex,"Can you suggest a popular red wine that everyone likes for a romantic dinner? We want something sweet and not too heavy, with flavors of spices and chocolate that we haven't tried before."
+650,complex,"Can I get a smooth white wine that isn't sweet at all, tastes like tropical fruit and spices, and is easy to drink while watching a film?"
+679,complex,"Can I get a sparkling wine that is a little sweet and not too heavy, with honey and flower tastes and a juicy feel, to drink on a quiet evening at home for under 15 euros?"
+686,complex,Can you suggest a sweet South African wine from that shelf that feels fresh and light for a cheese board? I want to try something new.
+724,complex,Can I get a bottle of sparkling wine that tastes like butter for under 15 euros to go with a cheese board?
+749,complex,"I need a strong wine for a fish dinner, and I want to spend between 20 and 40 euros."
+771,complex,"Hi, I am looking for a light red wine with some spices that feels smooth, for a birthday party, and I want to try something new for under 25 euros."
+778,complex,"Hi, I need a rosé gift for my boss that tastes a bit like flowers, isn't too heavy, and costs under 25 euros."
+819,complex,"I need something to drink at a barbecue that tastes like spices, but nothing too heavy."
+883,complex,"Can you help me find a sweet red wine from Spain for a barbecue? I want something juicy that tastes like dark berries and mushrooms, but not too heavy."
+889,complex,Can you recommend a light sparkling wine with a creamy feel and peach flavors that would go well with a fish dinner?
+897,complex,"Can you help me pick a light, sweet wine for dessert to give my boss, just something safe that cannot go wrong?"
+906,complex,"Can I get an unusual rosé that is not too heavy, with some herbal and spicy flavors, to drink on a hot summer afternoon? I want something I have never heard of before."
+939,complex,"Can you help me find a sweet Spanish wine from Spain for dessert that is not too heavy, but tastes like flowers and coffee, because we are having a spicy curry?"
+960,complex,"Hi, I'm looking for a dry sparkling wine that isn't too heavy to go with a cheese board."
+995,complex,"Do you have a sweet dessert wine that tastes like coffee for a romantic dinner, costing between 20 and 40 euros?"
+999,complex,"Can I get a dry red wine that's light with some spices and a warming feel, to go with a spicy curry?"

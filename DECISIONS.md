@@ -639,3 +639,19 @@ recommended:
   the student no longer shows which model made each list (it did, in a
   column named model_hidden): the model is in `validation_key.csv`, joined
   back by case number in `make judge-agree`, so the hand scores are blind.
+- **S3 plan: grounded explanations** (student, 19 Nov 2026, "all
+  recommended"). D1: explanations by Gemini Flash-Lite (`gemini-3.1-flash-lite`,
+  free tier, temperature 0, cached). Rejected: the local Llama 3.2 3B (weaker;
+  the app would need Ollama running). D2: the app's and worked example's
+  engine is a config switch, `rag.engine`, Sentence-BERT until the Gemini
+  sub-catalogue results are in; bge-small (preferred by the judge) is
+  available through the same switch. D3: one intro sentence plus one sentence
+  per wine, each quoting 3–8 words of that wine's note; the prompt holds only
+  title, grape, country, price and note, and forbids changing the order. D4:
+  the student annotates all 50 explanations in
+  `results/faithfulness_sample.csv` (faithful yes / partly / no, claims not
+  in the notes); an automatic column counts quotes found word for word in
+  the notes. If the LLM cannot answer, the app shows the shared-words hint,
+  labelled as such. Worked-example persona: Lucía, 24, new to wine, fruity
+  and not too dry, about $20 (budget filter $20), refinement "sweeter"; the
+  request passes the vocabulary check (no expert terms).

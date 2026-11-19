@@ -132,8 +132,11 @@ and `claims_not_in_notes`. Rule I apply:
 - *no* — a claim contradicts the note, or the sentence describes the wrong
   wine.
 - Definitions of general wine words are not counted as claims about the
-  wine, because the prompt asks for them; they are listed separately if
-  wrong. (To be confirmed and recorded in DECISIONS when I annotate.)
+  wine, because the prompt asks for them; a wrong one is written in
+  `claims_not_in_notes` but does not change the label (DECISIONS,
+  19 Nov 2026, "Faithfulness annotation rule").
+- Why the rosé example is *partly* and not a gloss: it states how this
+  wine was made, which the note does not say.
 
 The faithfulness rate goes in the thesis only once it is computed by a
 script from the annotated sheet; until then it is "not yet available".

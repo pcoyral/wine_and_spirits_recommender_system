@@ -1,0 +1,82 @@
+# S3 on GitHub's machines: the worked example (make worked-example) and 50
+# grounded explanations for annotation (make faithfulness). About 52 Gemini
+# calls, well within one day's free quota; answers are cached and saved with
+# the results on the branch rag-results.
+# Starts on a push to the branch `run-rag`.
+name: Explanations
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [run-rag]
+
+permissions:
+  contents: write
+
+jobs:
+  rag:
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.11", cache: pip}
+      - name: Install
+        run: pip install -r requirements.txt && pip install -e .
+      - name: Unit tests
+        run: make test
+      - name: Earlier answers (from the branch rag-results, if it exists)
+        run: |
+          if git ls-remote --exit-code --heads origin rag-results > /dev/null; then
+            git fetch --depth 1 origin rag-results
+            git checkout FETCH_HEAD -- data/llm_cache || echo "no cached answers yet"
+          fi
+      - name: Raw data, cleaning, split unchanged
+        run: |
+          mkdir -p data/raw
+          curl -sSfL -o data/raw/winemag-data-130k-v2.csv \
+            https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2019/2019-05-28/winemag-data-130k-v2.csv
+          expected=$(python -c "import json; print(json.load(open('results/eda/data_manifest.json'))['raw_sha256'])")
+          echo "$expected  data/raw/winemag-data-130k-v2.csv" | sha256sum --check
+          make data
+          git diff --exit-code -- data/processed/test_ids.csv data/processed/dev_ids.csv
+          git checkout -- results/eda
+      - name: Embedding cache
+        uses: actions/cache@v4
+        with:
+          path: data/processed/embeddings
+          key: embeddings-${{ hashFiles('config.yaml', 'results/eda/data_manifest.json') }}
+          restore-keys: embeddings-
+      - name: Embeddings
+        run: make embed
+      - name: Worked example and explanations
+        id: rag
+        continue-on-error: true   # keep the answers so far if the quota runs out
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: |
+          make worked-example
+          make faithfulness
+      - name: Summary page
+        if: always()
+        run: |
+          {
+            echo "### Explanations: ${{ steps.rag.outcome }}"
+            echo "LLM answers in the cache: $(ls data/llm_cache | wc -l)"
+            if [ -f results/worked_example.md ]; then cat results/worked_example.md; fi
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Save answers and results on the branch rag-results
+        if: always()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -B rag-results
+          git add data/llm_cache
+          git add -f results/worked_example.md results/worked_example.html results/worked_example.csv results/faithfulness_sample.csv || true
+          git commit -m "Explanations: answers and results (run ${{ github.run_id }})" || true
+          git push --force origin rag-results
+      - name: Stop here if not finished
+        if: steps.rag.outcome != 'success'
+        run: |
+          echo "Not finished (quota or an unreadable answer). Push to run-rag again later: it continues from the cache."
+          exit 1

@@ -1,9 +1,11 @@
-"""SensoryRec chat PROTOTYPE (S3, first version). Run with `make app`.
+"""SensoryRec chat PROTOTYPE (S3). Run with `make app`.
 
-A request in everyday words -> top 5 wines from the chosen model -> refine
-with one click. No LLM yet: the explanation box shows the words each tasting
-note shares with the request. Everything is ranked by the same models as in
-`make eval` (fitted with the test wines held out).
+A request in everyday words -> top 5 wines from the engine (rag.engine in
+config.yaml) -> refine with one click -> a short explanation per wine,
+written by Gemini from the retrieved tasting notes only (rag.py). The engine
+ranks; the LLM only explains. Without a Gemini key, cached explanations are
+still shown; otherwise the box falls back to the words the note shares with
+the request, labelled as such.
 """
 import html
 import sys
@@ -15,7 +17,7 @@ import streamlit as st
 sys.path.insert(0, str(Path(__file__).parent))   # app/style.py
 import style  # noqa: E402
 
-from sensoryrec import images, prototype
+from sensoryrec import images, prototype, rag
 from sensoryrec.config import load_config, repo_path
 from sensoryrec.recommenders import build_models
 from sensoryrec.refinement import Refiner, load_lexicons
@@ -107,7 +109,21 @@ def refiner(name):
     return Refiner(model.embeddings, model.catalogue, lexicons).fit(test_ids)
 
 
+@st.cache_resource
+def explainer():
+    return rag.from_config(cfg)
+
+
+@st.cache_data(show_spinner="Writing the explanation…")
+def explanation(request, wine_ids, change):
+    """Cached per request, list and change, so a rerun does not ask again."""
+    wines, _ = catalogue()
+    top = wines.set_index("wine_id").loc[list(wine_ids)].reset_index()
+    return rag.explain(explainer(), cfg["rag"]["prompt"], request, top, change)
+
+
 def reset(query=""):
+    st.session_state.change = None       # (label, wine_ids before) of the last refinement
     st.session_state.query = query
     st.session_state.steps = []          # taste refinements, in order
     st.session_state.max_price = None    # set by "cheaper"
@@ -121,14 +137,17 @@ st.sidebar.markdown("### Settings")
 # The app shows the semantic engine only (student's decision, 16 Nov 2026);
 # Gemini embeddings will be added here as the one alternative. The baselines
 # stay in the evaluation (`make eval`), not in the app.
-APP_MODELS = {"semantic": "Sentence-BERT", "semantic_gemini": "Gemini embeddings"}
-names = [m.name for m in build_models(cfg) if m.name in APP_MODELS]   # Gemini appears once enabled
+APP_MODELS = {"semantic": "Sentence-BERT", "semantic_bge": "bge-small", "semantic_gemini": "Gemini embeddings"}
+# rag.engine chooses the engine (student's decision D2, 19 Nov 2026); Gemini
+# appears next to it once its embeddings are enabled.
+names = [m.name for m in build_models(cfg) if m.name == cfg["rag"]["engine"] or m.name == "semantic_gemini"]
 model_name = names[0] if len(names) == 1 else st.sidebar.selectbox(
     "Engine", names, format_func=APP_MODELS.get)
 st.sidebar.caption(f"Engine: {APP_MODELS[model_name]}." + ("" if len(names) > 1 else " Gemini embeddings come next."))
 wines, _ = catalogue()
 country = st.sidebar.selectbox("Country (optional)", ["any"] + sorted(wines["country"].dropna().unique()))
-st.sidebar.caption("PROTOTYPE: no LLM explanation yet (S3). Bottles are drawn by shape and colour; label photos (X-Wines, CC0) where a wine matches.")
+st.sidebar.caption("PROTOTYPE. Explanations: Gemini, from the tasting notes only; the engine alone ranks. "
+                   "Bottles are drawn by shape and colour; label photos (X-Wines, CC0) where a wine matches.")
 
 # ---------------------------------------------------------------- request
 st.markdown('<div class="maison-nav"><span class="maison-brand">SensoryRec</span>'
@@ -179,11 +198,13 @@ buttons = prototype.refinement_buttons(lexicons) if can_refine else []
 cols = st.columns(len(buttons) + 2)
 for col, (label, trait, sign) in zip(cols, buttons):
     if col.button(label):
+        st.session_state.change = (label, top["wine_id"].tolist())
         st.session_state.steps = steps + [(trait, sign)]
         st.rerun()
 if cols[-2].button("cheaper"):
     limit = prototype.cheaper_limit(top)
     if limit is not None:
+        st.session_state.change = ("cheaper", top["wine_id"].tolist())
         st.session_state.max_price = limit
         st.rerun()
 if cols[-1].button("start over"):
@@ -198,10 +219,16 @@ elif not alpha_from_dev:
 if top.empty:
     st.warning("No wine passes these filters. Press 'start over'.")
 colours = variety_colour()
-for row in top.itertuples():
+change = ""
+if st.session_state.change:
+    change = rag.change_text(st.session_state.change[0], st.session_state.change[1], top["wine_id"].tolist())
+out = explanation(query, tuple(top["wine_id"]), change) if not top.empty else {"intro": "", "whys": [], "source": "llm"}
+if out["intro"]:
+    st.markdown(f"*{out['intro']}*")
+why_label = ("Why this wine" if out["source"] == "llm"
+             else "Why this wine (no written explanation available: words the note shares with your request)")
+for row, why in zip(top.itertuples(), out["whys"]):
     price = f"${row.price:.0f}" if pd.notna(row.price) else "price unknown"
-    words = prototype.shared_words(query, row.description)
-    why = ", ".join(words) if words else "no shared words; matched on meaning"
     colour = colours.get(row.variety)
     st.markdown(
         f'<div class="maison-card" style="display:grid;grid-template-columns:70px 1fr;gap:20px">'
@@ -211,6 +238,5 @@ for row in top.itertuples():
         f'<div class="meta">{html.escape(str(row.variety))} · {html.escape(str(row.country))} · {price} · '
         f'{row.points} points (Wine Enthusiast)</div>'
         f'<div class="note">{html.escape(row.description)}</div>'
-        f'<div class="why"><b>Why this wine</b> (prototype: words the tasting note shares with your request): '
-        f'{html.escape(why)}. <i>A written explanation, grounded in this note, comes next (S3).</i></div></div></div>',
+        f'<div class="why"><b>{why_label}</b>: {html.escape(why)}</div></div></div>',
         unsafe_allow_html=True)

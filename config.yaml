@@ -148,6 +148,48 @@ extra_embedding_models:
     # (section subcatalogue; DECISIONS.md, 17 Nov 2026).
     enabled: false
 
+rag:
+  # Grounded explanations (S3; plan approved by the student, 19 Nov 2026).
+  # The engine ranks; the LLM only explains (CLAUDE.md rule 2).
+  # engine: the app's and worked example's model (D2: a switch, Sentence-BERT
+  # until the Gemini sub-catalogue results are in; semantic_bge also works).
+  engine: semantic
+  k: 5
+  n_faithfulness: 50
+  faithfulness_out: results/faithfulness_sample.csv
+  llm:
+    model: gemini-3.1-flash-lite     # D1: Gemini Flash-Lite, free tier
+    url: "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
+    temperature: 0
+    seed: 42
+    response_mime_type: application/json
+    pause_seconds: 5                 # 15 requests per minute on the free tier
+  worked_example:
+    persona: "Lucía, 24, is new to wine. She is cooking for friends on Saturday, likes fruity wines that are not too dry, and wants to spend about $20."
+    request: "Something fruity and not too dry to drink with friends over dinner, easy to like"
+    max_price: 20
+    refinement: {label: sweeter, trait: sweetness, sign: 1}
+  # {request}, {wines}, {k}, {change}; literal braces are doubled
+  prompt: |
+    You help a person who is new to wine. They asked: "{request}"
+    {change}
+    A search engine has already chosen these {k} wines, in this order. Do not change the order,
+    do not add or remove wines, and do not say which one is best.
+
+    {wines}
+
+    For each wine, write ONE sentence in plain, friendly English saying why it fits the request.
+    Rules:
+    - Use only the information above. Do not add facts about the winery, the region, food or
+      prices that are not written there.
+    - Each sentence must contain a short exact quote (3 to 8 words) from that wine's tasting note,
+      in double quotes.
+    - If the note does not cover a wish in the request (for example sweetness), say so honestly.
+    - Explain any wine word a beginner may not know.
+    Then write one short intro sentence about the selection as a whole.
+    Answer with JSON only, in this form:
+    {{"intro": "...", "wines": [{{"wine": 1, "why": "..."}}, {{"wine": 2, "why": "..."}}]}}
+
 subcatalogue:
   # Gemini embeddings on a smaller catalogue (student's decision C, 17 Nov 2026):
   # every test and dev wine plus random wines (seed) up to `size`.

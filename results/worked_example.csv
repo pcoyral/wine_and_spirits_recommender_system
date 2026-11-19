@@ -1,0 +1,11 @@
+turn,rank,wine_id,title,why,source,has_photo
+1. First answer,1,29574,Trefethen 2002 Riesling (Napa Valley),"This wine is light and easy to drink, though it is described as ""dry, bright and light,"" which means it lacks the sweetness you requested.",llm,False
+1. First answer,2,61028,Jean-Michel Cazes 2010  Bordeaux Blanc,"This wine is a great choice because it has ""an edge of sweetness"" that makes it soft and pleasant to drink.",llm,False
+1. First answer,3,123259,Luna 2008 Pinot Grigio (Napa Valley),"This wine offers ""modest peach, pineapple, lemon"" flavors, though it is dry, meaning it does not have the sugary taste you might be looking for.",llm,False
+1. First answer,4,16074,Caves Aliança 2010 Galeria Bical (Bairrada),"This is a ""softly fruity"" wine with melon and pear notes, though the note does not mention if it is sweet or dry.",llm,False
+1. First answer,5,110947,Raymond 2009 R Collection Lot No 7 Field Blend Red (California),"This is a ""slightly sweet wine"" with berry flavors, making it a very approachable option for a casual dinner.",llm,False
+"2. After ""sweeter""",1,127173,Pink Truck 2010 Pink Wine Rosé (California),"This rosé, which is a pink wine made from red grapes, is ""simple and sweet"" with refreshing fruit flavors.",llm,False
+"2. After ""sweeter""",2,123259,Luna 2008 Pinot Grigio (Napa Valley),"While this Pinot Grigio is actually dry, meaning it lacks sugar, it offers ""modest peach, pineapple"" flavors that are easy to enjoy.",llm,False
+"2. After ""sweeter""",3,43990,Binyamina 2009 Reserve Kosher Sauvignon Blanc (Upper Galilee),"This Sauvignon Blanc is ""somewhat sweet with flavors"" of candy and fruit juice, making it very approachable.",llm,False
+"2. After ""sweeter""",4,18343,Amberhill 2010 Secret Blend White (California),"This white blend is ""simple and sugary sweet"" with bright tropical fruit notes that are very easy to like.",llm,False
+"2. After ""sweeter""",5,14729,Backhouse 2010 Pinot Grigio (California),"This Pinot Grigio is ""overtly sweet"" and tastes like tea with sugar, which is perfect if you prefer a very sugary drink.",llm,False

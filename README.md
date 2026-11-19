@@ -71,9 +71,14 @@ SHA-256 is recorded in `results/eda/data_manifest.json` by `make data`.
 | `make eval-simulated` | Coverage and diversity of every model on the simulated queries → `results/simulated_coverage*.csv` |
 | `make xwines` | Long tail and sparsity in consumer ratings (X-Wines, analysis only; put the Full version's two CSVs in `data/raw/xwines/`) → `results/xwines/` |
 | `make map-mockup` | Map MOCK-UP for Future Work (real origins of the top-5, invented shops) → `docs/map_mockup.html`; see `docs/map_libraries.md` |
-| `make app` | Chat **prototype** in the browser: request → top 5 → refine (needs `pip install -r requirements-app.txt`, `make data` and `make embed`) |
+| `make app` | Chat **prototype** in the browser: request → top 5 with grounded explanations → refine (needs `pip install -r requirements-app.txt`, `make data` and `make embed`; explanations need `GEMINI_API_KEY`, otherwise a labelled fallback is shown) |
+| `make worked-example` | The demo's complete worked example (persona → request → top 5 with bottle pictures → "sweeter" → explanations; set in `config.yaml`, `rag.worked_example`) → `results/worked_example.{md,html,csv}` |
+| `make faithfulness` | 50 simulated requests → top 5 → explanation, with an automatic quote check and empty columns for hand annotation → `results/faithfulness_sample.csv` |
 | `make judge` | LLM-as-a-judge: Gemini rates every model's top 5 for 150 simulated requests in 3 tiers → `results/judge/` |
 | `make judge-agree` | Agreement between your hand scores (`data/judge_validation_filled.csv`) and the judge |
+| `make gemini-subcatalogue` | Gemini embeddings on the 10,000-wine sub-catalogue and every model compared there (resumable over several days of free quota) → `results/subcatalogue/` |
+| `make images` | X-Wines label photos (CC0) for matched wines → `data/images/`, `results/images_coverage.csv` |
+| `make photos` / `make photos-apply` | Candidate bottle photos for the demo wines and a review sheet; then use only the approved ones |
 | `make xwines-cf` | Collaborative filtering vs content on X-Wines consumer ratings, with cold-start groups → `results/xwines_cf/` |
 | `make test` | Run unit tests |
 
@@ -90,6 +95,12 @@ They have no correct wine, so they measure only how widely and evenly each
 model recommends (coverage of wines, wineries and varieties, tail share,
 Gini, novelty, diversity), not accuracy.
 
+Explanations (S3): the engine ranks; an LLM (Gemini Flash-Lite, temperature
+0, cached) writes one sentence per wine that must quote that wine's tasting
+note. Faithfulness is checked twice: automatically (do the quoted phrases
+occur in the notes?) and by hand on 50 explanations (faithful yes / partly /
+no; claims not in the notes).
+
 ## Running in the cloud (GitHub Actions)
 
 Two manual workflows (Actions tab → pick one → "Run workflow") do the heavy
@@ -99,6 +110,15 @@ steps on GitHub's machine and push their output to a branch:
 |---|---|---|
 | Demo | `make data`, `make embed`, `make demo` | `demo-results` |
 | Simulated queries | `make simulate`, `make embed`, `make eval-simulated` | `simulation-results` |
+
+Other workflows start when a commit is pushed to their trigger branch, and
+also push their output to a branch:
+
+| Workflow | Trigger branch | What it runs | Output branch |
+|---|---|---|---|
+| Judge | `run-judge` | `make judge` | `judge-results` |
+| Gemini embeddings | `run-embed-gemini` | `make gemini-subcatalogue` (one day of quota per run) | `gemini-results` |
+| Explanations | `run-rag` | `make worked-example`, `make faithfulness` | `rag-results` |
 
 "Simulated queries" needs the repository secret `GEMINI_API_KEY` (Settings →
 Secrets and variables → Actions) and `simulation.llm.model` set in

@@ -655,3 +655,16 @@ recommended:
   labelled as such. Worked-example persona: Lucía, 24, new to wine, fruity
   and not too dry, about $20 (budget filter $20), refinement "sweeter"; the
   request passes the vocabulary check (no expert terms).
+
+- **Faithfulness annotation rule** (student, 19 Nov 2026, "confirmed,
+  glosses don't count"). In `results/faithfulness_sample.csv`: *yes* = every
+  claim about the wine is in its note; *partly* = mostly grounded but at
+  least one claim about the wine is not in the note (written in
+  `claims_not_in_notes`); *no* = a claim contradicts the note or describes
+  the wrong wine. Beginner definitions of general wine words (e.g. what
+  acidity means) are not counted as claims about the wine, because the
+  prompt asks for them; a definition that is wrong is noted in
+  `claims_not_in_notes` but does not change the label. Reason: the label
+  measures grounding in the retrieved note, not general wine knowledge.
+  Example of *partly*: "a rosé, which is a pink wine made from red grapes"
+  (a fact about the wine's making, not in the note).

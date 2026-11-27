@@ -27,10 +27,15 @@ API = "https://generativelanguage.googleapis.com/v1beta/models/{model}:{method}"
 
 
 class GeminiEncoder:
-    def __init__(self, model, dims, batch_dir, query_cache_dir, batch_size=100, pause_seconds=0, post=None):
-        """post: function (url, body) -> parsed JSON. Left as None, the real
+    def __init__(self, model, dims, batch_dir, query_cache_dir, batch_size=100, pause_seconds=0,
+                 query_pause_seconds=None, post=None):
+        """pause_seconds: wait after each batch of notes; query_pause_seconds:
+        wait after each single request (one text, so a much shorter wait keeps
+        the same per-minute rate; defaults to pause_seconds).
+        post: function (url, body) -> parsed JSON. Left as None, the real
         API is called; tests pass a fake."""
         self.model, self.dims, self.batch_size, self.pause = model, dims, batch_size, pause_seconds
+        self.query_pause = pause_seconds if query_pause_seconds is None else query_pause_seconds
         self.batch_dir, self.query_cache_dir = Path(batch_dir), Path(query_cache_dir)
         self.post = post or post_json
         self.n_calls = 0
@@ -43,10 +48,10 @@ class GeminiEncoder:
         data = json.dumps({"model": self.model, "dims": self.dims, "task": task, "texts": list(texts)})
         return hashlib.sha256(data.encode()).hexdigest()
 
-    def _call(self, method, body):
+    def _call(self, method, body, pause):
         out = self.post(API.format(model=self.model, method=method), body)
         self.n_calls += 1
-        time.sleep(self.pause)
+        time.sleep(pause)
         return out
 
     def encode(self, texts, batch_size=None, show_progress_bar=False):
@@ -60,7 +65,7 @@ class GeminiEncoder:
             path = self.batch_dir / f"{self._key(batch, 'RETRIEVAL_DOCUMENT')}.npy"
             if not path.exists():
                 data = self._call("batchEmbedContents",
-                                  {"requests": [self._request(t, "RETRIEVAL_DOCUMENT") for t in batch]})
+                                  {"requests": [self._request(t, "RETRIEVAL_DOCUMENT") for t in batch]}, self.pause)
                 vectors = np.array([e["values"] for e in data["embeddings"]], dtype=np.float32)
                 if vectors.shape != (len(batch), self.dims):
                     raise ValueError(f"unexpected embedding shape {vectors.shape}")
@@ -79,7 +84,7 @@ class GeminiEncoder:
             if path.exists():
                 out.append(json.loads(path.read_text())["embedding"])
                 continue
-            data = self._call("embedContent", self._request(text, "RETRIEVAL_QUERY"))
+            data = self._call("embedContent", self._request(text, "RETRIEVAL_QUERY"), self.query_pause)
             vector = data["embedding"]["values"]
             path.write_text(json.dumps({"model": self.model, "dims": self.dims, "task": "RETRIEVAL_QUERY",
                                         "text": text, "embedding": vector}))

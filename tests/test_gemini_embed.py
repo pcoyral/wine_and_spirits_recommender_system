@@ -68,3 +68,13 @@ def test_gemini_is_off_until_enabled():
     cfg["extra_embedding_models"][0]["enabled"] = True
     [m] = extra_from_config(cfg)
     assert m.name == "semantic_gemini" and m._encoder.dims == 768
+
+
+def test_queries_wait_their_own_pause(tmp_path, monkeypatch):
+    waits = []
+    monkeypatch.setattr("sensoryrec.gemini_embed.time.sleep", waits.append)
+    e = GeminiEncoder("gemini-embedding-001", 3, tmp_path / "batches", tmp_path / "cache", batch_size=2,
+                      pause_seconds=60, query_pause_seconds=1, post=FakeAPI())
+    e.encode(["red", "white"])
+    e.encode_queries(["a red please"])
+    assert waits == [60, 1]          # one batch of notes, then one request

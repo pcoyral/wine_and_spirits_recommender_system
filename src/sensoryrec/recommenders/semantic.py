@@ -139,7 +139,8 @@ def extra_from_config(cfg):
         if m.get("provider") == "gemini":
             from sensoryrec.gemini_embed import GeminiEncoder
             encoder = GeminiEncoder(m["model"], m["dims"], repo_path(cache_dir) / "gemini_batches",
-                                    repo_path(cfg["llm"]["cache_dir"]), m["batch_size"], m.get("pause_seconds", 0))
+                                    repo_path(cfg["llm"]["cache_dir"]), m["batch_size"], m.get("pause_seconds", 0),
+                                    m.get("query_pause_seconds"))
         models.append(SemanticRecommender(m["model"], revision=m["revision"], batch_size=m["batch_size"],
                                           cache_dir=cache_dir, encoder=encoder, name=m["name"],
                                           query_prefix=m.get("query_prefix", "")))
